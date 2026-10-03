@@ -5931,7 +5931,7 @@ function boot() {
   // One-time: carry over levels she beat on the old link (only via ?beat=N).
   const p = Save.data.progress, h = Save.data.help;
   const beat = parseInt(new URLSearchParams(location.search).get('beat'), 10);
-  if (beat > 0 && beat <= 500 && !h.carriedOver) {
+  if (beat > 0 && beat <= 500 && beat + 1 > p.unlocked) {   // only ever moves progress forward
     for (let n = 1; n <= beat; n++) if (!p.stars[n]) p.stars[n] = 1;
     p.unlocked = Math.max(p.unlocked, beat + 1);
     h.carriedOver = true;
