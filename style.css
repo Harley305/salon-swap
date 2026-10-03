@@ -1009,7 +1009,7 @@ body[data-world="2"] .bg-spark.pink { background: radial-gradient(circle, #fff 0
 
 /* ---------- World 6: Cinematic Credits (awards night) ---------- */
 .scene-awards { display: none; }
-body[data-world="6"] .scene-road, body[data-world="6"] .scene-stage, body[data-world="6"] .scene-craft, body[data-world="6"] .scene-loc { display: none; }
+body[data-world="6"] .scene-road, body[data-world="6"] .scene-stage, body[data-world="6"] .scene-craft, body[data-world="6"] .scene-loc, body[data-world="6"] .scene-party { display: none; }
 body[data-world="6"] .scene-awards { display: block; }
 body[data-world="6"] { background: linear-gradient(180deg, #0a0c1c 0%, #141a33 55%, #1b1530 100%); }
 body[data-world="6"] .bg-spark { background: radial-gradient(circle, #fff 0%, rgba(255,224,140,.95) 35%, rgba(244,184,58,0) 70%); }
@@ -1284,6 +1284,104 @@ body[data-world="4"] .bg-spark.pink { background: radial-gradient(circle, #fff 0
 
 @media (prefers-reduced-motion: reduce) {
   .lo-sun, .scene-loc .tumble, .scene-loc .dust { animation: none; }
+}
+
+/* ---------- World 5: The Wrap Party ---------- */
+.scene-party { display: none; }
+body[data-world="5"] .scene-road, body[data-world="5"] .scene-stage, body[data-world="5"] .scene-craft,
+body[data-world="5"] .scene-loc, body[data-world="5"] .scene-awards { display: none; }
+body[data-world="5"] .scene-party { display: block; }
+body[data-world="5"] { background: linear-gradient(180deg, #0c0620 0%, #1d0b3a 55%, #2a0b33 100%); }
+body[data-world="5"] .bg-spark { background: radial-gradient(circle, #fff 0%, rgba(95,242,255,.9) 35%, rgba(95,242,255,0) 70%); }
+body[data-world="5"] .bg-spark.pink { background: radial-gradient(circle, #fff 0%, rgba(255,95,180,.9) 35%, rgba(255,95,180,0) 70%); }
+
+.pa-sky {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(60% 40% at 50% 48%, rgba(180,80,255,.35), transparent 70%),
+    linear-gradient(180deg, #07031a 0%, #1a0838 45%, #3a0d4a 52%, #12052a 100%);
+}
+/* sweeping colored light beams from the disco ball */
+.scene-party .beam {
+  position: absolute; top: 3vh; left: 50%; width: 9vw; max-width: 80px; height: 80vh; margin-left: -4.5vw;
+  transform-origin: 50% 0;
+  clip-path: polygon(45% 0, 55% 0, 100% 100%, 0 100%);
+  mix-blend-mode: screen; opacity: .45;
+  animation: beam-sweep 5s ease-in-out infinite alternate;
+}
+.scene-party .b1 { background: linear-gradient(180deg, rgba(255,95,180,.9), transparent); animation-duration: 4.4s; }
+.scene-party .b2 { background: linear-gradient(180deg, rgba(95,242,255,.9), transparent); animation-duration: 5.6s; animation-delay: -2s; }
+.scene-party .b3 { background: linear-gradient(180deg, rgba(180,140,255,.9), transparent); animation-duration: 6.2s; animation-delay: -4s; }
+.scene-party .b4 { background: linear-gradient(180deg, rgba(255,224,138,.8), transparent); animation-duration: 4.9s; animation-delay: -1s; }
+@keyframes beam-sweep { from { transform: rotate(-38deg); } to { transform: rotate(38deg); } }
+.pa-ball {
+  position: absolute; left: 50%; top: -3.5vh; width: 9vh; height: 9vh; margin-left: -4.5vh; border-radius: 50%; opacity: .8;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.25) 0 1px, transparent 1px 1.1vh),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.25) 0 1px, transparent 1px 1.1vh),
+    radial-gradient(circle at 35% 30%, #ffffff, #c9d6ff 40%, #6f6a9e 75%, #3b3466);
+  box-shadow: 0 0 30px 8px rgba(200,220,255,.45);
+  animation: ball-spin 6s linear infinite;
+}
+
+@keyframes ball-spin { from { background-position: 0 0, 0 0, 0 0; } to { background-position: 0 0, 9vh 0, 0 0; } }
+.scene-party .pd {
+  position: absolute; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--c); box-shadow: 0 0 10px 3px var(--c);
+  animation: pd-blink 3s ease-in-out infinite;
+}
+@keyframes pd-blink { 0%, 100% { opacity: .1; transform: scale(.6); } 50% { opacity: 1; transform: scale(1.2); } }
+/* neon sign */
+.pa-sign {
+  position: absolute; left: 50%; top: calc(var(--horizon) - 21vh); transform: translateX(-50%) rotate(-4deg);
+  font-weight: 700; font-size: 7.5vh; line-height: .9; text-align: center; letter-spacing: 2px;
+  color: #fff; text-shadow: 0 0 6px #ff5fb4, 0 0 16px #ff5fb4, 0 0 32px #ff2f9a;
+  animation: neon-flicker 5s infinite;
+}
+.pa-sign span { display: block; font-size: 3vh; letter-spacing: 3px; color: #e8fdff; text-shadow: 0 0 6px #5ff2ff, 0 0 16px #5ff2ff; }
+@keyframes neon-flicker { 0%, 18%, 22%, 100% { opacity: 1; } 20% { opacity: .55; } 60% { opacity: .95; } 62% { opacity: .7; } 64% { opacity: 1; } }
+/* equalizer bars along the horizon */
+.pa-eq {
+  position: absolute; left: 6%; right: 6%; top: calc(var(--horizon) - 7vh); height: 7vh;
+  display: flex; align-items: flex-end; gap: .6vw;
+}
+.pa-eq i {
+  flex: 1; height: 30%; border-radius: 2px 2px 0 0;
+  background: linear-gradient(0deg, #5ff2ff, #b48cff 60%, #ff5fb4);
+  box-shadow: 0 0 8px rgba(180,140,255,.6);
+  animation: eq 0.9s ease-in-out infinite alternate;
+}
+@keyframes eq { from { height: 15%; } to { height: 95%; } }
+/* neon grid dance floor */
+.pa-floor {
+  position: absolute; left: 0; right: 0; top: var(--horizon); bottom: 0;
+  overflow: hidden; perspective: 220px; perspective-origin: 50% 0;
+  background: linear-gradient(180deg, #2a0b3f, #0d0420);
+}
+.grid-plane {
+  position: absolute; left: 50%; bottom: 0; width: 900px; height: 1600px; margin-left: -450px;
+  transform-origin: 50% 100%; transform: rotateX(76deg);
+  background:
+    repeating-linear-gradient(90deg, rgba(95,242,255,.75) 0 2px, transparent 2px 60px),
+    repeating-linear-gradient(0deg, rgba(255,95,180,.75) 0 2px, transparent 2px 60px);
+  animation: grid-move 2.4s linear infinite;
+}
+@keyframes grid-move { from { background-position: 0 0, 0 0; } to { background-position: 0 0, 0 60px; } }
+
+/* map: neon trail for World 5 */
+.map-line .neon-edge { stroke: #12052a; stroke-width: 28; opacity: .85; }
+.map-line .neon      { stroke: rgba(180,140,255,.35); stroke-width: 18; }
+.map-line .neon-glow { stroke: rgba(255,95,180,.55); stroke-width: 40; filter: blur(8px); }
+.map-line .neon-done { stroke: #ff8fd0; stroke-width: 10; }
+.map-line .neon-dash { stroke: #5ff2ff; stroke-width: 3; stroke-dasharray: 2 9; }
+.node.w5:not(.current):not(.locked) {
+  background: radial-gradient(circle at 35% 30%, #ffd1f0, #c04ad9 55%, #5b1f7a);
+  box-shadow: 0 5px 0 #3a0f52, 0 0 14px rgba(255,95,180,.6), 0 10px 18px rgba(0,0,0,.35);
+}
+.world-banner.wb5 { background: linear-gradient(180deg, #8a2fb0, #3a0f52); box-shadow: 0 0 18px rgba(255,95,180,.5), 0 6px 16px rgba(0,0,0,.45); }
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-party .beam, .pa-ball, .scene-party .pd, .pa-sign, .pa-eq i, .grid-plane { animation: none; }
 }
 
 /* ---------- Finale ---------- */

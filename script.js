@@ -101,6 +101,7 @@ const CONFIG = {
   // Extra win lines per world (mixed in with yours above).
   worldWinMessages: {
     2: ["That's a wrap on that one!", 'Check the gate — we got it!', 'Perfect take!', 'Moving on — next setup!'],
+    5: ['Turn it up!', 'The dance floor is yours!', 'DJ, play her song!', 'Encore! Encore!'],
     4: ['That’s a print!', 'Golden hour, golden take!', 'Location scouts are jealous!', 'Moving to the next setup!'],
     3: ['Order up!', 'The crew says thank you!', 'Seconds, anyone?', 'Chef’s kiss!'],
     6: ['And the award goes to… {name}!', "{name}, you've earned this one.", 'Standing ovation!', 'Speech! Speech!'],
@@ -827,12 +828,131 @@ function drawWaterItem(ctx) {
   rr(ctx, 40, 34, 4, 10, 2); ctx.fill(); rr(ctx, 40, 66, 4, 9, 2); ctx.fill();
 }
 
+/* World 5 · The Wrap Party: neon lights and music. */
+function drawDiscoBall(ctx, t) {
+  ctx.strokeStyle = WHITE; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(50, 6); ctx.lineTo(50, 20); ctx.stroke();
+  ctx.save();
+  ctx.beginPath(); ctx.arc(50, 52, 31, 0, Math.PI * 2); ctx.clip();
+  ctx.fillStyle = WHITE; ctx.fillRect(19, 21, 62, 62);
+  ctx.fillStyle = t.dark;
+  for (let y = 21; y < 84; y += 9) for (let x = 19 + ((y / 9) % 2 ? 0 : 4.5); x < 82; x += 9) {
+    if (((x * 7 + y * 3) | 0) % 5 === 0) { ctx.fillStyle = t.light; } else ctx.fillStyle = t.dark;
+    ctx.fillRect(x + 1, y + 1, 6.5, 6.5);
+  }
+  ctx.restore();
+  ctx.strokeStyle = WHITE; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(50, 52, 31, 0, Math.PI * 2); ctx.stroke();
+  sparkle(ctx, 34, 38, 8, WHITE);
+  sparkle(ctx, 80, 22, 6, WHITE);
+}
+
+function drawBoombox(ctx, t) {
+  ctx.fillStyle = WHITE;
+  rr(ctx, 12, 32, 76, 46, 9); ctx.fill();
+  ctx.strokeStyle = WHITE; ctx.lineWidth = 4; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(26, 32); ctx.lineTo(30, 20); ctx.lineTo(70, 20); ctx.lineTo(74, 32); ctx.stroke();  // handle
+  ctx.fillStyle = t.dark;
+  [30, 70].forEach(x => { ctx.beginPath(); ctx.arc(x, 58, 12, 0, Math.PI * 2); ctx.fill(); });
+  ctx.fillStyle = WHITE;
+  [30, 70].forEach(x => { ctx.beginPath(); ctx.arc(x, 58, 4.5, 0, Math.PI * 2); ctx.fill(); });
+  ctx.fillStyle = t.dark;
+  rr(ctx, 42, 38, 16, 9, 2); ctx.fill();                         // tape window
+  [44, 49, 54].forEach(x => { rr(ctx, x, 54, 3, 14, 1.5); ctx.fill(); });
+}
+
+function drawPartyHat(ctx, t) {
+  withRotation(ctx, 10, () => {
+    ctx.fillStyle = WHITE;
+    ctx.beginPath(); ctx.moveTo(50, 14); ctx.lineTo(76, 80); ctx.lineTo(24, 80); ctx.closePath(); ctx.fill();
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(50, 14); ctx.lineTo(76, 80); ctx.lineTo(24, 80); ctx.closePath(); ctx.clip();
+    ctx.strokeStyle = t.dark; ctx.lineWidth = 6;
+    [34, 50, 66].forEach(y => { ctx.beginPath(); ctx.moveTo(18, y + 14); ctx.lineTo(82, y - 6); ctx.stroke(); });
+    ctx.restore();
+    ctx.fillStyle = '#FFE08A';                                    // pom-pom
+    ctx.beginPath(); ctx.arc(50, 13, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = WHITE;                                        // brim
+    rr(ctx, 20, 77, 60, 8, 4); ctx.fill();
+  });
+}
+
+function drawMusicNote(ctx, t) {
+  ctx.fillStyle = WHITE;
+  ctx.beginPath(); ctx.ellipse(32, 72, 13, 10, -0.4, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(70, 64, 13, 10, -0.4, 0, Math.PI * 2); ctx.fill();
+  rr(ctx, 40, 22, 6, 50, 3); ctx.fill();
+  rr(ctx, 78, 14, 6, 50, 3); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(40, 22); ctx.lineTo(84, 12); ctx.lineTo(84, 26); ctx.lineTo(40, 36); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = t.dark;
+  ctx.beginPath(); ctx.ellipse(29, 69, 4, 2.6, -0.4, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(67, 61, 4, 2.6, -0.4, 0, Math.PI * 2); ctx.fill();
+  sparkle(ctx, 18, 28, 6, WHITE);
+}
+
+function drawHeadphones(ctx, t) {
+  ctx.strokeStyle = WHITE; ctx.lineWidth = 8; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(50, 54, 30, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
+  ctx.fillStyle = WHITE;
+  rr(ctx, 13, 48, 20, 32, 9); ctx.fill();
+  rr(ctx, 67, 48, 20, 32, 9); ctx.fill();
+  ctx.fillStyle = t.dark;
+  rr(ctx, 19, 54, 9, 20, 4.5); ctx.fill();
+  rr(ctx, 72, 54, 9, 20, 4.5); ctx.fill();
+  ctx.fillStyle = WHITE;                                          // little sound waves
+  ctx.strokeStyle = WHITE; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(50, 66, 6, -0.9, 0.9); ctx.stroke();
+  ctx.beginPath(); ctx.arc(50, 66, 6, Math.PI - 0.9, Math.PI + 0.9); ctx.stroke();
+}
+
+function drawGlowStick(ctx, t) {
+  withRotation(ctx, 32, () => {
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';                     // glow
+    rr(ctx, 33, 6, 34, 88, 17); ctx.fill();
+    ctx.fillStyle = WHITE;
+    rr(ctx, 40, 12, 20, 76, 10); ctx.fill();
+    ctx.fillStyle = t.dark;
+    rr(ctx, 40, 12, 20, 10, 5); ctx.fill();
+    rr(ctx, 40, 78, 20, 10, 5); ctx.fill();
+    ctx.fillStyle = t.light;
+    rr(ctx, 45, 28, 5, 44, 2.5); ctx.fill();
+  });
+  sparkle(ctx, 22, 26, 7, WHITE);
+  sparkle(ctx, 80, 76, 6, WHITE);
+}
+
+const PARTY_TILES = [
+  { id: 'disco',      name: 'Disco Ball', plural: 'Disco Balls', base: '#3AAFA9', light: '#8BE6DF', dark: '#1D7470', draw: drawDiscoBall },
+  { id: 'boombox',    name: 'Boombox',    plural: 'Boomboxes',   base: '#FF7E5F', light: '#FFB49E', dark: '#C14A2E', draw: drawBoombox },
+  { id: 'partyhat',   name: 'Party Hat',  plural: 'Party Hats',  base: '#EC5FA5', light: '#FFA3CF', dark: '#A8306C', draw: drawPartyHat },
+  { id: 'note',       name: 'Music Note', plural: 'Music Notes', base: '#F4B83A', light: '#FFDF8A', dark: '#A8730B', draw: drawMusicNote },
+  { id: 'headphones', name: 'Headphones', plural: 'Headphones',  base: '#8C7BEF', light: '#C4B9FF', dark: '#5240B8', draw: drawHeadphones },
+  { id: 'glowstick',  name: 'Glow Stick', plural: 'Glow Sticks', base: '#7CC243', light: '#D8FFB0', dark: '#3F7A18', draw: drawGlowStick },
+];
+
+function drawMixtapeItem(ctx) {
+  // a turquoise mixtape with a pink label
+  ctx.fillStyle = '#3AAFA9';
+  rr(ctx, 20, 30, 60, 40, 5); ctx.fill();
+  ctx.fillStyle = '#FFA3CF';
+  rr(ctx, 25, 34, 50, 18, 3); ctx.fill();
+  ctx.fillStyle = '#5A5268';
+  ctx.font = '700 8px Fredoka, ui-rounded, sans-serif';
+  ctx.fillText('WRAP', 39, 46);
+  ctx.fillStyle = '#1D3B3A';
+  rr(ctx, 33, 55, 34, 11, 5); ctx.fill();
+  ctx.fillStyle = '#FFFFFF';
+  [41, 59].forEach(x => { ctx.beginPath(); ctx.arc(x, 60.5, 3.6, 0, Math.PI * 2); ctx.fill(); });
+  ctx.fillStyle = '#2a807b';
+  ctx.beginPath(); ctx.moveTo(30, 70); ctx.lineTo(34, 64); ctx.lineTo(66, 64); ctx.lineTo(70, 70); ctx.closePath(); ctx.fill();
+}
+
 /* ----- Worlds -----
    World 1 · City Streets      (1–30):    the road into town, salon tiles.
    World 2 · The Studio Set    (31–60):   backstage, film-set tiles.
    World 3 · The Crafty Table  (61–90):   crew food, cascades.
    World 4 · On Location       (91–120):  desert & beach shoots, golden hour.
-   World 5 · The Wrap Party    (121–150): coming soon (uses the Crafty Table look for now).
+   World 5 · The Wrap Party    (121–150): neon lights, music, the dance floor.
    World 6 · Cinematic Credits (151–180): the red carpet, award tiles, the finale. */
 const WORLDS = [
   null,
@@ -844,12 +964,13 @@ const WORLDS = [
     blurb: "Break time, {name}! The crafty table is loaded — chain those cascades and keep the crew fed:" },
   { n: 4, name: 'On Location', tiles: LOCATION_TILES,
     blurb: "Pack the van, {name} — we're shooting out on location! Sun, sand and long days. Here's what's in the kit:" },
-  null,
+  { n: 5, name: 'The Wrap Party', tiles: PARTY_TILES,
+    blurb: "That's a wrap, {name}! The cameras are off and the music is on — time to celebrate with the crew:" },
   { n: 6, name: 'Cinematic Credits', tiles: AWARD_TILES,
     blurb: "From the chair to the spotlight, {name}. Tonight the industry says thank you — dress for the carpet:" },
 ];
 const WORLD_NAMES = [null, 'City Streets', 'The Studio Set', 'The Crafty Table', 'On Location', 'The Wrap Party', 'Cinematic Credits'];
-const worldOf = level => (level > 150 ? 6 : level > 120 ? 3 : level > 90 ? 4 : level > 60 ? 3 : level > 30 ? 2 : 1);
+const worldOf = level => (level > 150 ? 6 : level > 120 ? 5 : level > 90 ? 4 : level > 60 ? 3 : level > 30 ? 2 : 1);
 
 /* Every world has three 10-level acts; the last level of each act is a boss board. */
 const ACT_NAMES = ['Introduction', 'Obstacles', 'Master Board'];
@@ -937,6 +1058,7 @@ const DROP_ITEMS = {
   2: { name: 'script', plural: 'scripts', run: 'Script run', draw: drawScriptItem },
   3: { name: 'cake slice', plural: 'cake slices', run: 'Dessert run', draw: drawCakeItem },
   4: { name: 'water bottle', plural: 'water bottles', run: 'Water run', draw: drawWaterItem },
+  5: { name: 'mixtape', plural: 'mixtapes', run: 'Mixtape run', draw: drawMixtapeItem },
 };
 const dropItem = w => DROP_ITEMS[w] || DROP_ITEMS[1];
 
@@ -3202,10 +3324,264 @@ const LEVELS = [
     '.ji..ij.',
     '.jjhhjj.',
     '........'] },
+  /* ===== WORLD 5 · THE WRAP PARTY (levels 121–150) ===== */
+  /* 121 */ { moves: 26, kinds: 5, goals: [['collect', 'note', 24], ['collect', 'partyhat', 24]], tip: 'It\'s a wrap! Time to celebrate — the party is on!' },
+  /* 122 */ { moves: 29, kinds: 6, goals: [], layout: [
+    '........',
+    '........',
+    '.j.jj.j.',
+    '..j..j..',
+    '..j..j..',
+    '.j.jj.j.',
+    '........',
+    '........'] },
+  /* 123 */ { moves: 30, kinds: 6, drops: 2, dropsMax: 1, goals: [['collect', 'glowstick', 16]], tip: 'Mixtape run! Get the tapes down to the DJ booth.', layout: [
+    '...d....',
+    '........',
+    '........',
+    '.j....j.',
+    '.j....j.',
+    '........',
+    '........',
+    '........'] },
+  /* 124 */ { moves: 31, kinds: 6, goals: [['collect', 'disco', 18]], layout: [
+    '........',
+    '........',
+    '..i..i..',
+    '...ii...',
+    '...ii...',
+    '..i..i..',
+    '........',
+    '........'] },
+  /* 125 */ { moves: 25, kinds: 5, goals: [['score', 20000]], breather: true },
+  /* 126 */ { moves: 33, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '....d...',
+    '........',
+    '.h....h.',
+    '........',
+    '..h..h..',
+    '........',
+    '........',
+    '........'] },
+  /* 127 */ { moves: 27, kinds: 6, goals: [], tip: 'Speakers and road cases everywhere — clear the dance floor!', layout: [
+    '........',
+    '..bbbb..',
+    '...jj...',
+    '........',
+    '........',
+    '...jj...',
+    '..bbbb..',
+    '........'] },
+  /* 128 */ { moves: 32, kinds: 6, drops: 2, dropsMax: 1, goals: [['collect', 'boombox', 18]], layout: [
+    '..d.....',
+    '........',
+    '.jj..jj.',
+    '........',
+    '...ii...',
+    '........',
+    '.jj..jj.',
+    '........'] },
+  /* 129 */ { moves: 39, kinds: 6, goals: [], layout: [
+    '........',
+    '.i....i.',
+    '...ii...',
+    '.h....h.',
+    '.h....h.',
+    '...ii...',
+    '.i....i.',
+    '........'] },
+  /* 130 */ { moves: 34, kinds: 6, drops: 3, dropsMax: 1, goals: [['collect', 'headphones', 18]], tip: 'Act 1 boss board — the DJ just dropped the beat!', layout: [
+    '...d....',
+    '........',
+    '.jjjjjj.',
+    '.j.bb.j.',
+    '.j....j.',
+    '.jjjjjj.',
+    '........',
+    '........'] },
+  /* 131 */ { moves: 32, kinds: 6, goals: [], tip: 'Act 2: the party gets packed — obstacles everywhere!', layout: [
+    '........',
+    '.J....J.',
+    '..J..J..',
+    '..J..J..',
+    '..J..J..',
+    '..J..J..',
+    '.J....J.',
+    '........'] },
+  /* 132 */ { moves: 35, kinds: 6, goals: [['collect', 'note', 18], ['collect', 'disco', 18]], layout: [
+    '........',
+    '..I..I..',
+    '.i....i.',
+    '........',
+    '........',
+    '.i....i.',
+    '..I..I..',
+    '........'] },
+  /* 133 */ { moves: 36, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '...d....',
+    '........',
+    '.B....B.',
+    '..jjjj..',
+    '..jjjj..',
+    '........',
+    '.B....B.',
+    '........'] },
+  /* 134 */ { moves: 37, kinds: 6, goals: [['collect', 'partyhat', 18]], layout: [
+    '........',
+    '.H....H.',
+    '........',
+    '..i..i..',
+    '..i..i..',
+    '...hh...',
+    '.H....H.',
+    '........'] },
+  /* 135 */ { moves: 27, kinds: 5, drops: 1, dropsMax: 1, goals: [['collect', 'note', 34]], breather: true, layout: [
+    '........',
+    '....d...',
+    '........',
+    '........',
+    '........',
+    '........',
+    '........',
+    '........'] },
+  /* 136 */ { moves: 34, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '..d.....',
+    '........',
+    '.XX..XX.',
+    '........',
+    '..jjjj..',
+    '..jjjj..',
+    '........',
+    '........'] },
+  /* 137 */ { moves: 35, kinds: 6, goals: [['collect', 'boombox', 18], ['collect', 'headphones', 18]], tip: 'Green lights on the dance floor tonight… very emerald.', layout: [
+    '........',
+    '..I..I..',
+    '.h....h.',
+    '...ii...',
+    '...ii...',
+    '.h....h.',
+    '..I..I..',
+    '........'] },
+  /* 138 */ { moves: 33, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '....d...',
+    '.b.JJ.b.',
+    '.J....J.',
+    '.J.ii.J.',
+    '.J....J.',
+    '.b.JJ.b.',
+    '........',
+    '........'] },
+  /* 139 */ { moves: 30, kinds: 6, goals: [], layout: [
+    '........',
+    '.hJ..Jh.',
+    '.J....J.',
+    '...bb...',
+    '...bb...',
+    '.J....J.',
+    '.hJ..Jh.',
+    '........'] },
+  /* 140 */ { moves: 40, kinds: 6, drops: 2, dropsMax: 1, goals: [['collect', 'note', 16]], tip: 'Act 2 boss board — the whole crew is on the dance floor!', layout: [
+    '...d....',
+    '.jjjjjj.',
+    '.ji..ij.',
+    '.j.bb.j.',
+    '.j....j.',
+    '.ji..ij.',
+    '.jjjjjj.',
+    '........'] },
+  /* 141 */ { moves: 33, kinds: 6, goals: [], tip: 'Act 3: Master Boards — the last song of the night!', layout: [
+    '........',
+    '.JJ..JJ.',
+    '.J....J.',
+    '..h..h..',
+    '..h..h..',
+    '.J....J.',
+    '.JJ..JJ.',
+    '........'] },
+  /* 142 */ { moves: 37, kinds: 6, goals: [['collect', 'partyhat', 18], ['collect', 'disco', 18]], layout: [
+    '........',
+    '.H.ii.H.',
+    '........',
+    '.i.HH.i.',
+    '........',
+    '.H.ii.H.',
+    '........',
+    '........'] },
+  /* 143 */ { moves: 38, kinds: 6, drops: 2, dropsMax: 1, goals: [['collect', 'glowstick', 16]], layout: [
+    '..d.....',
+    '........',
+    '.b.XX.b.',
+    '.b....b.',
+    '..iiii..',
+    '........',
+    '.b....b.',
+    '........'] },
+  /* 144 */ { moves: 34, kinds: 6, goals: [], layout: [
+    '........',
+    '.jjjjjj.',
+    '.jJJJJj.',
+    '........',
+    '........',
+    '.jJJJJj.',
+    '.jjjjjj.',
+    '........'] },
+  /* 145 */ { moves: 28, kinds: 5, drops: 1, dropsMax: 1, goals: [['score', 22000]], breather: true, layout: [
+    '........',
+    '...d....',
+    '........',
+    '........',
+    '........',
+    '........',
+    '........',
+    '........'] },
+  /* 146 */ { moves: 37, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '....d...',
+    '.hj..jh.',
+    '.jh..hj.',
+    '...ii...',
+    '...ii...',
+    '.jh..hj.',
+    '.hj..jh.',
+    '........'] },
+  /* 147 */ { moves: 37, kinds: 6, goals: [['collect', 'headphones', 18], ['collect', 'note', 18]], layout: [
+    '........',
+    '...B....',
+    '.i..h.i.',
+    '.h....h.',
+    '........',
+    '.h..h.h.',
+    '.i.B..i.',
+    '........'] },
+  /* 148 */ { moves: 44, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '...d....',
+    '.JbJJbJ.',
+    '.b....b.',
+    '.J.ii.J.',
+    '.J.ii.J.',
+    '.b....b.',
+    '.JbJJbJ.',
+    '........'] },
+  /* 149 */ { moves: 35, kinds: 6, goals: [['collect', 'boombox', 16], ['collect', 'partyhat', 16]], layout: [
+    '........',
+    '..b..b..',
+    '.H.JJ.H.',
+    '...JJ...',
+    '...JJ...',
+    '.H.JJ.H.',
+    '..b..b..',
+    '........'] },
+  /* 150 */ { moves: 44, kinds: 6, drops: 2, dropsMax: 1, goals: [['collect', 'disco', 16]], tip: 'World 5 finale — one more song before the credits roll!', layout: [
+    '....d...',
+    '.jjhhjj.',
+    '.jI..Ij.',
+    '.j.XX.j.',
+    '.j.XX.j.',
+    '.ji..ij.',
+    '.jjhhjj.',
+    '........'] },
 ];
 
-/* World 6 · Cinematic Credits (levels 151–180): the red carpet and the awards.
-   Levels 121–150 (World 5) are generated until they get their own handmade boards. */
+/* World 6 · Cinematic Credits (levels 151–180): the red carpet and the awards. */
 const LEVELS_W6 = [
   /* ===== WORLD 6 · CINEMATIC CREDITS (levels 151–180) ===== */
   /* 151 */ { moves: 26, kinds: 5, goals: [['collect', 'trophy', 24], ['collect', 'bouquet', 24]], tip: 'Welcome to the red carpet — the final world!' },
@@ -5106,7 +5482,8 @@ const UI = {
     const W3 = 90, W4 = 120;
     const road = seg(1, W1), film = seg(W1, W2), carpet = seg(W5, total);
     const roadDone = seg(1, Math.min(reached, W1)), filmDone = doneSeg(W1, W2), carpetDone = doneSeg(W5, total);
-    const tables = [[W2, W3], [W4, W5]].map(([a, b]) => [seg(a, b), doneSeg(a, b)]);
+    const tables = [[W2, W3]].map(([a, b]) => [seg(a, b), doneSeg(a, b)]);
+    const neon = seg(W4, W5), neonDone = doneSeg(W4, W5);
     const dirt = seg(W3, W4), dirtDone = doneSeg(W3, W4);
     const d = list => (list.length > 1 ? line(list) : '');
     // banners on the open side of the path
@@ -5115,7 +5492,7 @@ const UI = {
       return `<div class="world-banner wb${num}" style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px"><span>World ${num}</span>${name}</div>`;
     };
     const mid = (a, b) => [(pts[a - 1][0] + pts[b - 1][0]) / 2, (pts[a - 1][1] + pts[b - 1][1]) / 2];
-    const m2 = mid(W1, W1 + 1), m3 = mid(W2, Math.min(W2 + 1, total)), m6 = total > W5 ? mid(W5, W5 + 1) : null, m4 = total > W3 ? mid(W3, W3 + 1) : null;
+    const m2 = mid(W1, W1 + 1), m3 = mid(W2, Math.min(W2 + 1, total)), m6 = total > W5 ? mid(W5, W5 + 1) : null, m4 = total > W3 ? mid(W3, W3 + 1) : null, m5 = total > W4 ? mid(W4, W4 + 1) : null;
     path.innerHTML =
       `<svg class="map-line" width="${W}" height="${H}" aria-hidden="true">` +
       `<path class="road-edge" d="${d(road)}"/>` +
@@ -5139,6 +5516,10 @@ const UI = {
       `<path class="dirt" d="${d(dirt)}"/>` +
       `<path class="dirt-glow" d="${d(dirtDone)}"/><path class="dirt-done" d="${d(dirtDone)}"/>` +
       `<path class="dirt-tracks" d="${d(dirt)}"/>` +
+      `<path class="neon-edge" d="${d(neon)}"/>` +
+      `<path class="neon" d="${d(neon)}"/>` +
+      `<path class="neon-glow" d="${d(neonDone)}"/><path class="neon-done" d="${d(neonDone)}"/>` +
+      `<path class="neon-dash" d="${d(neon)}"/>` +
       `<path class="carpet-edge" d="${d(carpet)}"/>` +
       `<path class="carpet" d="${d(carpet)}"/>` +
       `<path class="carpet-glow" d="${d(carpetDone)}"/><path class="carpet-done" d="${d(carpetDone)}"/>` +
@@ -5148,6 +5529,7 @@ const UI = {
       banner(2, WORLDS[2].name, m2[0], m2[1]) +
       (total > W2 ? banner(3, WORLDS[3].name, m3[0], m3[1]) : '') +
       (m4 ? banner(4, WORLDS[4].name, m4[0], m4[1]) : '') +
+      (m5 ? banner(5, WORLDS[5].name, m5[0], m5[1]) : '') +
       (m6 ? banner(6, WORLDS[6].name, m6[0], m6[1]) : '') +
       nodes;
 
@@ -5442,7 +5824,7 @@ const UI = {
     const lv = buildLevel(n);
     const best = Save.data.progress.stars[n] || 0;
     const take = (Save.data.progress.fails[n] || 0) + 1;
-    const kicker = w === 2 ? `Scene · Take ${take}` : w === 3 ? 'Order up' : w === 4 ? `Call sheet · Day ${n - 90}` : w === 6 ? 'Category' : 'Level';
+    const kicker = w === 2 ? `Scene · Take ${take}` : w === 3 ? 'Order up' : w === 4 ? `Call sheet · Day ${n - 90}` : w === 5 ? `Track ${n - 120}` : w === 6 ? 'Category' : 'Level';
     this.showModal(`
       <div class="panel-act">World ${w} · Act ${actOf(n)} — ${ACT_NAMES[actOf(n) - 1]}</div>
       ${isBoss(n) ? '<div class="boss-tag">👑 Boss board</div>' : ''}
@@ -5599,7 +5981,7 @@ const UI = {
     }
     const w = worldOf(n);
     const msg = Lines.win(w);
-    const [kick, head] = w === 2 ? [`Scene ${n}`, "That's a wrap!"] : w === 3 ? [`Order ${n}`, 'Delicious!'] : w === 4 ? [`Day ${n - 90}`, 'That’s a print!']
+    const [kick, head] = w === 2 ? [`Scene ${n}`, "That's a wrap!"] : w === 3 ? [`Order ${n}`, 'Delicious!'] : w === 4 ? [`Day ${n - 90}`, 'That’s a print!'] : w === 5 ? [`Track ${n - 120}`, 'Encore!']
       : w === 6 ? [`Category ${n}`, 'Winner!'] : [`Level ${n}`, 'Complete!'];
     Pip.react('cheer', 3000);
     this.showModal(`
@@ -5631,6 +6013,7 @@ const UI = {
     const [kick, head, again] = w === 2 ? [`Scene ${lv.n} · Take ${take - 1}`, 'Cut!', `Take ${take}`]
       : w === 3 ? [`Order ${lv.n}`, 'Out of snacks!', 'Try again']
       : w === 4 ? [`Day ${lv.n - 90}`, 'We lost the light!', 'Go again']
+      : w === 5 ? [`Track ${lv.n - 120}`, 'The music stopped!', 'Play it again']
       : w === 6 ? [`Category ${lv.n}`, 'So close!', 'Try again'] : [`Level ${lv.n}`, 'Out of moves', 'Try again'];
     this.showModal(`
       <div class="panel-kicker">${kick}</div>
@@ -5697,6 +6080,7 @@ const Background = {
     html += this.stage();
     html += this.craft();
     html += this.location();
+    html += this.party();
     html += this.awards();
 
     for (let i = 0; i < 22; i++) {
@@ -5761,6 +6145,30 @@ const Background = {
       </div>
       <i class="tumble"></i>
       ${dust}
+    </div>`;
+  },
+
+  // World 5: the wrap party — neon grid dance floor, disco ball, light beams, equalizer.
+  party() {
+    const rnd = seededRandom(1212);
+    let eq = '';
+    for (let i = 0; i < 24; i++) {
+      eq += `<i style="animation-delay:-${(rnd() * 1.2).toFixed(2)}s;animation-duration:${(0.6 + rnd() * 0.7).toFixed(2)}s"></i>`;
+    }
+    let dots = '';
+    for (let i = 0; i < 26; i++) {
+      const c = ['#ff5fb4', '#5ff2ff', '#b48cff', '#ffe08a', '#7CC243'][i % 5];
+      dots += `<i class="pd" style="left:${(rnd() * 100).toFixed(1)}%;top:${(rnd() * 60).toFixed(1)}%;--c:${c};` +
+              `animation-delay:-${(rnd() * 4).toFixed(2)}s;animation-duration:${(2.5 + rnd() * 3).toFixed(2)}s"></i>`;
+    }
+    return `<div class="scene scene-party">
+      <div class="pa-sky"></div>
+      <div class="beam b1"></div><div class="beam b2"></div><div class="beam b3"></div><div class="beam b4"></div>
+      <div class="pa-ball"></div>
+      ${dots}
+      <div class="pa-sign"><span>That's a</span>WRAP!</div>
+      <div class="pa-eq">${eq}</div>
+      <div class="pa-floor"><div class="grid-plane"></div></div>
     </div>`;
   },
 
