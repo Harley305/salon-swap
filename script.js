@@ -62,10 +62,10 @@ const CONFIG = {
   sfxVolume: 0.85,    // 0–1
   idleHintMs: 7000,   // show a quiet hint after this long without a move
 
-  // She finished levels 1–30 on the old link before the game moved to GitHub.
-  // First visit here marks them complete (1★ each) so she continues at 31.
-  // Set to 0 to turn this off.
-  alreadyBeatThrough: 30,
+  // Special links (add to the end of the game's address):
+  //   ?beat=30   → first visit marks levels 1–30 complete (1★ each),
+  //                so she continues at 31. Only happens once per device.
+  //   ?reset=1   → wipes this device's progress and starts over at level 1.
   showDebug: false,   // test info line under the board; tap the big title to toggle
 
   // ===== Chris's messages =====
@@ -3288,17 +3288,24 @@ const Background = {
 
 /* ---------- 12. BOOT ---------- */
 function boot() {
+  // ?reset=1 → start this device over from level 1.
+  if (new URLSearchParams(location.search).get('reset') === '1') {
+    try { localStorage.removeItem('msalon.save'); localStorage.removeItem('msalon.save.bak'); } catch (e) {}
+    location.replace(location.pathname);
+    return;
+  }
   Save.load();
   Render.init();
   Input.init();
   UI.init();
   Background.init();
 
-  // One-time: carry over the 30 levels she beat on the old link.
+  // One-time: carry over levels she beat on the old link (only via ?beat=N).
   const p = Save.data.progress, h = Save.data.help;
-  if (CONFIG.alreadyBeatThrough && !h.carriedOver) {
-    for (let n = 1; n <= CONFIG.alreadyBeatThrough; n++) if (!p.stars[n]) p.stars[n] = 1;
-    p.unlocked = Math.max(p.unlocked, CONFIG.alreadyBeatThrough + 1);
+  const beat = parseInt(new URLSearchParams(location.search).get('beat'), 10);
+  if (beat > 0 && beat <= 500 && !h.carriedOver) {
+    for (let n = 1; n <= beat; n++) if (!p.stars[n]) p.stars[n] = 1;
+    p.unlocked = Math.max(p.unlocked, beat + 1);
     h.carriedOver = true;
     h.howTo = h.howTo || false;
     ['gel', 'ice', 'chain', 'box'].forEach(t => { h.seen[t] = true; });
