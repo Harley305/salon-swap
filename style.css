@@ -1418,6 +1418,18 @@ body[data-world="5"] .bg-spark.pink { background: radial-gradient(circle, #fff 0
                          50% { filter: drop-shadow(0 0 44px rgba(255,224,150,.95)) drop-shadow(0 10px 20px rgba(0,0,0,.6)); } }
 .finale.rolling .fin-trophy { animation: none; transform: translateY(-39vh) scale(.36); opacity: .28; }
 .finale.rolling .fin-plate { opacity: 0; animation: none; transition: opacity .6s ease; }
+/* when the credits finish: trophy comes back bright, with the message engraved on the plaque */
+.fin-engrave { display: none; }
+.finale.rolling.ended .fin-credits { opacity: 0; }
+.finale.rolling.ended .fin-trophy { transform: none; opacity: 1; transition: transform 1.2s ease, opacity 1.2s ease; }
+.finale.ended .fin-trophy img { width: min(44vw, 210px); }
+.finale.ended .fin-plate { opacity: 1; animation: none; max-width: min(86vw, 380px); padding: 14px 22px 16px;
+  background: linear-gradient(180deg, #3a2c14, #1c140a); border: 3px solid #F4B83A;
+  box-shadow: inset 0 0 0 2px rgba(255,233,168,.25), 0 10px 30px rgba(0,0,0,.6); transition: opacity 1s ease .4s; }
+.finale.ended .fin-engrave { display: block; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(244,184,58,.45);
+  font-size: 17px; font-weight: 600; line-height: 1.45; color: #FFE9A8; font-style: italic;
+  text-shadow: 0 1px 0 rgba(0,0,0,.6), 0 0 10px rgba(244,184,58,.25); }
+.fin-engrave b { display: block; margin-top: 8px; font-style: normal; color: #FFB3D6; font-size: 17px; }
 
 .fin-credits {
   position: absolute; left: 0; right: 0; top: 24vh; bottom: 12vh;
@@ -1438,6 +1450,10 @@ body[data-world="5"] .bg-spark.pink { background: radial-gradient(circle, #fff 0
 .cr-role { margin-top: 26px; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--mist); opacity: .7; }
 .cr-name { font-size: 24px; font-weight: 700; margin-top: 4px; }
 .cr-item { font-size: 19px; margin-top: 6px; }
+.fin-credits .cr-item { margin-top: 14px; line-height: 1.25; }
+.cr-item small { display: block; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: #FFB3D6; opacity: .85; margin-top: 2px; }
+.cr-honor { margin-top: 18px; font-size: 18px; font-weight: 700; color: #FFE9A8; text-shadow: 0 0 14px rgba(244,184,58,.5); }
+.finale.rolling .cr-roll { animation-duration: 55s; }
 .cr-msg { font-size: 20px; line-height: 1.45; margin: 10px auto 0; max-width: 320px; }
 .cr-sig { font-size: 20px; font-weight: 700; color: #FFB3D6; margin-top: 10px; }
 .cr-end { margin-top: 44px; font-size: 30px; font-weight: 700; color: #FFE9A8; }

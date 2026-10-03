@@ -110,10 +110,32 @@ const CONFIG = {
   // ===== Level 180 finale: end credits =====
   fullName: 'Myesha Starks',
   awardTitle: 'Best Hair Department',
-  credits: [                     // her real credits — add more anytime
-    'Sweetwater (2023)',
-    'Love, Victor',
+  // Her real credits (from her resume): 'Title (type) | Role'. Add or remove lines anytime.
+  credits: [
+    'Bad Monkey (TV Series) | Key Hairstylist',
+    'Aces (Limited Series) | Personal Hairstylist',
+    'Forever (Netflix Series) | Hairstylist',
+    'Merry Gentlemen (Netflix Film) | Hairstylist',
+    '9-1-1 (TV Series) | Key Hairstylist',
+    '9-1-1: Lone Star (TV Series) | Additional Hairstylist',
+    'Sweetwater (Feature Film) | Department Head Hairstylist',
+    'Good Trouble (TV Series) | Hairstylist',
+    'Winning Time: The Rise of the Lakers Dynasty (HBO) | Hairstylist',
+    'The Orville, Season 3 (TV Series) | Hairstylist',
+    'Love, Victor (Hulu Series) | Hairstylist',
+    'American Horror Story (FX Series) | Day Player Hairstylist',
+    'Saturday Morning All Stars (Netflix) | Key Hairstylist',
+    'Generation (HBO Series) | Department Head Hairstylist',
+    'The Guest House (Feature Film) | Department Head Hairstylist',
+    'Blindfire (Feature Film) | Department Head Hairstylist',
+    'This Is Us (NBC Series) | Hairstylist',
+    'Legendary (HBO Series) | Hairstylist',
+    'Warped (Nickelodeon Series) | Personal Hairstylist',
+    'Hungry (TV Series) | Key Hairstylist',
+    'Michael (Feature Film) | Hairstylist',
+    'Lucky Strike (Feature Film) | Hairstylist',
   ],
+  honors: 'Emmy-Nominated Hairstylist',
   // Chris: replace this with your own message to her.
   finaleMessage: "From the first chair to the red carpet — I've watched you earn every bit of it. I'm so proud of you.",
   finaleSignature: '— Chris',
@@ -6027,13 +6049,17 @@ const UI = {
     this.hideModal();
     const p = Save.data.progress;
     const stars = Object.values(p.stars).reduce((a, b) => a + b, 0);
-    const credits = (CONFIG.credits || []).map(c => `<div class="cr-item">${esc(c)}</div>`).join('');
+    const credits = (CONFIG.credits || []).map(c => {
+      const [title, role] = String(c).split('|').map(x => x.trim());
+      return `<div class="cr-item">${esc(title)}${role ? `<small>${esc(role)}</small>` : ''}</div>`;
+    }).join('');
     const el = document.createElement('div');
     el.className = 'finale';
     el.innerHTML = `
       <div class="fin-trophy">
         <img src="${this.trophyArt()}" alt="">
-        <div class="fin-plate"><span>${esc(CONFIG.awardTitle)}</span>${esc(CONFIG.fullName)}</div>
+        <div class="fin-plate"><span>${esc(CONFIG.awardTitle)}</span>${esc(CONFIG.fullName)}
+          <div class="fin-engrave">${esc(CONFIG.finaleMessage)}<b>${esc(CONFIG.finaleSignature)}</b></div></div>
       </div>
       <div class="fin-credits"><div class="cr-roll">
         <div class="cr-title">${esc(CONFIG.playerName)}'s<br>${esc(CONFIG.gameName)}</div>
@@ -6041,13 +6067,11 @@ const UI = {
         <div class="cr-role">Hair Department Head</div><div class="cr-name">${esc(CONFIG.fullName)}</div>
         <div class="cr-role">Co-starring</div><div class="cr-name">Pip</div>
         <div class="cr-pips">${[1, 2, 3, 4, 5, 6].map(w => `<img src="${Pip.url(w, 'cheer', 80)}" alt="">`).join('')}</div>
+        ${CONFIG.honors ? `<div class="cr-honor">★ ${esc(CONFIG.honors)} ★</div>` : ''}
         <div class="cr-role">Selected credits</div>${credits}
         <div class="cr-role">The journey</div>
         <div class="cr-item">${[1, 2, 3, 4, 5, 6].map(w => esc((WORLDS[w] || { name: WORLD_NAMES[w] }).name)).join(' · ')}</div>
         <div class="cr-item">180 levels · ★ ${stars}</div>
-        <div class="cr-role">A special thank-you</div>
-        <div class="cr-msg">${esc(CONFIG.finaleMessage)}</div>
-        <div class="cr-sig">${esc(CONFIG.finaleSignature)}</div>
         <div class="cr-end">That's a wrap.</div>
       </div></div>
       <div class="fin-btns">
@@ -6067,13 +6091,14 @@ const UI = {
       setTimeout(() => { el.remove(); if (onDone) onDone(); }, 450);
     };
     const showDone = () => {
+      el.classList.add('ended');                  // credits fade, trophy + engraved plaque return
       el.querySelector('[data-fin="done"]').hidden = false;
       el.querySelector('[data-fin="skip"]').hidden = true;
     };
     // trophy first, then the credits roll
     setTimeout(() => el.classList.add('rolling'), 4200);
     roll.addEventListener('animationend', showDone);
-    setTimeout(showDone, 40000);
+    setTimeout(showDone, 62000);
     el.addEventListener('click', e => {
       const b = e.target.closest('[data-fin]');
       if (!b) return;
