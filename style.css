@@ -1321,3 +1321,10 @@ body[data-world="3"] .bg-spark.pink { background: radial-gradient(circle, #fff 0
   background: none; border: 0; color: var(--mist); opacity: .7;
   font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer;
 }
+
+/* iPad / wide screens in landscape: Pip stands beside the board instead of over the goals */
+@media (min-width: 700px) and (min-aspect-ratio: 1/1) {
+  .pip-board { left: auto; right: calc(100% + 14px); bottom: 24px; width: 84px; height: 101px; }
+  .toast { left: 50%; }
+  .toast::after { display: none; }
+}
