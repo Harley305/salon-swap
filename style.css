@@ -1464,7 +1464,7 @@ body[data-world="5"] .bg-spark.pink { background: radial-gradient(circle, #fff 0
 @keyframes pip-jump { 0% { transform: translateY(0) scale(1); } 35% { transform: translateY(-16px) scale(1.12) rotate(-6deg); } 100% { transform: translateY(0) scale(1); } }
 /* the speech bubble sits beside Pip */
 .toast { left: calc(50% + 26px); max-width: calc(100% - 70px); }
-.toast::after { left: 10px; bottom: 6px; transform: rotate(45deg); box-shadow: -3px 3px 0 0 var(--turq); }
+.toast::after { left: -8px; top: 50%; bottom: auto; transform: translateY(-50%) rotate(45deg); box-shadow: -3px 3px 0 0 var(--turq); }   /* tail sits outside, pointing at Pip */
 .toast.show.long { max-width: calc(100% - 70px); }
 
 .pip-title {
