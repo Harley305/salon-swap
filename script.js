@@ -63,8 +63,8 @@ const CONFIG = {
   idleHintMs: 7000,   // show a quiet hint after this long without a move
 
   // Special links (add to the end of the game's address):
-  //   ?beat=30   → first visit marks levels 1–30 complete (1★ each),
-  //                so she continues at 31. Only happens once per device.
+  //   ?beat=30   → marks levels 1–30 complete (1★ each) so she continues at 31.
+  //                Only ever moves progress forward, never back.
   //   ?reset=1   → wipes this device's progress and starts over at level 1.
   showDebug: false,   // test info line under the board; tap the big title to toggle
 
