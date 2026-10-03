@@ -579,14 +579,19 @@ const AWARD_TILES = [
    World 3 · Awards Night (levels 61–90+): the red carpet, award tiles. */
 const WORLDS = [
   null,
-  { n: 1, name: 'Breaking In', tiles: SALON_TILES,
+  { n: 1, name: 'City Streets', tiles: SALON_TILES,
     blurb: '' },
-  { n: 2, name: 'On Set', tiles: STAGE_TILES,
+  { n: 2, name: 'The Studio Set', tiles: STAGE_TILES,
     blurb: "You made it onto the set, {name}! Time to work with the stars — here's your new kit:" },
   { n: 3, name: 'Awards Night', tiles: AWARD_TILES,
     blurb: "From the chair to the spotlight, {name}. Tonight the industry says thank you — dress for the carpet:" },
 ];
 const worldOf = level => (level > 60 ? 3 : level > 30 ? 2 : 1);
+
+/* Every world has three 10-level acts; the last level of each act is a boss board. */
+const ACT_NAMES = ['Introduction', 'Obstacles', 'Master Board'];
+const actOf = level => Math.floor(((level - 1) % 30) / 10) + 1;
+const isBoss = level => level % 10 === 0;
 const tilesFor = level => WORLDS[worldOf(level)].tiles;
 
 // The tiles currently in play (swapped in place when the world changes).
@@ -602,11 +607,45 @@ const World = {
     WORLDS[w].tiles.forEach(t => TILE_TYPES.push(t));
     Render.sprites = [];                       // rebuild tile pictures
     if (typeof UI !== 'undefined' && UI.icons) { UI.buildIcons(); UI.refreshHero(); }
+    Pip.refresh();
+    const tp = document.getElementById('titlePip');
+    if (tp) tp.src = Pip.url(w, 'happy');
     Render.layout();
   },
 };
 
 const BOMB = -2;   // kind used by the Glam Ball (never matches by color)
+const DROP = -3;   // kind used by ingredient drops (never matches, can't be blasted)
+
+/* Ingredient drop: a cream token with the world's item on it. World 1 = coffee. */
+function buildDropSprite(px, world = 1) {
+  const c = document.createElement('canvas');
+  c.width = c.height = px;
+  const ctx = c.getContext('2d');
+  ctx.scale(px / 100, px / 100);
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath(); ctx.arc(50, 54, 42, 0, Math.PI * 2); ctx.fill();
+  const g = ctx.createRadialGradient(42, 36, 6, 50, 50, 44);
+  g.addColorStop(0, '#FFFDF6'); g.addColorStop(0.7, '#F6E7CF'); g.addColorStop(1, '#D9BE96');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(50, 50, 42, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#F4B83A'; ctx.lineWidth = 3.5;
+  ctx.beginPath(); ctx.arc(50, 50, 41, 0, Math.PI * 2); ctx.stroke();
+  // takeaway coffee cup
+  ctx.fillStyle = '#6B3E26';
+  ctx.beginPath(); ctx.moveTo(33, 34); ctx.lineTo(67, 34); ctx.lineTo(62, 78); ctx.lineTo(38, 78); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#3AAFA9';                                  // her turquoise sleeve
+  ctx.beginPath(); ctx.moveTo(35.5, 48); ctx.lineTo(64.5, 48); ctx.lineTo(63, 62); ctx.lineTo(37, 62); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath(); ctx.arc(50, 55, 3.2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#F2EDE6';                                  // lid
+  rr(ctx, 29, 26, 42, 9, 4); ctx.fill();
+  rr(ctx, 36, 21, 28, 7, 3); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(44, 16); ctx.quadraticCurveTo(40, 11, 44, 6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(54, 16); ctx.quadraticCurveTo(50, 11, 54, 6); ctx.stroke();
+  return c;
+}
 
 function sparkle(ctx, x, y, r, color) {
   ctx.fillStyle = color;
@@ -1412,6 +1451,256 @@ const Daily = {
   },
 };
 
+/* ---------- 4e. PIP — her guide ----------
+   A little mannequin head who travels with her. The hairstyle changes
+   in every world; the face changes with the mood.
+   moods: happy, blink, wow, oops, think, wink, cheer */
+const Pip = {
+  _cache: {},
+  // Skin tones she can choose from: [highlight, shade]
+  TONES: [
+    ['#FCE9DC', '#E9C3AA'],
+    ['#F4D2B6', '#DCA985'],
+    ['#E2AE85', '#C4885E'],
+    ['#C68C5F', '#A46B42'],
+    ['#9A6443', '#7B4B2F'],
+    ['#6B412C', '#4E2D1D'],
+  ],
+  tone() {
+    const t = Save.data && Save.data.settings && Save.data.settings.pipTone;
+    return typeof t === 'number' && this.TONES[t] ? t : 2;
+  },
+  setTone(i) {
+    Save.data.settings.pipTone = i;
+    Save.write();
+    this.refresh();
+    const tp = document.getElementById('titlePip');
+    if (tp) tp.src = this.url(World.current, 'happy');
+  },
+
+  // Draw Pip into a 100 × 120 box.
+  draw(ctx, world, mood, toneIdx = this.tone()) {
+    const [skinTop, skinBot] = this.TONES[toneIdx] || this.TONES[2];
+    const HAIR = {
+      1: '#3B2416', 2: '#7A3B1F', 3: '#A4652F', 4: '#2A1A10', 5: '#4B2E6E', 6: '#E5BE6E',
+    };
+    const hair = HAIR[world] || HAIR[1];
+    const skinG = ctx.createLinearGradient(0, 26, 0, 90);
+    skinG.addColorStop(0, skinTop); skinG.addColorStop(1, skinBot);
+    const circle = (x, y, r, fill) => { ctx.fillStyle = fill; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); };
+
+    // ---- stand
+    ctx.fillStyle = skinBot;
+    rr(ctx, 42, 80, 16, 22, 4); ctx.fill();
+    const baseG = ctx.createLinearGradient(0, 100, 0, 116);
+    baseG.addColorStop(0, '#3AAFA9'); baseG.addColorStop(1, '#1D7470');
+    ctx.fillStyle = baseG;
+    ctx.beginPath(); ctx.ellipse(50, 108, 26, 8, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.35)';
+    ctx.beginPath(); ctx.ellipse(46, 105, 14, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+
+    // ---- hair behind the head
+    if (world === 4) {                                   // braids
+      for (const side of [-1, 1]) {
+        for (let i = 0; i < 5; i++) circle(50 + side * 26, 62 + i * 9, 6.5 - i * 0.5, hair);
+        circle(50 + side * 26, 106, 3.5, '#EC5FA5');
+      }
+    }
+    if (world === 2) {                                   // big curls
+      [[24, 44], [20, 58], [24, 72], [76, 44], [80, 58], [76, 72], [32, 30], [68, 30], [50, 24], [38, 24], [62, 24]]
+        .forEach(([x, y]) => circle(x, y, 11, hair));
+    }
+    if (world === 6) {                                   // long red-carpet waves
+      ctx.fillStyle = hair;
+      ctx.beginPath();
+      ctx.moveTo(22, 46);
+      ctx.bezierCurveTo(14, 70, 26, 80, 18, 96);
+      ctx.bezierCurveTo(30, 100, 34, 88, 32, 78);
+      ctx.lineTo(68, 78);
+      ctx.bezierCurveTo(66, 88, 70, 100, 82, 96);
+      ctx.bezierCurveTo(74, 80, 86, 70, 78, 46);
+      ctx.closePath(); ctx.fill();
+    }
+
+    // ---- head
+    ctx.fillStyle = skinG;
+    ctx.beginPath(); ctx.ellipse(50, 56, 25, 28, 0, 0, Math.PI * 2); ctx.fill();
+
+    // ---- hair on top
+    ctx.fillStyle = hair;
+    if (world === 1) {                                   // top-knot bun
+      ctx.beginPath(); ctx.ellipse(50, 42, 26, 17, 0, Math.PI, 0); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(24, 44); ctx.quadraticCurveTo(36, 34, 50, 40); ctx.quadraticCurveTo(64, 34, 76, 44); ctx.lineTo(76, 40); ctx.lineTo(24, 40); ctx.fill();
+      circle(50, 18, 13, hair);
+      ctx.fillStyle = '#3AAFA9'; rr(ctx, 38, 27, 24, 6, 3); ctx.fill();          // scrunchie
+      ctx.fillStyle = '#8BE6DF'; rr(ctx, 42, 28, 6, 3, 1.5); ctx.fill();
+    } else if (world === 2) {
+      ctx.beginPath(); ctx.ellipse(50, 40, 27, 15, 0, Math.PI, 0); ctx.fill();
+      [[30, 36], [42, 31], [58, 31], [70, 36]].forEach(([x, y]) => circle(x, y, 8, hair));
+      // crew headset
+      ctx.strokeStyle = '#2A2A33'; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(50, 50, 30, Math.PI * 1.08, Math.PI * 1.92); ctx.stroke();
+      circle(22, 58, 6, '#2A2A33');
+      ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(23, 62); ctx.quadraticCurveTo(26, 74, 38, 74); ctx.stroke();
+      circle(39, 74, 2.6, '#EC5FA5');
+    } else if (world === 3) {                            // beehive updo
+      ctx.beginPath(); ctx.ellipse(50, 22, 22, 22, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(50, 42, 26, 14, 0, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = '#EC5FA5'; rr(ctx, 25, 37, 50, 6, 3); ctx.fill();          // headband
+      ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(50, 22, 14, Math.PI * 1.1, Math.PI * 1.7); ctx.stroke();
+    } else if (world === 4) {                            // braids + sun hat
+      ctx.beginPath(); ctx.ellipse(50, 42, 26, 14, 0, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = '#E8C77E';
+      ctx.beginPath(); ctx.ellipse(50, 34, 40, 9, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(50, 26, 20, 14, 0, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = '#3AAFA9'; ctx.fillRect(30, 28, 40, 5);
+      ctx.strokeStyle = 'rgba(122,82,8,.35)'; ctx.lineWidth = 1.2;
+      for (let x = 16; x <= 84; x += 8) { ctx.beginPath(); ctx.moveTo(x, 31); ctx.lineTo(x + 3, 38); ctx.stroke(); }
+    } else if (world === 5) {                            // sleek bob + neon streaks + heart shades
+      ctx.beginPath();
+      ctx.moveTo(22, 70); ctx.bezierCurveTo(16, 30, 84, 30, 78, 70);
+      ctx.lineTo(72, 70); ctx.bezierCurveTo(74, 46, 60, 40, 50, 40); ctx.bezierCurveTo(40, 40, 26, 46, 28, 70);
+      ctx.closePath(); ctx.fill();
+      ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+      ctx.strokeStyle = '#FF5FB0'; ctx.beginPath(); ctx.moveTo(32, 38); ctx.quadraticCurveTo(24, 52, 26, 66); ctx.stroke();
+      ctx.strokeStyle = '#3EF2E3'; ctx.beginPath(); ctx.moveTo(66, 36); ctx.quadraticCurveTo(76, 50, 74, 66); ctx.stroke();
+      const heart = (x, y, col) => {
+        ctx.fillStyle = col;
+        ctx.beginPath(); ctx.moveTo(x, y + 5);
+        ctx.bezierCurveTo(x - 9, y - 1, x - 5, y - 8, x, y - 3);
+        ctx.bezierCurveTo(x + 5, y - 8, x + 9, y - 1, x, y + 5); ctx.fill();
+      };
+      heart(40, 34, '#FF5FB0'); heart(60, 34, '#FF5FB0');
+      ctx.strokeStyle = '#FF5FB0'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(45, 32); ctx.lineTo(55, 32); ctx.stroke();
+    } else if (world === 6) {                            // glam side-part wave + emerald clip
+      ctx.beginPath();
+      ctx.moveTo(24, 50); ctx.bezierCurveTo(22, 26, 70, 22, 78, 44);
+      ctx.bezierCurveTo(66, 36, 54, 40, 46, 34); ctx.bezierCurveTo(40, 40, 30, 42, 24, 50);
+      ctx.fill();
+      ctx.fillStyle = '#F4B83A'; rr(ctx, 60, 33, 12, 5, 2.5); ctx.fill();
+      circle(66, 35.5, 3, '#2ECC71');
+      ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(34, 34); ctx.quadraticCurveTo(46, 28, 58, 32); ctx.stroke();
+    }
+
+    // ---- face
+    const eyeY = 58, ink = toneIdx >= 4 ? '#1A0D12' : '#3A2230';
+    const openEye = (x, big) => {
+      ctx.fillStyle = ink;
+      ctx.beginPath(); ctx.ellipse(x, eyeY, big ? 4.6 : 3.6, big ? 5.4 : 4.4, 0, 0, Math.PI * 2); ctx.fill();
+      circle(x + 1.3, eyeY - 1.6, big ? 1.8 : 1.3, '#FFFFFF');
+    };
+    const arcEye = x => {                                 // happy ^ eye
+      ctx.strokeStyle = ink; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(x, eyeY + 2, 4.4, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+    };
+    const lineEye = x => {
+      ctx.strokeStyle = ink; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x - 4, eyeY); ctx.lineTo(x + 4, eyeY); ctx.stroke();
+    };
+    if (mood === 'blink') { lineEye(41); lineEye(59); }
+    else if (mood === 'cheer' || mood === 'happy') { arcEye(41); arcEye(59); }
+    else if (mood === 'wink') { openEye(41); arcEye(59); }
+    else if (mood === 'wow') { openEye(41, true); openEye(59, true); }
+    else if (mood === 'think') {
+      ctx.fillStyle = ink;
+      ctx.beginPath(); ctx.ellipse(42, eyeY - 1.5, 3.4, 4.2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(60, eyeY - 1.5, 3.4, 4.2, 0, 0, Math.PI * 2); ctx.fill();
+      circle(43.5, eyeY - 4, 1.2, '#FFFFFF'); circle(61.5, eyeY - 4, 1.2, '#FFFFFF');
+    } else { openEye(41); openEye(59); }
+
+    // brows for oops / think
+    ctx.strokeStyle = ink; ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+    if (mood === 'oops') {                               // worried: inner ends up
+      ctx.beginPath(); ctx.moveTo(36, 51); ctx.lineTo(45, 48); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(64, 51); ctx.lineTo(55, 48); ctx.stroke();
+    } else if (mood === 'think') {
+      ctx.beginPath(); ctx.moveTo(36, 49); ctx.lineTo(45, 48); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(55, 47); ctx.lineTo(64, 50); ctx.stroke();
+    }
+
+    // blush
+    ctx.fillStyle = toneIdx >= 4 ? 'rgba(236,95,165,.45)' : 'rgba(236,95,165,.32)';
+    ctx.beginPath(); ctx.ellipse(34, 67, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(66, 67, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+
+    // mouth
+    ctx.strokeStyle = ink; ctx.fillStyle = '#C2416F'; ctx.lineWidth = 2.4;
+    if (mood === 'wow') {
+      ctx.beginPath(); ctx.ellipse(50, 72, 4, 5, 0, 0, Math.PI * 2); ctx.fillStyle = ink; ctx.fill();
+    } else if (mood === 'cheer') {
+      ctx.beginPath(); ctx.moveTo(42, 68); ctx.quadraticCurveTo(50, 82, 58, 68); ctx.closePath();
+      ctx.fillStyle = '#C2416F'; ctx.fill(); ctx.stroke();
+    } else if (mood === 'oops') {
+      ctx.beginPath(); ctx.moveTo(44, 74); ctx.quadraticCurveTo(50, 69, 56, 74); ctx.stroke();
+    } else if (mood === 'think') {
+      ctx.beginPath(); ctx.moveTo(45, 72); ctx.lineTo(55, 71); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.moveTo(43, 69); ctx.quadraticCurveTo(50, 76, 57, 69); ctx.stroke();
+    }
+  },
+
+  url(world, mood, px = 120, tone = this.tone()) {
+    const key = world + ':' + mood + ':' + px + ':' + tone;
+    if (!this._cache[key]) {
+      const c = document.createElement('canvas');
+      c.width = px; c.height = Math.round(px * 1.2);
+      const ctx = c.getContext('2d');
+      ctx.scale(px / 100, px / 100);
+      this.draw(ctx, world, mood, tone);
+      this._cache[key] = c.toDataURL();
+    }
+    return this._cache[key];
+  },
+
+  img(mood = 'happy', cls = '', world = World.current) {
+    return `<img class="pip ${cls}" src="${this.url(world, mood)}" alt="Pip">`;
+  },
+
+  /* ---- the Pip that stands next to the board ---- */
+  el: null,
+  _moodTimer: 0,
+  _blinkTimer: 0,
+  mood: 'happy',
+  mount() {
+    const frame = document.querySelector('.board-frame');
+    if (!frame || this.el) return;
+    this.el = document.createElement('img');
+    this.el.className = 'pip pip-board';
+    this.el.alt = 'Pip';
+    frame.appendChild(this.el);
+    this.set('happy');
+    const blink = () => {
+      this._blinkTimer = setTimeout(() => {
+        if (this.mood === 'happy') {
+          this.el.src = this.url(World.current, 'blink');
+          setTimeout(() => { if (this.mood === 'happy') this.el.src = this.url(World.current, 'happy'); }, 140);
+        }
+        blink();
+      }, 2600 + Math.random() * 2600);
+    };
+    blink();
+  },
+  set(mood, holdMs = 0) {
+    if (!this.el) return;
+    this.mood = mood;
+    this.el.src = this.url(World.current, mood);
+    clearTimeout(this._moodTimer);
+    if (holdMs) this._moodTimer = setTimeout(() => this.set('happy'), holdMs);
+  },
+  react(mood, holdMs = 2000, jump = true) {
+    this.set(mood, holdMs);
+    if (jump && this.el) {
+      this.el.classList.remove('pip-jump');
+      void this.el.offsetWidth;
+      this.el.classList.add('pip-jump');
+    }
+  },
+  refresh() { if (this.el) this.set(this.mood); },
+};
+
 /* ---------- 5. BOARD MODEL ----------
    grid[r][c]  → the tile in that cell (or null)
    cells[r][c] → what's under/around it: { gel, box, shake }
@@ -1435,7 +1724,7 @@ function makeTile(kind, r, c) {
 
 function blankSpec(rows, cols) {
   return Array.from({ length: rows }, () =>
-    Array.from({ length: cols }, () => ({ gel: 0, box: 0, lock: null })));
+    Array.from({ length: cols }, () => ({ gel: 0, box: 0, lock: null, drop: false })));
 }
 
 const Board = {
@@ -1448,6 +1737,8 @@ const Board = {
   inBounds(r, c) { return r >= 0 && r < this.rows && c >= 0 && c < this.cols; },
   kindAt(r, c) { const t = this.inBounds(r, c) && this.grid[r] && this.grid[r][c]; return t ? t.kind : -1; },
   movable(r, c) { const t = this.inBounds(r, c) && this.grid[r][c]; return !!t && !t.lock; },
+  dropsOnBoard() { let n = 0; this.forEachTile(t => { if (t.drop) n++; }); return n; },
+  makeDrop(r, c) { const t = makeTile(DROP, r, c); t.drop = true; return t; },
   randomKind() { return Math.floor(Math.random() * this.kinds); },
 
   // Build the board for a level: blockers from the layout, tiles everywhere else.
@@ -1455,6 +1746,7 @@ const Board = {
     this.kinds = kinds;
     spec = spec || blankSpec(this.rows, this.cols);
     this.cells = spec.map(row => row.map(s => ({ gel: s.gel, box: s.box, shake: 0 })));
+    const isDrop = (r, c) => spec[r] && spec[r][c] && spec[r][c].drop;
     this.grid = spec.map(row => row.map(() => null));
 
     // No starting matches, and at least one move.
@@ -1462,6 +1754,7 @@ const Board = {
       for (let r = 0; r < this.rows; r++) {
         for (let c = 0; c < this.cols; c++) {
           if (this.cells[r][c].box) { this.grid[r][c] = null; continue; }
+          if (isDrop(r, c)) { this.grid[r][c] = this.makeDrop(r, c); continue; }
           let k, guard = 0;
           do {
             k = this.randomKind();
@@ -1516,12 +1809,12 @@ const Board = {
       if (!this.inBounds(r2, c2)) return;
       if (!this.movable(r1, c1) || !this.movable(r2, c2)) return;
       const t1 = this.grid[r1][c1], t2 = this.grid[r2][c2];
-      if (t1.special === 'bomb' || t2.special === 'bomb' || (t1.special && t2.special)) {
+      if (!t1.drop && !t2.drop && (t1.special === 'bomb' || t2.special === 'bomb' || (t1.special && t2.special))) {
         moves.push({ a: { r: r1, c: c1 }, b: { r: r2, c: c2 } });   // special combos always work
         return;
       }
       const a = k[r1][c1], b = k[r2][c2];
-      if (a < 0 || b < 0 || a === b) return;
+      if ((a < 0 && b < 0) || a === b) return;          // a drop can swap if the other tile makes a match
       k[r1][c1] = b; k[r2][c2] = a;
       if (this.matchesAt(k, r1, c1) || this.matchesAt(k, r2, c2)) {
         moves.push({ a: { r: r1, c: c1 }, b: { r: r2, c: c2 } });
@@ -1617,13 +1910,13 @@ const LEVELS = [
     '........',
     '........',
     '........'] },
-  /* 6 */ { moves: 20, kinds: 5, goals: [], tip: 'Match frozen tiles to crack the ice.', layout: [
+  /* 6 */ { moves: 22, kinds: 4, goals: [], drops: 2, dropsMax: 1, tip: 'Coffee run! Clear the tiles under the coffee to bring it down.', layout: [
     '........',
     '........',
-    '.i....i.',
+    '...d....',
     '........',
     '........',
-    '.i....i.',
+    '........',
     '........',
     '........'] },
   /* 7 */ { moves: 22, kinds: 5, goals: [], tip: 'Make an L or T shape for a Glitter Blast!', layout: [
@@ -1645,7 +1938,15 @@ const LEVELS = [
     '........',
     '........',
     '........'] },
-  /* 10 */ { moves: 25, kinds: 5, goals: [['score', 22000]], breather: true },
+  /* 10 */ { moves: 28, kinds: 5, goals: [], drops: 3, dropsMax: 2, tip: 'Act 1 boss board — show the city what you’ve got!', layout: [
+    '........',
+    '........',
+    '.d....d.',
+    '..jjjj..',
+    '..jjjj..',
+    '........',
+    '........',
+    '........'] },
   /* 11 */ { moves: 21, kinds: 5, goals: [], tip: 'Pink gel takes two hits!', layout: [
     '........',
     '........',
@@ -1655,14 +1956,14 @@ const LEVELS = [
     '..JJJJ..',
     '........',
     '........'] },
-  /* 12 */ { moves: 22, kinds: 5, goals: [], layout: [
+  /* 12 */ { moves: 22, kinds: 5, goals: [], tip: 'Match frozen tiles to crack the ice.', layout: [
     '........',
-    '.I....I.',
+    '.i....i.',
     '........',
     '...ii...',
     '...ii...',
     '........',
-    '.I....I.',
+    '.i....i.',
     '........'] },
   /* 13 */ { moves: 26, kinds: 6, goals: [['collect', 'dryer', 22]], tip: 'All six styles are in the salon now!' },
   /* 14 */ { moves: 22, kinds: 5, goals: [], tip: "Chained tiles can't move. Match them to break free!", layout: [
@@ -2352,7 +2653,7 @@ function buildLevel(n) {
   const raw = n <= LEVELS.length ? LEVELS[n - 1] : generateLevel(n);
   const layout = raw.layout || [];
   const spec = blankSpec(CONFIG.rows, CONFIG.cols);
-  const counts = { gel: 0, ice: 0, chain: 0, box: 0 };
+  const counts = { gel: 0, ice: 0, chain: 0, box: 0, drop: 0 };
 
   for (let r = 0; r < CONFIG.rows; r++) {
     for (let c = 0; c < CONFIG.cols; c++) {
@@ -2367,6 +2668,7 @@ function buildLevel(n) {
         case 'b': s.box = 1; counts.box++; break;
         case 'B': s.box = 2; counts.box++; break;
         case 'X': s.box = 3; counts.box++; break;
+        case 'd': s.drop = true; counts.drop++; break;
       }
     }
   }
@@ -2379,6 +2681,9 @@ function buildLevel(n) {
   ['gel', 'ice', 'chain', 'box'].forEach(t => {
     if (counts[t] && !goals.some(g => g.type === t)) goals.push({ type: t, need: counts[t], have: 0 });
   });
+  // ingredient drops: `drops` = total to deliver (some start on the board as 'd', the rest fall in)
+  const dropTotal = Math.max(raw.drops || 0, counts.drop);
+  if (dropTotal) goals.unshift({ type: 'drop', need: dropTotal, have: 0 });
 
   const round100 = v => Math.round(v / 100) * 100;
   const perMove = CONFIG.scorePerMove[raw.kinds || 6] || 600;
@@ -2387,7 +2692,8 @@ function buildLevel(n) {
     ? [scoreGoal.need, round100(scoreGoal.need * 1.3), round100(scoreGoal.need * 1.6)]
     : [0, round100(raw.moves * perMove * CONFIG.star2Factor), round100(raw.moves * perMove * CONFIG.star3Factor)];
 
-  return { n, moves: raw.moves, kinds: raw.kinds || 6, goals, spec, stars, tip: raw.tip || '' };
+  return { n, moves: raw.moves, kinds: raw.kinds || 6, goals, spec, stars, tip: raw.tip || '',
+           drops: { total: dropTotal, initial: counts.drop, max: raw.dropsMax || 2 } };
 }
 
 /* ---------- 7. BLOCKER ART ---------- */
@@ -2552,6 +2858,7 @@ const Render = {
     this.ice = [null, buildIceSprite(px, 1), buildIceSprite(px, 2)];
     this.chain = [null, buildChainSprite(px, 1), buildChainSprite(px, 2)];
     this.box = [null, buildBoxSprite(px, 1), buildBoxSprite(px, 2), buildBoxSprite(px, 3)];
+    this.dropSprite = buildDropSprite(px, World.current);
     this.draw(performance.now());
   },
 
@@ -2691,6 +2998,12 @@ const Render = {
       if (t === hB) { x -= hdc * nudge * s; y -= hdr * nudge * s; }
       if (y > H || y + size < 0) return;
       ctx.globalAlpha = t.alpha;
+      if (t.drop) {
+        const bob = Math.sin(now / 300 + t.c) * s * 0.03;
+        ctx.drawImage(this.dropSprite, x, y + bob, size, size);
+        ctx.globalAlpha = 1;
+        return;
+      }
       if (t.special === 'bomb') {
         ctx.drawImage(this.bombSprite, x, y, size, size);
       } else {
@@ -2768,6 +3081,14 @@ const Render = {
       ctx.restore();
     }
 
+    if (Game.level && Game.level.drops && Game.level.drops.total) {
+      const a = 0.45 + 0.35 * Math.sin(now / 250);
+      ctx.fillStyle = `rgba(244,184,58,${a.toFixed(2)})`;
+      for (let c = 0; c < Board.cols; c++) {
+        const cx = (c + 0.5) * s, y = H - s * 0.13;
+        ctx.beginPath(); ctx.moveTo(cx - s * 0.12, y - s * 0.06); ctx.lineTo(cx + s * 0.12, y - s * 0.06); ctx.lineTo(cx, y + s * 0.07); ctx.closePath(); ctx.fill();
+      }
+    }
     Particles.draw(ctx, s);
     this.drawFX(s, W, H);
   },
@@ -2811,7 +3132,9 @@ const Input = {
     if (!cell) return;
     Game.armIdle();
     if (Game.mode === 'hammer') {
-      if (Board.grid[cell.r][cell.c] || Board.cells[cell.r][cell.c].box) Game.hammerAt(cell);
+      const ht = Board.grid[cell.r][cell.c];
+      if (ht && ht.drop) { UI.toast("Can't smash the coffee — bring it down!"); return; }
+      if (ht || Board.cells[cell.r][cell.c].box) Game.hammerAt(cell);
       return;
     }
     if (!Board.movable(cell.r, cell.c)) { Game.nudgeBlocked(cell); return; }
@@ -2897,6 +3220,7 @@ const Game = {
     UI.setScore(0);
 
     World.apply(worldOf(n));
+    this.dropsToSpawn = lv.drops.total - lv.drops.initial;
     Board.setup(lv.spec, lv.kinds);
     UI.showLevelHud(lv);
     UI.setMoves(this.movesLeft);
@@ -2917,6 +3241,7 @@ const Game = {
     UI.updateBoosters();
     if (lv.tip) UI.toast(lv.tip, true);
     if (!Save.data.help.howTo) setTimeout(() => UI.showHowTo(0, true), 400);
+    else if (!Save.data.help.pip) setTimeout(() => UI.showMeetPip(), 500);
     this.armIdle();
   },
 
@@ -2943,7 +3268,7 @@ const Game = {
     if (!moves.length) return;
     const m = moves[Math.floor(Math.random() * moves.length)];
     this.hint = { a: m.a, b: m.b, start: performance.now() };
-    if (!silent) UI.toast(Lines.hint());
+    if (!silent) UI.toast(Lines.hint(), false, 'wink'); else Pip.react('wink', 1500, false);
     Sound.play('twinkle');
     Loop.wake();
   },
@@ -2976,7 +3301,7 @@ const Game = {
     Board.swap(a, b);
     await this.slide([ta, tb], CONFIG.swapMs);
 
-    const combo = ta.special === 'bomb' || tb.special === 'bomb' || !!(ta.special && tb.special);
+    const combo = !ta.drop && !tb.drop && (ta.special === 'bomb' || tb.special === 'bomb' || !!(ta.special && tb.special));
     const k = Board.kindsMatrix();
     const makesMatch = combo || Board.matchesAt(k, ta.r, ta.c) || Board.matchesAt(k, tb.r, tb.c);
 
@@ -2985,11 +3310,11 @@ const Game = {
       this.badStreak++;
       if (this.badStreak >= CONFIG.stuckAfter) {
         this.badStreak = 0;
-        UI.toast(Lines.stuck());
+        UI.toast(Lines.stuck(), false, 'think');
         clearTimeout(this._hintTimer);
         this._hintTimer = setTimeout(() => this.showHint(), 1700);
       } else {
-        UI.toast(Lines.oops());
+        UI.toast(Lines.oops(), false, 'oops');
       }
       Sound.play('nope');
       await this.slide([ta, tb], CONFIG.swapMs + 40, Ease.outBack);
@@ -3058,8 +3383,32 @@ const Game = {
         }));
       }
       await this.collapse();
+      while (await this.deliverDrops()) await this.collapse();
     }
     if (Board.findMoves().length === 0) await this.shuffle();
+  },
+
+  // Drops that reach the bottom row get delivered.
+  async deliverDrops() {
+    const r = Board.rows - 1, done = [];
+    for (let c = 0; c < Board.cols; c++) {
+      const t = Board.grid[r][c];
+      if (t && t.drop) done.push(t);
+    }
+    if (!done.length) return false;
+    Sound.play('gift');
+    await Promise.all(done.map(t => {
+      Particles.burst(t.c + 0.5, t.r + 0.5, ['#F4B83A', '#FFFFFF', '#3AAFA9'], 14, { star: true, speed: 4 });
+      FX.play({ type: 'text', r: t.r + 0.2, c: t.c + 0.5, text: '+1,000', big: true }, 900);
+      return Tweens.to(t, { y: t.r + 0.7, scale: 0.4, alpha: 0 }, 380, { ease: Ease.inCubic });
+    }));
+    done.forEach(t => {
+      Board.grid[t.r][t.c] = null;
+      this.progress('drop');
+    });
+    this.addScore(done.length * 1000);
+    UI.updateGoals();
+    return true;
   },
 
   // Turn match runs into: cells to clear + special tiles to create.
@@ -3132,6 +3481,7 @@ const Game = {
     const add = (r, c, depth) => {
       if (!Board.inBounds(r, c)) return;
       if (!Board.grid[r][c] && !Board.cells[r][c].box) return;
+      if (Board.grid[r][c] && Board.grid[r][c].drop) return;   // drops can't be blasted
       const k = key(r, c);
       if (set.has(k)) return;
       const p = { r, c, depth };
@@ -3255,6 +3605,7 @@ const Game = {
     }
     if (cascade >= 3) {
       FX.play({ type: 'callout', text: COMBO_WORDS[Math.min(6, cascade)] }, 1100);
+      Pip.react('wow', 1600);
       Shake.add(0.2 + 0.1 * Math.min(4, cascade - 3));
       Sound.play('special', 0.05);
     }
@@ -3270,6 +3621,7 @@ const Game = {
     const set = new Map(), fx = [];
     const add = (r, c, depth = 0) => {
       if (!Board.inBounds(r, c) || (!Board.grid[r][c] && !Board.cells[r][c].box)) return;
+      if (Board.grid[r][c] && Board.grid[r][c].drop) return;
       const k = r * Board.cols + c;
       if (!set.has(k)) set.set(k, { r, c, depth });
     };
@@ -3363,7 +3715,13 @@ const Game = {
 
       for (let i = movers.length, rank = 0; i < open.length; i++, rank++) {
         const r = open[i];
-        const t = makeTile(Board.randomKind(), r, c);
+        // Sometimes the top new tile in a column is an ingredient drop.
+        const top = i === open.length - 1;
+        const onBoard = Board.dropsOnBoard();
+        const wantDrop = top && this.dropsToSpawn > 0 && onBoard < ((this.level && this.level.drops.max) || 2) &&
+                         (onBoard === 0 || Math.random() < 0.18);
+        const t = wantDrop ? Board.makeDrop(r, c) : makeTile(Board.randomKind(), r, c);
+        if (wantDrop) this.dropsToSpawn--;
         t.y = -0.6 - rank;                     // stacked just above the board
         Board.grid[r][c] = t;
         jobs.push(Tweens.to(t, { y: r }, fallMs(r - t.y), { ease: Ease.fall, delay: c * 10 + 40 }));
@@ -3374,10 +3732,10 @@ const Game = {
 
   // No moves left: reshuffle the movable tiles into a playable board.
   async shuffle(msg = 'No moves — shuffling!') {
-    UI.toast(msg);
+    UI.toast(msg, false, 'wow');
     Sound.play('twister');
     const spots = [], tiles = [];
-    Board.forEachTile((t, r, c) => { if (!t.lock) { spots.push({ r, c }); tiles.push(t); } });
+    Board.forEachTile((t, r, c) => { if (!t.lock && !t.drop) { spots.push({ r, c }); tiles.push(t); } });
 
     for (let attempt = 0; attempt < 1000; attempt++) {
       for (let i = tiles.length - 1; i > 0; i--) {
@@ -3430,7 +3788,7 @@ const Game = {
       this.movesLeft += 5;
       UI.setMoves(this.movesLeft);
       Sound.play('gift');
-      UI.toast('+5 moves!');
+      UI.toast('+5 moves!', false, 'cheer');
     } else if (type === 'shuffle') {
       this.locked = true;
       this.clearHint();
@@ -3473,7 +3831,7 @@ const Game = {
     UI.setMoves(5);
     UI.updateBoosters();
     Sound.play('gift');
-    UI.toast('+5 moves — you got this!');
+    UI.toast('+5 moves — you got this!', false, 'cheer');
     this.armIdle();
   },
 
@@ -3497,7 +3855,7 @@ const Game = {
     const left = this.movesLeft;
     this.stats = { movesLeft: left, scoreBeforeFinale: this.score };   // for tuning
     if (left > 0) {
-      UI.toast('Finishing touches! ✨');
+      UI.toast('Finishing touches! ✨', false, 'cheer');
       Sound.play('twinkle');
       await wait(600);
       const pool = [];
@@ -3631,6 +3989,16 @@ const UI = {
       const node = e.target.closest('.node');
       if (node && !node.classList.contains('locked')) this.showIntro(+node.dataset.n);
     });
+    $('panel').addEventListener('click', e => {
+      const sw = e.target.closest('[data-tone]');
+      if (!sw) return;
+      e.stopPropagation();
+      Pip.setTone(+sw.dataset.tone);
+      document.querySelectorAll('.tone').forEach(b => b.classList.toggle('on', b === sw));
+      const row = $('pipRow'); if (row) row.innerHTML = this.pipRow();
+      document.querySelectorAll('.pip-card').forEach(img => { img.src = Pip.url(World.current, 'cheer'); });
+      Sound.play('tap');
+    });
     $('modal').addEventListener('click', e => {
       const b = e.target.closest('[data-act]');
       if (!b) return;
@@ -3686,6 +4054,7 @@ const UI = {
       ice: layered(buildIceSprite(px, 2)),
       chain: layered(buildChainSprite(px, 1)),
       box: buildBoxSprite(px, 1).toDataURL(),
+      drop: buildDropSprite(px).toDataURL(),
     };
   },
 
@@ -3744,7 +4113,8 @@ const UI = {
     this._scoreAnim = requestAnimationFrame(step);
   },
 
-  toast(text, long = false) {
+  toast(text, long = false, mood = 'happy') {
+    Pip.react(mood, long ? 3500 : 2000, mood !== 'happy');
     const el = $('toast');
     el.textContent = text;
     el.classList.remove('show', 'long');
@@ -3819,9 +4189,13 @@ const UI = {
       pts.push([x, y]);
       const stars = p.stars[n] || 0;
       const state = n > p.unlocked ? 'locked' : n === p.unlocked ? 'current' : 'done';
-      nodes += `<button class="node ${state}${n % 10 === 0 ? ' milestone' : ''} w${worldOf(n)}" data-n="${n}" ` +
+      if (state === 'current') {
+        nodes += `<img class="pip pip-map" src="${Pip.url(worldOf(n), 'cheer')}" alt="Pip" ` +
+                 `style="left:${(x + (x > W / 2 ? -88 : 42)).toFixed(1)}px;top:${(y - 30).toFixed(1)}px">`;
+      }
+      nodes += `<button class="node ${state}${n % 10 === 0 ? ' milestone boss' : ''} w${worldOf(n)}" data-n="${n}" ` +
                `style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px" aria-label="Level ${n}">` +
-               `<span class="node-num">${n}</span>` +
+               `<span class="node-num">${n}</span>` + (isBoss(n) ? '<span class="node-crown">👑</span>' : '') +
                (state === 'done' ? `<span class="node-stars">${'★'.repeat(stars)}<i>${'★'.repeat(3 - stars)}</i></span>` : '') +
                `</button>`;
     }
@@ -4048,6 +4422,8 @@ const UI = {
                              how: 'Include the frozen tiles in a match. Thick ice takes two.' };
       case 'chain': return { icon: this.icons.chain, title: `Break the chains (${left})`,
                              how: "Chained tiles can't move. Match them where they sit to set them free." };
+      case 'drop':  return { icon: this.icons.drop,  title: `Coffee run: deliver ${left}`,
+                             how: 'Clear the tiles under each coffee so it drops to the bottom row (follow the gold arrows).' };
       case 'box':   return { icon: this.icons.box,   title: `Open the boxes (${left})`,
                              how: 'Make matches right next to a box. Darker boxes take more hits.' };
       case 'score': return { icon: null, title: `Reach ${g.need.toLocaleString()} points`,
@@ -4067,13 +4443,49 @@ const UI = {
     }).join('');
   },
 
+  toneRow() {
+    const cur = Pip.tone();
+    return `<div class="tone-label">Choose Pip's skin tone</div><div class="tone-row">` +
+      Pip.TONES.map(([a, b], i) => `<button type="button" class="tone${i === cur ? ' on' : ''}" data-tone="${i}" ` +
+        `style="background:linear-gradient(160deg, ${a}, ${b})" aria-label="Skin tone ${i + 1}"></button>`).join('') + `</div>`;
+  },
+  pipRow() {
+    return [1, 2, 3, 4, 5, 6].map(w => `<img src="${Pip.url(w, 'happy', 80)}" alt="">`).join('');
+  },
+
+  // Tap Pip on the title screen to restyle.
+  showPipStyle() {
+    this.showModal(`
+      <img class="pip pip-card pip-big" id="pipPreview" src="${Pip.url(World.current, 'cheer')}" alt="Pip">
+      <div class="panel-kicker">Pip's look</div>
+      <div class="panel-title">Style Pip</div>
+      ${this.toneRow()}
+      <div class="pip-row" id="pipRow">${this.pipRow()}</div>
+      <div class="panel-btns"><button class="btn btn-big" data-act="close">Done</button></div>`);
+  },
+
+  showMeetPip() {
+    this.showModal(`
+      <img class="pip pip-card pip-big" src="${Pip.url(World.current, 'cheer')}" alt="Pip">
+      <div class="panel-kicker">Your new sidekick</div>
+      <div class="panel-title">Meet Pip!</div>
+      <div class="ht-text">Hi ${esc(CONFIG.playerName)}! I'm Pip, your styling sidekick. I'll cheer you on, tease you a little, and get a brand-new look in every world.</div>
+      ${this.toneRow()}
+      <div class="pip-row" id="pipRow">${this.pipRow()}</div>
+      <div class="panel-note">Pick my skin tone — you can change it anytime by tapping me on the title screen.</div>
+      <div class="panel-btns"><button class="btn btn-big btn-gold" data-act="ok">Let's style!</button></div>`,
+      { ok: () => { Save.data.help.pip = true; Save.write(); Pip.react('cheer', 1800); } });
+  },
+
   showWorldIntro(w, then) {
     const icons = this.tileIcons(w);
     const tiles = WORLDS[w].tiles.map((t, i) =>
       `<div class="wi-tile"><img src="${icons[i]}" alt=""><span>${t.name}</span></div>`).join('');
     this.showModal(`
+      <img class="pip pip-card" src="${Pip.url(w, 'cheer')}" alt="Pip">
       <div class="panel-kicker">World ${w}</div>
       <div class="panel-title">${WORLDS[w].name}</div>
+      <div class="pip-says">Pip got a new look for ${WORLDS[w].name}!</div>
       <div class="ht-text">${esc(WORLDS[w].blurb.replace(/\{name\}/g, CONFIG.playerName))}</div>
       <div class="wi-grid">${tiles}</div>
       <div class="panel-note">Same rules as before, just a little tougher.</div>
@@ -4091,6 +4503,8 @@ const UI = {
     const take = (Save.data.progress.fails[n] || 0) + 1;
     const kicker = w === 2 ? `Scene · Take ${take}` : w === 3 ? 'Category' : 'Level';
     this.showModal(`
+      <div class="panel-act">World ${w} · Act ${actOf(n)} — ${ACT_NAMES[actOf(n) - 1]}</div>
+      ${isBoss(n) ? '<div class="boss-tag">👑 Boss board</div>' : ''}
       <div class="panel-kicker">${kicker}</div>
       <div class="panel-title">${n}</div>
       <div class="panel-label">Your goals</div>
@@ -4194,6 +4608,8 @@ const UI = {
         <div class="cr-title">${esc(CONFIG.playerName)}'s<br>${esc(CONFIG.gameName)}</div>
         <div class="cr-role">Starring</div><div class="cr-name">${esc(CONFIG.fullName)}</div>
         <div class="cr-role">Hair Department Head</div><div class="cr-name">${esc(CONFIG.fullName)}</div>
+        <div class="cr-role">Co-starring</div><div class="cr-name">Pip</div>
+        <div class="cr-pips">${[1, 2, 3, 4, 5, 6].map(w => `<img src="${Pip.url(w, 'cheer', 80)}" alt="">`).join('')}</div>
         <div class="cr-role">Selected credits</div>${credits}
         <div class="cr-role">The journey</div>
         <div class="cr-item">Breaking In · On Set · Awards Night</div>
@@ -4243,7 +4659,9 @@ const UI = {
     const w = worldOf(n);
     const msg = Lines.win(w);
     const [kick, head] = w === 2 ? [`Scene ${n}`, "That's a wrap!"] : w === 3 ? [`Category ${n}`, 'Winner!'] : [`Level ${n}`, 'Complete!'];
+    Pip.react('cheer', 3000);
     this.showModal(`
+      <img class="pip pip-card pip-win" src="${Pip.url(w, 'cheer')}" alt="Pip">
       <div class="panel-kicker">${kick}</div>
       <div class="panel-title">${head}</div>
       <div class="big-stars">${[1, 2, 3].map(i =>
@@ -4500,6 +4918,14 @@ function boot() {
   Input.init();
   UI.init();
   Background.init();
+  Pip.mount();
+  const titlePip = document.createElement('img');
+  titlePip.id = 'titlePip';
+  titlePip.className = 'pip pip-title';
+  titlePip.alt = 'Pip';
+  titlePip.src = Pip.url(World.current, 'happy');
+  $('screenTitle').appendChild(titlePip);
+  titlePip.addEventListener('click', () => { Sound.play('button'); UI.showPipStyle(); });
 
   // One-time: carry over levels she beat on the old link (only via ?beat=N).
   const p = Save.data.progress, h = Save.data.help;
@@ -4538,5 +4964,5 @@ if (document.fonts && document.fonts.ready) {
 }
 
 // Handy for testing in the console.
-window.__game = { Board, Game, Save, Render, Loop, FX, UI, Tweens, BOMB, makeTile, buildLevel, LEVELS,
+window.__game = { Board, Game, Save, Render, Loop, FX, UI, Tweens, BOMB, makeTile, buildLevel, LEVELS, Pip, World,
                   Sound, Music, Particles, Shake, Confetti, Daily };
