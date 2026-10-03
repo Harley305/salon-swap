@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- CodePen: paste the next line into Settings → HTML → "Stuff for <head>" -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#17252A">
+  <title>Myesha's Salon Swap</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- ===== CodePen HTML panel: copy from here ===== -->
+<div class="bg" id="bg" aria-hidden="true"></div>
+<div id="app">
+
+  <!-- TITLE -->
+  <section class="screen screen-title" id="screenTitle">
+    <button class="icon-btn sound-btn" id="btnSoundTitle" type="button" aria-label="Sound on">🔊</button>
+    <div class="hero">
+      <div class="hero-name" id="heroName">Myesha's</div>
+      <div class="hero-game" id="heroGame">Salon Swap</div>
+      <div class="hero-tiles" id="heroTiles"></div>
+    </div>
+    <button class="btn btn-big" id="btnPlay" type="button">Play</button>
+  </section>
+
+  <!-- LEVEL MAP -->
+  <section class="screen screen-map" id="screenMap" hidden>
+    <header class="map-head">
+      <button class="icon-btn" id="btnMapBack" type="button" aria-label="Back to title">‹</button>
+      <div class="map-title">Level Map</div>
+      <div class="map-stars" id="mapStars">★ 0</div>
+    </header>
+    <div class="map-scroll scrollable" id="mapScroll">
+      <div class="map-path" id="mapPath"></div>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section class="screen screen-game" id="screenGame" hidden>
+    <header class="hud">
+      <button class="icon-btn" id="btnMap" type="button" aria-label="Level map">☰</button>
+      <div class="level-info">
+        <div class="level-label" id="levelLabel">Level 1</div>
+        <div class="star-bar" id="starBar">
+          <div class="star-fill" id="starFill"></div>
+          <span class="star-mark">★</span><span class="star-mark">★</span><span class="star-mark">★</span>
+        </div>
+      </div>
+      <div class="stat" id="movesStat">
+        <span class="stat-label">Moves</span>
+        <span class="stat-value" id="moves">--</span>
+      </div>
+    </header>
+
+    <div class="goals-row">
+      <div class="goals" id="goals"></div>
+      <div class="stat stat-score">
+        <span class="stat-label">Score</span>
+        <span class="stat-value" id="score">0</span>
+      </div>
+    </div>
+
+    <main class="board-area" id="boardArea">
+      <div class="board-frame">
+        <div class="toast" id="toast" aria-live="polite"></div>
+        <canvas id="board" aria-label="Game board"></canvas>
+      </div>
+    </main>
+
+    <footer class="toolbar">
+      <div class="boosters">
+        <button class="booster" type="button" data-booster="hammer" aria-label="Hammer: smash one tile"><span class="b-icon">🔨</span><span class="b-count">0</span></button>
+        <button class="booster" type="button" data-booster="shuffle" aria-label="Twister: shuffle the board"><span class="b-icon">🌪️</span><span class="b-count">0</span></button>
+        <button class="booster" type="button" data-booster="moves" aria-label="Five extra moves"><span class="b-icon b-text">+5</span><span class="b-count">0</span></button>
+        <button class="booster booster-sound" type="button" id="btnSound" aria-label="Sound on">🔊</button>
+      </div>
+      <div class="debug" id="debug"></div>
+    </footer>
+  </section>
+
+  <!-- POP-UP PANEL (level intro, win, lose) -->
+  <div class="modal" id="modal" hidden>
+    <div class="panel" id="panel" role="dialog" aria-modal="true"></div>
+  </div>
+
+  <!-- win confetti -->
+  <canvas id="confetti" aria-hidden="true"></canvas>
+
+</div>
+<!-- ===== to here ===== -->
+<script src="script.js"></script>
+</body>
+</html>
