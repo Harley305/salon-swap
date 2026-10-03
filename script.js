@@ -5224,9 +5224,11 @@ const UI = {
       ${msg ? `<div class="panel-msg">${esc(msg)}</div>` : ''}
       <div class="panel-btns">
         <button class="btn btn-big" data-act="next">Next level</button>
+        ${stars < 3 ? `<button class="btn" data-act="again">↻ Play again for ★★★</button>` : ''}
         <button class="btn btn-ghost" data-act="map">Level map</button>
       </div>`,
       { next: () => (worldOf(n + 1) > (Save.data.help.world || 1) ? this.showIntro(n + 1) : Game.startLevel(n + 1)),
+        again: () => Game.startLevel(n),
         map: () => this.openMap() });
     Confetti.burst(160);
     Sound.play('heelClicks');
