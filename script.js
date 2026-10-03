@@ -3229,7 +3229,7 @@ const Background = {
 
   // Two layers of spires: a faint far row and a glowing near row.
   skyline(rnd) {
-    const W = 400, H = 150;
+    const W = 1200, H = 150;   // wide, so big screens show more city instead of zooming in
     const towers = (count, minH, maxH, fill, windows) => {
       let out = '';
       let x = -6;
@@ -3279,8 +3279,8 @@ const Background = {
           <feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
       </defs>
-      <g>${towers(30, 45, 100, 'url(#cityFar)', false)}</g>
-      <g filter="url(#cityGlow)">${towers(28, 22, 72, 'url(#cityNear)', true)}</g>
+      <g>${towers(95, 45, 100, 'url(#cityFar)', false)}</g>
+      <g filter="url(#cityGlow)">${towers(90, 22, 72, 'url(#cityNear)', true)}</g>
     </svg>`;
   },
 };
