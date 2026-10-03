@@ -97,6 +97,23 @@ const CONFIG = {
     'Tell me you love me.',
     'Ready for another level?',
   ],
+
+  // Extra win lines per world (mixed in with yours above).
+  worldWinMessages: {
+    2: ["That's a wrap on that one!", 'Check the gate — we got it!', 'Perfect take!', 'Moving on — next setup!'],
+    3: ['And the award goes to… {name}!', "{name}, you've earned this one.", 'Standing ovation!', 'Speech! Speech!'],
+  },
+
+  // ===== Level 90 finale: end credits =====
+  fullName: 'Myesha Starks',
+  awardTitle: 'Best Hair Department',
+  credits: [                     // her real credits — add more anytime
+    'Sweetwater (2023)',
+    'Love, Victor',
+  ],
+  // Chris: replace this with your own message to her.
+  finaleMessage: "From the first chair to the red carpet — I've watched you earn every bit of it. I'm so proud of you.",
+  finaleSignature: '— Chris',
 };
 
 
@@ -388,24 +405,188 @@ function drawMirror(ctx, t) {
   }
 }
 
+function drawWig(ctx, t) {
+  // stand
+  ctx.fillStyle = WHITE;
+  rr(ctx, 45, 70, 10, 12, 2); ctx.fill();
+  rr(ctx, 32, 80, 36, 6, 3); ctx.fill();
+  // big styled hair (bouffant + side curls)
+  ctx.beginPath();
+  ctx.arc(50, 34, 26, Math.PI, 0);
+  ctx.bezierCurveTo(80, 50, 74, 66, 66, 68);
+  ctx.lineTo(34, 68);
+  ctx.bezierCurveTo(26, 66, 20, 50, 24, 34);
+  ctx.closePath();
+  ctx.fill();
+  // face
+  ctx.fillStyle = t.dark;
+  ctx.beginPath(); ctx.ellipse(50, 50, 13, 17, 0, 0, Math.PI * 2); ctx.fill();
+  // hair swoop + curls
+  ctx.strokeStyle = t.dark; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(32, 30); ctx.quadraticCurveTo(50, 14, 68, 30); ctx.stroke();
+  ctx.beginPath(); ctx.arc(29, 56, 4, 0, Math.PI * 1.5); ctx.stroke();
+  ctx.beginPath(); ctx.arc(71, 56, 4, Math.PI * 1.5, Math.PI, true); ctx.stroke();
+}
+
 const STAGE_TILES = [
   { id: 'reel',     name: 'Film Reel',  plural: 'Film Reels',  base: '#3AAFA9', light: '#8BE6DF', dark: '#1D7470', draw: drawReel },
   { id: 'clap',     name: 'Clapboard',  plural: 'Clapboards',  base: '#FF7E5F', light: '#FFB49E', dark: '#C14A2E', draw: drawClap },
   { id: 'lipstick', name: 'Lipstick',   plural: 'Lipsticks',   base: '#EC5FA5', light: '#FFA3CF', dark: '#A8306C', draw: drawLipstick },
-  { id: 'star',     name: 'Star',       plural: 'Stars',       base: '#F4B83A', light: '#FFDF8A', dark: '#A8730B', draw: drawStarAward },
+  { id: 'wig',      name: 'Wig Head',   plural: 'Wig Heads',   base: '#F4B83A', light: '#FFDF8A', dark: '#A8730B', draw: drawWig },
   { id: 'brush',    name: 'Brush',      plural: 'Brushes',     base: '#8C7BEF', light: '#C4B9FF', dark: '#5240B8', draw: drawBrush },
   { id: 'mirror',   name: 'Mirror',     plural: 'Mirrors',     base: '#7CC243', light: '#E9FFD2', dark: '#4A8420', draw: drawMirror },
 ];
 
+/* ----- World 3: Awards Night tiles ----- */
+function drawPressCam(ctx, t) {
+  ctx.fillStyle = WHITE;
+  rr(ctx, 40, 18, 22, 12, 3); ctx.fill();          // flash head
+  rr(ctx, 47, 28, 8, 8, 1); ctx.fill();
+  rr(ctx, 16, 36, 68, 44, 9); ctx.fill();           // body
+  rr(ctx, 22, 31, 16, 8, 2); ctx.fill();
+  ctx.fillStyle = t.dark;
+  ctx.beginPath(); ctx.arc(50, 58, 15, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = WHITE;
+  ctx.beginPath(); ctx.arc(50, 58, 8, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = t.dark;
+  ctx.beginPath(); ctx.arc(50, 58, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = t.light;
+  ctx.fillRect(43, 21, 16, 6);
+  sparkle(ctx, 72, 16, 9, WHITE);
+}
+
+function drawEnvelope(ctx, t) {
+  ctx.fillStyle = WHITE;
+  rr(ctx, 14, 28, 72, 48, 6); ctx.fill();
+  ctx.strokeStyle = t.dark; ctx.lineWidth = 3; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(17, 31); ctx.lineTo(50, 56); ctx.lineTo(83, 31); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(17, 73); ctx.lineTo(40, 52); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(83, 73); ctx.lineTo(60, 52); ctx.stroke();
+  // wax seal with a star
+  ctx.fillStyle = t.dark;
+  ctx.beginPath(); ctx.arc(50, 56, 10, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = WHITE;
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 2.4 : 6;
+    ctx.lineTo(50 + Math.cos(a) * r, 56 + Math.sin(a) * r);
+  }
+  ctx.closePath(); ctx.fill();
+}
+
+function drawBouquet(ctx, t) {
+  // wrap
+  ctx.fillStyle = WHITE;
+  ctx.beginPath(); ctx.moveTo(30, 48); ctx.lineTo(70, 48); ctx.lineTo(54, 90); ctx.lineTo(46, 90); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = t.dark;
+  ctx.beginPath(); ctx.moveTo(44, 70); ctx.lineTo(56, 70); ctx.lineTo(53, 76); ctx.lineTo(47, 76); ctx.closePath(); ctx.fill();
+  // three blooms
+  const bloom = (cx, cy, r) => {
+    ctx.fillStyle = WHITE;
+    for (let i = 0; i < 6; i++) {
+      const a = i * Math.PI / 3;
+      ctx.beginPath(); ctx.arc(cx + Math.cos(a) * r * 0.62, cy + Math.sin(a) * r * 0.62, r * 0.5, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = t.dark;
+    ctx.beginPath(); ctx.arc(cx, cy, r * 0.38, 0, Math.PI * 2); ctx.fill();
+  };
+  bloom(34, 36, 13); bloom(66, 36, 13); bloom(50, 24, 14);
+}
+
+function drawTrophy(ctx, t) {
+  ctx.fillStyle = WHITE;
+  // cup
+  ctx.beginPath();
+  ctx.moveTo(28, 16); ctx.lineTo(72, 16); ctx.lineTo(70, 34);
+  ctx.bezierCurveTo(68, 50, 58, 56, 50, 56);
+  ctx.bezierCurveTo(42, 56, 32, 50, 30, 34);
+  ctx.closePath(); ctx.fill();
+  // handles
+  ctx.strokeStyle = WHITE; ctx.lineWidth = 6; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(26, 30, 9, Math.PI * 0.5, Math.PI * 1.5); ctx.stroke();
+  ctx.beginPath(); ctx.arc(74, 30, 9, Math.PI * 1.5, Math.PI * 0.5); ctx.stroke();
+  // stem + base
+  rr(ctx, 45, 54, 10, 14, 2); ctx.fill();
+  rr(ctx, 34, 66, 32, 8, 3); ctx.fill();
+  rr(ctx, 28, 74, 44, 10, 3); ctx.fill();
+  // engraved star + plate
+  ctx.fillStyle = t.dark;
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 4 : 9.5;
+    ctx.lineTo(50 + Math.cos(a) * r, 33 + Math.sin(a) * r);
+  }
+  ctx.closePath(); ctx.fill();
+  rr(ctx, 38, 77, 24, 4, 2); ctx.fill();
+}
+
+function drawRosette(ctx, t) {
+  // tails
+  ctx.fillStyle = WHITE;
+  ctx.beginPath(); ctx.moveTo(38, 52); ctx.lineTo(28, 88); ctx.lineTo(37, 82); ctx.lineTo(44, 90); ctx.lineTo(50, 56); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(62, 52); ctx.lineTo(72, 88); ctx.lineTo(63, 82); ctx.lineTo(56, 90); ctx.lineTo(50, 56); ctx.closePath(); ctx.fill();
+  // ruffled ring
+  ctx.beginPath();
+  for (let i = 0; i <= 32; i++) {
+    const a = i * Math.PI / 16, r = i % 2 ? 26 : 30;
+    ctx.lineTo(50 + Math.cos(a) * r, 40 + Math.sin(a) * r);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = t.dark;
+  ctx.beginPath(); ctx.arc(50, 40, 18, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = WHITE;
+  ctx.font = '700 22px Fredoka, ui-rounded, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('1', 50, 41);
+}
+
+function drawFlute(ctx, t) {
+  withRotation(ctx, -12, () => {
+    ctx.fillStyle = WHITE;
+    // glass
+    ctx.beginPath();
+    ctx.moveTo(38, 12); ctx.lineTo(62, 12); ctx.lineTo(58, 52);
+    ctx.quadraticCurveTo(56, 60, 50, 60); ctx.quadraticCurveTo(44, 60, 42, 52);
+    ctx.closePath(); ctx.fill();
+    rr(ctx, 48, 58, 4, 22, 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(50, 82, 14, 4, 0, 0, Math.PI * 2); ctx.fill();
+    // sparkling drink
+    ctx.fillStyle = t.dark;
+    ctx.beginPath();
+    ctx.moveTo(40.5, 26); ctx.lineTo(59.5, 26); ctx.lineTo(57, 51);
+    ctx.quadraticCurveTo(55.5, 56, 50, 56); ctx.quadraticCurveTo(44.5, 56, 43, 51);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = WHITE;
+    [[47, 46, 1.8], [53, 40, 1.5], [49, 33, 1.3], [54, 50, 1.2]].forEach(([x, y, r]) => {
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    });
+  });
+  sparkle(ctx, 74, 20, 7, WHITE);
+}
+
+const AWARD_TILES = [
+  { id: 'camera',   name: 'Press Camera', plural: 'Press Cameras', base: '#3AAFA9', light: '#8BE6DF', dark: '#1D7470', draw: drawPressCam },
+  { id: 'envelope', name: 'Envelope',     plural: 'Envelopes',     base: '#FF7E5F', light: '#FFB49E', dark: '#C14A2E', draw: drawEnvelope },
+  { id: 'bouquet',  name: 'Bouquet',      plural: 'Bouquets',      base: '#EC5FA5', light: '#FFA3CF', dark: '#A8306C', draw: drawBouquet },
+  { id: 'trophy',   name: 'Trophy',       plural: 'Trophies',      base: '#F4B83A', light: '#FFDF8A', dark: '#A8730B', draw: drawTrophy },
+  { id: 'ribbon',   name: 'Winner Ribbon', plural: 'Winner Ribbons', base: '#8C7BEF', light: '#C4B9FF', dark: '#5240B8', draw: drawRosette },
+  { id: 'flute',    name: 'Toast',        plural: 'Toasts',        base: '#7CC243', light: '#B6E68C', dark: '#4A8420', draw: drawFlute },
+];
+
 /* ----- Worlds -----
-   World 1 (levels 1–30): the road, salon tiles.
-   World 2 (levels 31+):  backstage, studio tiles. */
+   World 1 · Breaking In  (levels 1–30):  the road to the city, salon tiles.
+   World 2 · On Set       (levels 31–60): backstage, film-set tiles.
+   World 3 · Awards Night (levels 61–90+): the red carpet, award tiles. */
 const WORLDS = [
   null,
-  { n: 1, name: 'The Road',  tiles: SALON_TILES },
-  { n: 2, name: 'Backstage', tiles: STAGE_TILES },
+  { n: 1, name: 'Breaking In', tiles: SALON_TILES,
+    blurb: '' },
+  { n: 2, name: 'On Set', tiles: STAGE_TILES,
+    blurb: "You made it onto the set, {name}! Time to work with the stars — here's your new kit:" },
+  { n: 3, name: 'Awards Night', tiles: AWARD_TILES,
+    blurb: "From the chair to the spotlight, {name}. Tonight the industry says thank you — dress for the carpet:" },
 ];
-const worldOf = level => (level > 30 ? 2 : 1);
+const worldOf = level => (level > 60 ? 3 : level > 30 ? 2 : 1);
 const tilesFor = level => WORLDS[worldOf(level)].tiles;
 
 // The tiles currently in play (swapped in place when the world changes).
@@ -1633,7 +1814,7 @@ const LEVELS = [
     '.j....j.',
     '.jjjjjj.',
     '........'] },
-  /* 33 */ { moves: 29, kinds: 6, goals: [['collect', 'star', 16]], layout: [
+  /* 33 */ { moves: 29, kinds: 6, goals: [['collect', 'wig', 16]], layout: [
     '........',
     '..i..i..',
     '........',
@@ -1706,7 +1887,7 @@ const LEVELS = [
     '.BB..BB.',
     '........',
     '........'] },
-  /* 42 */ { moves: 29, kinds: 6, goals: [['collect', 'lipstick', 18], ['collect', 'star', 18]], layout: [
+  /* 42 */ { moves: 29, kinds: 6, goals: [['collect', 'lipstick', 18], ['collect', 'wig', 18]], layout: [
     '........',
     '........',
     '..h..h..',
@@ -1778,7 +1959,7 @@ const LEVELS = [
     '.bJ..Jb.',
     '.Bb..bB.',
     '........'] },
-  /* 50 */ { moves: 30, kinds: 6, goals: [['collect', 'star', 30]], breather: true, tip: 'Halfway through Backstage!', layout: [
+  /* 50 */ { moves: 30, kinds: 6, goals: [['collect', 'wig', 30]], breather: true, tip: 'Halfway through the shoot!', layout: [
     '........',
     '........',
     '.j.jj.j.',
@@ -1851,7 +2032,7 @@ const LEVELS = [
     '.b....b.',
     '.JbJJbJ.',
     '........'] },
-  /* 59 */ { moves: 31, kinds: 6, goals: [['collect', 'mirror', 16], ['collect', 'star', 16]], layout: [
+  /* 59 */ { moves: 31, kinds: 6, goals: [['collect', 'mirror', 16], ['collect', 'wig', 16]], layout: [
     '........',
     '..h..h..',
     '.H....H.',
@@ -1861,14 +2042,260 @@ const LEVELS = [
     '..h..h..',
     '........'] },
   /* 60 */ { moves: 36, kinds: 6, goals: [['collect', 'lipstick', 16]], tip: 'Opening night — the big finale!', layout: [
+    '........',
+    '.jjhhjj.',
+    '.jI..Ij.',
+    '.j.XX.j.',
+    '.j.XX.j.',
+    '.jI..Ij.',
+    '.jjhhjj.',
+    '........'] },
+  /* 61 */ { moves: 26, kinds: 5, goals: [['collect', 'trophy', 24], ['collect', 'bouquet', 24]], tip: 'Welcome to the red carpet!' },
+  /* 62 */ { moves: 28, kinds: 6, goals: [], layout: [
+    '........',
+    '..jjjj..',
+    '.j....j.',
+    '.j.ii.j.',
+    '.j.ii.j.',
+    '.j....j.',
+    '..jjjj..',
+    '........'] },
+  /* 63 */ { moves: 28, kinds: 6, goals: [['collect', 'camera', 18]], layout: [
+    '........',
+    '.b....b.',
+    '.bb..bb.',
     '...hh...',
+    '........',
+    '.bb..bb.',
+    '.b....b.',
+    '........'] },
+  /* 64 */ { moves: 29, kinds: 6, goals: [], layout: [
+    '........',
+    '.JJ..JJ.',
+    '.J.hh.J.',
+    '........',
+    '........',
+    '.J.hh.J.',
+    '.JJ..JJ.',
+    '........'] },
+  /* 65 */ { moves: 25, kinds: 5, goals: [['score', 23000]], breather: true },
+  /* 66 */ { moves: 29, kinds: 6, goals: [['collect', 'envelope', 18]], layout: [
+    '........',
+    '..i..i..',
+    '.i.BB.i.',
+    '...BB...',
+    '........',
+    '.i....i.',
+    '..i..i..',
+    '........'] },
+  /* 67 */ { moves: 30, kinds: 6, goals: [], layout: [
+    '........',
+    '.jjjjjj.',
+    '.jJJJJj.',
+    '........',
+    '........',
+    '.jJJJJj.',
+    '.jjjjjj.',
+    '........'] },
+  /* 68 */ { moves: 31, kinds: 6, goals: [['collect', 'ribbon', 16], ['collect', 'flute', 16]], layout: [
+    '........',
+    '.h....h.',
+    '...hh...',
+    '........',
+    '........',
+    '...hh...',
+    '.h....h.',
+    '........'] },
+  /* 69 */ { moves: 30, kinds: 6, goals: [], layout: [
+    '........',
+    '.X....X.',
+    '..b..b..',
+    '.j.ii.j.',
+    '.j.ii.j.',
+    '..b..b..',
+    '.X....X.',
+    '........'] },
+  /* 70 */ { moves: 28, kinds: 5, goals: [['collect', 'trophy', 32]], breather: true, layout: [
+    '........',
+    '........',
+    '..jjjj..',
+    '........',
+    '........',
+    '..jjjj..',
+    '........',
+    '........'] },
+  /* 71 */ { moves: 30, kinds: 6, goals: [], layout: [
+    '........',
+    '.i.HH.i.',
+    '........',
+    '.H....H.',
+    '.H....H.',
+    '........',
+    '.i.HH.i.',
+    '........'] },
+  /* 72 */ { moves: 30, kinds: 6, goals: [['collect', 'bouquet', 20]], layout: [
+    '........',
     '.JJJJJJ.',
-    '.JI..IJ.',
+    '.J....J.',
+    '.J.bb.J.',
+    '.J.bb.J.',
+    '.J....J.',
+    '.JJJJJJ.',
+    '........'] },
+  /* 73 */ { moves: 29, kinds: 6, goals: [['collect', 'camera', 18], ['collect', 'envelope', 18]], layout: [
+    '........',
+    '..I..I..',
+    '........',
+    '.i.hh.i.',
+    '........',
+    '........',
+    '..I..I..',
+    '........'] },
+  /* 74 */ { moves: 31, kinds: 6, goals: [], layout: [
+    '........',
+    '.BXXXXB.',
+    '........',
+    '.jjjjjj.',
+    '.jjjjjj.',
+    '........',
+    '........',
+    '........'] },
+  /* 75 */ { moves: 27, kinds: 5, goals: [['score', 32000]], breather: true, layout: [
+    '........',
+    '........',
+    '...ii...',
+    '..i..i..',
+    '..i..i..',
+    '...ii...',
+    '........',
+    '........'] },
+  /* 76 */ { moves: 30, kinds: 6, goals: [['collect', 'flute', 20]], layout: [
+    '........',
+    '.jh..hj.',
+    '.j....j.',
+    '..JJJJ..',
+    '..JJJJ..',
+    '.j....j.',
+    '.jh..hj.',
+    '........'] },
+  /* 77 */ { moves: 30, kinds: 6, goals: [], layout: [
+    '........',
+    '.Bb..bB.',
+    '..I..I..',
+    '.b.hh.b.',
+    '.b....b.',
+    '..I..I..',
+    '.Bb..bB.',
+    '........'] },
+  /* 78 */ { moves: 30, kinds: 6, goals: [['collect', 'ribbon', 20], ['collect', 'trophy', 20]], layout: [
+    '........',
+    '..h..h..',
+    '.H....H.',
+    '...ii...',
+    '...ii...',
+    '.H....H.',
+    '..h..h..',
+    '........'] },
+  /* 79 */ { moves: 31, kinds: 6, goals: [], layout: [
+    '........',
+    '.JJJJJJ.',
+    '.JJJJJJ.',
     '.J.XX.J.',
     '.J.XX.J.',
-    '.JI..IJ.',
     '.JJJJJJ.',
-    '...hh...'] },
+    '.JJJJJJ.',
+    '........'] },
+  /* 80 */ { moves: 32, kinds: 6, goals: [['collect', 'bouquet', 30]], breather: true, tip: 'Ten more to go — the big night is near!', layout: [
+    '........',
+    '........',
+    '.j.jj.j.',
+    '........',
+    '........',
+    '.j.jj.j.',
+    '........',
+    '........'] },
+  /* 81 */ { moves: 31, kinds: 6, goals: [], layout: [
+    '........',
+    '.H.h.hH.',
+    '........',
+    '..I..I..',
+    '........',
+    '.H.h.hH.',
+    '........',
+    '........'] },
+  /* 82 */ { moves: 30, kinds: 6, goals: [['collect', 'envelope', 22]], layout: [
+    '........',
+    '.X.bb.X.',
+    '........',
+    '.b.jj.b.',
+    '.b.jj.b.',
+    '........',
+    '.X.bb.X.',
+    '........'] },
+  /* 83 */ { moves: 31, kinds: 6, goals: [], layout: [
+    '........',
+    '.jIjjIj.',
+    '.j....j.',
+    '.j.hh.j.',
+    '.j.hh.j.',
+    '.j....j.',
+    '.jIjjIj.',
+    '........'] },
+  /* 84 */ { moves: 30, kinds: 6, goals: [['collect', 'camera', 20], ['collect', 'flute', 20]], layout: [
+    '........',
+    '..b..b..',
+    '.h.BB.h.',
+    '........',
+    '........',
+    '.h.BB.h.',
+    '..b..b..',
+    '........'] },
+  /* 85 */ { moves: 28, kinds: 5, goals: [['collect', 'trophy', 36]], breather: true },
+  /* 86 */ { moves: 31, kinds: 6, goals: [], layout: [
+    '........',
+    '.JJJJJJ.',
+    '.JhJJhJ.',
+    '........',
+    '........',
+    '.JhJJhJ.',
+    '.JJJJJJ.',
+    '........'] },
+  /* 87 */ { moves: 31, kinds: 6, goals: [['collect', 'ribbon', 18]], layout: [
+    '........',
+    '.I.XX.I.',
+    '........',
+    '.i....i.',
+    '........',
+    '.i....i.',
+    '.I.XX.I.',
+    '........'] },
+  /* 88 */ { moves: 33, kinds: 6, goals: [], layout: [
+    '........',
+    '.bjjjjb.',
+    '.jh..hj.',
+    '.j.II.j.',
+    '.j.II.j.',
+    '.jh..hj.',
+    '.bjjjjb.',
+    '........'] },
+  /* 89 */ { moves: 31, kinds: 6, goals: [['collect', 'envelope', 20], ['collect', 'bouquet', 20]], layout: [
+    '........',
+    '..H..H..',
+    '.b....b.',
+    '..jjjj..',
+    '..jjjj..',
+    '.b....b.',
+    '..H..H..',
+    '........'] },
+  /* 90 */ { moves: 38, kinds: 6, goals: [['collect', 'trophy', 16]], tip: 'Awards night — this one is for you.', layout: [
+    '........',
+    '.jjhhjj.',
+    '.jI..Ij.',
+    '.j.XX.j.',
+    '.j.XX.j.',
+    '.jI..Ij.',
+    '.jjhhjj.',
+    '........'] },
 ];
 
 /* Levels after the handmade ones are generated — the same level number
@@ -3157,7 +3584,11 @@ const Lines = {
   oops:  makePicker(() => CONFIG.oopsMessages),
   stuck: makePicker(() => CONFIG.stuckMessages),
   hint:  makePicker(() => CONFIG.hintMessages),
-  win:   makePicker(() => CONFIG.winMessages),
+  _win: {},
+  win(w = World.current) {
+    if (!this._win[w]) this._win[w] = makePicker(() => CONFIG.winMessages.concat((CONFIG.worldWinMessages || {})[w] || []));
+    return this._win[w]();
+  },
 };
 
 const UI = {
@@ -3376,7 +3807,7 @@ const UI = {
     const W1 = 30;                                    // last level of World 1
     const scroll = $('mapScroll'), path = $('mapPath');
     const W = scroll.clientWidth || 360;
-    const gap = 92, padTop = 80, padBottom = 110;
+    const gap = 92, padTop = 80, padBottom = 150;
     const H = padTop + padBottom + (total - 1) * gap;
     path.style.height = H + 'px';
 
@@ -3388,7 +3819,7 @@ const UI = {
       pts.push([x, y]);
       const stars = p.stars[n] || 0;
       const state = n > p.unlocked ? 'locked' : n === p.unlocked ? 'current' : 'done';
-      nodes += `<button class="node ${state}${n % 10 === 0 ? ' milestone' : ''}${n > W1 ? ' w2' : ''}" data-n="${n}" ` +
+      nodes += `<button class="node ${state}${n % 10 === 0 ? ' milestone' : ''} w${worldOf(n)}" data-n="${n}" ` +
                `style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px" aria-label="Level ${n}">` +
                `<span class="node-num">${n}</span>` +
                (state === 'done' ? `<span class="node-stars">${'★'.repeat(stars)}<i>${'★'.repeat(3 - stars)}</i></span>` : '') +
@@ -3396,28 +3827,41 @@ const UI = {
     }
     const line = list => list.map((pt, i) => (i ? 'L' : 'M') + pt[0].toFixed(1) + ' ' + pt[1].toFixed(1)).join(' ');
     const reached = Math.min(p.unlocked, total);
-    const road = pts.slice(0, W1), film = pts.slice(W1 - 1);
-    const roadDone = pts.slice(0, Math.min(reached, W1));
-    const filmDone = reached > W1 ? pts.slice(W1 - 1, reached) : [];
-    // banner halfway between level 30 and 31
-    const mx = (pts[W1 - 1][0] + pts[W1][0]) / 2, by = (pts[W1 - 1][1] + pts[W1][1]) / 2;
-    const bx = mx > W / 2 ? W * 0.27 : W * 0.73;      // the open side, away from the nodes
+    const W2 = 60;                                    // last level of World 2
+    const seg = (a, b) => pts.slice(Math.max(0, a - 1), Math.min(b, pts.length));
+    const doneSeg = (a, b) => (reached > a ? seg(a, Math.min(b, reached)) : []);
+    const road = seg(1, W1), film = seg(W1, W2), carpet = seg(W2, total);
+    const roadDone = seg(1, Math.min(reached, W1)), filmDone = doneSeg(W1, W2), carpetDone = doneSeg(W2, total);
+    const d = list => (list.length > 1 ? line(list) : '');
+    // banners on the open side of the path
+    const banner = (num, name, x0, y) => {
+      const x = x0 > W / 2 ? W * 0.27 : W * 0.73;
+      return `<div class="world-banner wb${num}" style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px"><span>World ${num}</span>${name}</div>`;
+    };
+    const mid = (a, b) => [(pts[a - 1][0] + pts[b - 1][0]) / 2, (pts[a - 1][1] + pts[b - 1][1]) / 2];
+    const m2 = mid(W1, W1 + 1), m3 = mid(W2, Math.min(W2 + 1, total));
     path.innerHTML =
       `<svg class="map-line" width="${W}" height="${H}" aria-hidden="true">` +
-      `<path class="road-edge" d="${line(road)}"/>` +
-      `<path class="road" d="${line(road)}"/>` +
-      `<path class="road-glow" d="${line(roadDone)}"/>` +
-      `<path class="road-done" d="${line(roadDone)}"/>` +
-      `<path class="road-brick" d="${line(road)}"/>` +
-      `<path class="road-lane" d="${line(road)}"/>` +
-      `<path class="film-base" d="${line(film)}"/>` +
-      `<path class="film-holes" d="${line(film)}"/>` +
-      `<path class="film-mid" d="${line(film)}"/>` +
-      `<path class="film-frames" d="${line(film)}"/>` +
-      (filmDone.length > 1 ? `<path class="film-glow" d="${line(filmDone)}"/><path class="film-done" d="${line(filmDone)}"/>` : '') +
+      `<path class="road-edge" d="${d(road)}"/>` +
+      `<path class="road" d="${d(road)}"/>` +
+      `<path class="road-glow" d="${d(roadDone)}"/>` +
+      `<path class="road-done" d="${d(roadDone)}"/>` +
+      `<path class="road-brick" d="${d(road)}"/>` +
+      `<path class="road-lane" d="${d(road)}"/>` +
+      `<path class="film-base" d="${d(film)}"/>` +
+      `<path class="film-holes" d="${d(film)}"/>` +
+      `<path class="film-mid" d="${d(film)}"/>` +
+      `<path class="film-frames" d="${d(film)}"/>` +
+      `<path class="film-glow" d="${d(filmDone)}"/><path class="film-done" d="${d(filmDone)}"/>` +
+      `<path class="carpet-edge" d="${d(carpet)}"/>` +
+      `<path class="carpet" d="${d(carpet)}"/>` +
+      `<path class="carpet-glow" d="${d(carpetDone)}"/><path class="carpet-done" d="${d(carpetDone)}"/>` +
+      `<path class="carpet-sheen" d="${d(carpet)}"/>` +
       `</svg>` +
-      `<div class="world-banner" style="left:${bx.toFixed(1)}px;top:${by.toFixed(1)}px">` +
-      `<span>World 2</span>Backstage</div>` + nodes;
+      banner(1, WORLDS[1].name, pts[0][0], pts[0][1] + 58) +
+      banner(2, WORLDS[2].name, m2[0], m2[1]) +
+      (total > W2 ? banner(3, WORLDS[3].name, m3[0], m3[1]) : '') +
+      nodes;
 
     const totalStars = Object.values(p.stars).reduce((a, b) => a + b, 0);
     $('mapStars').textContent = `★ ${totalStars}`;
@@ -3472,8 +3916,10 @@ const UI = {
         <button class="btn btn-ghost" data-act="copy">Copy code</button>
         <button class="btn btn-ghost" data-act="paste">Paste code</button>
       </div>
+      ${Save.data.help.finale ? '<div class="panel-btns"><button class="btn" data-act="credits">🎬 Watch the credits</button></div>' : ''}
       <div class="panel-btns"><button class="btn btn-ghost" data-act="close">Close</button></div>`,
       {
+        credits: () => this.showFinale(),
         download: () => this.downloadSave(),
         upload: () => this.pickSaveFile(),
         copy: () => this.copySaveCode(),
@@ -3628,7 +4074,7 @@ const UI = {
     this.showModal(`
       <div class="panel-kicker">World ${w}</div>
       <div class="panel-title">${WORLDS[w].name}</div>
-      <div class="ht-text">You made it down the road, ${esc(CONFIG.playerName)}! Now it's showtime — meet the new styles:</div>
+      <div class="ht-text">${esc(WORLDS[w].blurb.replace(/\{name\}/g, CONFIG.playerName))}</div>
       <div class="wi-grid">${tiles}</div>
       <div class="panel-note">Same rules as before, just a little tougher.</div>
       <div class="panel-btns"><button class="btn btn-big btn-gold" data-act="go">Let's go!</button></div>`,
@@ -3642,8 +4088,10 @@ const UI = {
     if (w > (Save.data.help.world || 1)) { this.showWorldIntro(w, () => this.showIntro(n)); return; }
     const lv = buildLevel(n);
     const best = Save.data.progress.stars[n] || 0;
+    const take = (Save.data.progress.fails[n] || 0) + 1;
+    const kicker = w === 2 ? `Scene · Take ${take}` : w === 3 ? 'Category' : 'Level';
     this.showModal(`
-      <div class="panel-kicker">Level</div>
+      <div class="panel-kicker">${kicker}</div>
       <div class="panel-title">${n}</div>
       <div class="panel-label">Your goals</div>
       <div class="goal-rows">${this.goalRows(lv.goals, true, worldOf(n))}</div>
@@ -3716,11 +4164,88 @@ const UI = {
       });
   },
 
+  /* ----- Level 90 finale: trophy + end credits ----- */
+  trophyArt(px = 320) {
+    const c = document.createElement('canvas');
+    c.width = c.height = px;
+    const x = c.getContext('2d');
+    x.scale(px / 100, px / 100);
+    drawTrophy(x, { dark: '#7a5208' });
+    x.globalCompositeOperation = 'source-atop';      // paint the white trophy gold
+    const g = x.createLinearGradient(0, 10, 0, 90);
+    g.addColorStop(0, '#FFF6D8'); g.addColorStop(0.35, '#F7CF62'); g.addColorStop(0.7, '#E2A92E'); g.addColorStop(1, '#9C6A0A');
+    x.fillStyle = g; x.fillRect(0, 0, 100, 100);
+    return c.toDataURL();
+  },
+
+  showFinale(onDone) {
+    this.hideModal();
+    const p = Save.data.progress;
+    const stars = Object.values(p.stars).reduce((a, b) => a + b, 0);
+    const credits = (CONFIG.credits || []).map(c => `<div class="cr-item">${esc(c)}</div>`).join('');
+    const el = document.createElement('div');
+    el.className = 'finale';
+    el.innerHTML = `
+      <div class="fin-trophy">
+        <img src="${this.trophyArt()}" alt="">
+        <div class="fin-plate"><span>${esc(CONFIG.awardTitle)}</span>${esc(CONFIG.fullName)}</div>
+      </div>
+      <div class="fin-credits"><div class="cr-roll">
+        <div class="cr-title">${esc(CONFIG.playerName)}'s<br>${esc(CONFIG.gameName)}</div>
+        <div class="cr-role">Starring</div><div class="cr-name">${esc(CONFIG.fullName)}</div>
+        <div class="cr-role">Hair Department Head</div><div class="cr-name">${esc(CONFIG.fullName)}</div>
+        <div class="cr-role">Selected credits</div>${credits}
+        <div class="cr-role">The journey</div>
+        <div class="cr-item">Breaking In · On Set · Awards Night</div>
+        <div class="cr-item">90 levels · ★ ${stars}</div>
+        <div class="cr-role">A special thank-you</div>
+        <div class="cr-msg">${esc(CONFIG.finaleMessage)}</div>
+        <div class="cr-sig">${esc(CONFIG.finaleSignature)}</div>
+        <div class="cr-end">That's a wrap.</div>
+      </div></div>
+      <div class="fin-btns">
+        <button class="btn btn-ghost" data-fin="skip" type="button">Skip</button>
+        <button class="btn btn-big btn-gold" data-fin="done" type="button" hidden>Keep playing</button>
+      </div>`;
+    $('app').appendChild(el);
+    Confetti.burst(200);
+    Sound.play('heelClicks');
+    Sound.play('fanfare', 0.55);
+    Sound.play('fanfare', 2.2);
+    const roll = el.querySelector('.cr-roll');
+    const finish = () => {
+      Save.data.help.finale = true;
+      Save.write();
+      el.classList.add('out');
+      setTimeout(() => { el.remove(); if (onDone) onDone(); }, 450);
+    };
+    const showDone = () => {
+      el.querySelector('[data-fin="done"]').hidden = false;
+      el.querySelector('[data-fin="skip"]').hidden = true;
+    };
+    // trophy first, then the credits roll
+    setTimeout(() => el.classList.add('rolling'), 4200);
+    roll.addEventListener('animationend', showDone);
+    setTimeout(showDone, 40000);
+    el.addEventListener('click', e => {
+      const b = e.target.closest('[data-fin]');
+      if (!b) return;
+      if (b.dataset.fin === 'skip') { showDone(); el.classList.add('rolling', 'skipped'); }
+      else finish();
+    });
+  },
+
   showWin(n, stars, score) {
-    const msg = Lines.win();
+    if (n === 90 && !Save.data.help.finale) {
+      this.showFinale(() => this.openMap());
+      return;
+    }
+    const w = worldOf(n);
+    const msg = Lines.win(w);
+    const [kick, head] = w === 2 ? [`Scene ${n}`, "That's a wrap!"] : w === 3 ? [`Category ${n}`, 'Winner!'] : [`Level ${n}`, 'Complete!'];
     this.showModal(`
-      <div class="panel-kicker">Level ${n}</div>
-      <div class="panel-title">Complete!</div>
+      <div class="panel-kicker">${kick}</div>
+      <div class="panel-title">${head}</div>
       <div class="big-stars">${[1, 2, 3].map(i =>
         `<span class="bstar${i <= stars ? ' on' : ''}" style="animation-delay:${(0.75 + i * 0.3).toFixed(2)}s">★</span>`).join('')}</div>
       <div class="panel-score">${score.toLocaleString()}</div>
@@ -3739,16 +4264,21 @@ const UI = {
 
   showLose(lv) {
     const left = lv.goals.filter(g => (g.type === 'score' ? Game.score < g.need : g.have < g.need));
+    const w = worldOf(lv.n);
+    const take = (Save.data.progress.fails[lv.n] || 0) + 1;
+    const [kick, head, again] = w === 2 ? [`Scene ${lv.n} · Take ${take - 1}`, 'Cut!', `Take ${take}`]
+      : w === 3 ? [`Category ${lv.n}`, 'So close!', 'Try again'] : [`Level ${lv.n}`, 'Out of moves', 'Try again'];
     this.showModal(`
-      <div class="panel-kicker">Level ${lv.n}</div>
-      <div class="panel-title">Out of moves</div>
+      <div class="panel-kicker">${kick}</div>
+      <div class="panel-title">${head}</div>
+      ${w === 2 ? `<div class="panel-note">Let's go again from the top.</div>` : ''}
       <div class="panel-label">Still to go</div>
       <div class="goal-rows">${this.goalRows(left, false)}</div>
       <div class="panel-btns">
         ${Save.data.boosters.moves > 0
           ? `<button class="btn btn-big btn-gold" data-act="more">+5 moves <small>(${Save.data.boosters.moves} left)</small></button>`
           : ''}
-        <button class="btn btn-big" data-act="retry">Try again</button>
+        <button class="btn btn-big" data-act="retry">${again}</button>
         <button class="btn btn-ghost" data-act="map">Level map</button>
       </div>`,
       { retry: () => Game.startLevel(lv.n), map: () => this.openMap(), more: () => Game.continueWithMoves() });
@@ -3801,6 +4331,7 @@ const Background = {
       <path d="M0 30 C 60 20, 120 24, 170 32 L 230 32 C 280 22, 340 20, 400 28 L400 40 L0 40Z" fill="#1c5a4c"/>
     </svg></div>`;
     html += this.stage();
+    html += this.awards();
 
     for (let i = 0; i < 22; i++) {
       const kind = i % 5 === 0 ? ' star' : i % 4 === 0 ? ' pink' : '';
@@ -3812,6 +4343,37 @@ const Background = {
     }
     el.innerHTML = html;
     $('roadBricks').style.backgroundImage = `url(${this.brickTile()})`;
+  },
+
+  // World 3: awards night — turquoise carpet, velvet ropes, flashes, searchlights.
+  awards() {
+    const rnd = seededRandom(9090);
+    let flashes = '';
+    for (let i = 0; i < 18; i++) {
+      const left = i % 2 ? 4 + rnd() * 22 : 74 + rnd() * 22;
+      flashes += `<i class="flash" style="left:${left.toFixed(1)}%;top:${(52 + rnd() * 36).toFixed(1)}%;` +
+                 `animation-delay:-${(rnd() * 6).toFixed(2)}s;animation-duration:${(3.5 + rnd() * 4).toFixed(2)}s"></i>`;
+    }
+    let posts = '';
+    // velvet-rope posts along both sides of the carpet, in perspective
+    for (let i = 0; i < 6; i++) {
+      const t = i / 5;                                   // 0 = far, 1 = near
+      const y = 52 + t * 44, spread = 6 + t * 30, h = 2.2 + t * 6.5;
+      posts += `<i class="post" style="left:${(50 - spread).toFixed(1)}%;top:${y.toFixed(1)}%;height:${h.toFixed(1)}vh"></i>` +
+               `<i class="post" style="left:${(50 + spread).toFixed(1)}%;top:${y.toFixed(1)}%;height:${h.toFixed(1)}vh"></i>`;
+    }
+    return `<div class="scene scene-awards">
+      <div class="aw-sky"></div>
+      <div class="search s1"></div><div class="search s2"></div><div class="search s3"></div>
+      <div class="aw-stage"><div class="aw-arch"></div><div class="aw-trophy"></div></div>
+      <div class="aw-ground"></div>
+      <div class="aw-carpet"><div class="carpet-plane"><div class="carpet-sheen-move"></div></div></div>
+      <svg class="aw-ropes" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <path d="M44 52 Q42 60 39 62 Q33 72 29 74 Q22 84 20 96" />
+        <path d="M56 52 Q58 60 61 62 Q67 72 71 74 Q78 84 80 96" />
+      </svg>
+      ${posts}${flashes}
+    </div>`;
   },
 
   // World 2: a theater stage — curtains, marquee bulbs, sweeping spotlights.
