@@ -617,20 +617,8 @@ const World = {
 const BOMB = -2;   // kind used by the Glam Ball (never matches by color)
 const DROP = -3;   // kind used by ingredient drops (never matches, can't be blasted)
 
-/* Ingredient drop: a cream token with the world's item on it. World 1 = coffee. */
-function buildDropSprite(px, world = 1) {
-  const c = document.createElement('canvas');
-  c.width = c.height = px;
-  const ctx = c.getContext('2d');
-  ctx.scale(px / 100, px / 100);
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.beginPath(); ctx.arc(50, 54, 42, 0, Math.PI * 2); ctx.fill();
-  const g = ctx.createRadialGradient(42, 36, 6, 50, 50, 44);
-  g.addColorStop(0, '#FFFDF6'); g.addColorStop(0.7, '#F6E7CF'); g.addColorStop(1, '#D9BE96');
-  ctx.fillStyle = g;
-  ctx.beginPath(); ctx.arc(50, 50, 42, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#F4B83A'; ctx.lineWidth = 3.5;
-  ctx.beginPath(); ctx.arc(50, 50, 41, 0, Math.PI * 2); ctx.stroke();
+/* Ingredient drops: a cream token with each world's item on it. */
+function drawCoffeeItem(ctx) {
   // takeaway coffee cup
   ctx.fillStyle = '#6B3E26';
   ctx.beginPath(); ctx.moveTo(33, 34); ctx.lineTo(67, 34); ctx.lineTo(62, 78); ctx.lineTo(38, 78); ctx.closePath(); ctx.fill();
@@ -644,6 +632,45 @@ function buildDropSprite(px, world = 1) {
   ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(44, 16); ctx.quadraticCurveTo(40, 11, 44, 6); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(54, 16); ctx.quadraticCurveTo(50, 11, 54, 6); ctx.stroke();
+}
+
+function drawScriptItem(ctx) {
+  // stack of script pages with brass fasteners and a turquoise cover
+  ctx.save();
+  ctx.translate(50, 52); ctx.rotate(-0.12); ctx.translate(-50, -52);
+  ctx.fillStyle = '#E9E2D4'; rr(ctx, 30, 24, 40, 54, 3); ctx.fill();
+  ctx.fillStyle = '#FFFFFF'; rr(ctx, 27, 21, 40, 54, 3); ctx.fill();
+  ctx.fillStyle = '#3AAFA9'; rr(ctx, 27, 21, 9, 54, 3); ctx.fill();
+  ctx.fillStyle = '#F4B83A';
+  [30, 48, 66].forEach(y => { ctx.beginPath(); ctx.arc(31.5, y, 2.4, 0, Math.PI * 2); ctx.fill(); });
+  ctx.fillStyle = '#5A5268';
+  ctx.font = '700 7px Fredoka, ui-rounded, sans-serif';
+  ctx.fillText('SCENE', 41, 32);
+  ctx.fillStyle = '#B9B2C4';
+  [40, 46, 52, 58, 64].forEach((y, i) => ctx.fillRect(41, y, i % 2 ? 16 : 22, 2.4));
+  ctx.restore();
+}
+
+const DROP_ITEMS = {
+  1: { name: 'coffee', plural: 'coffees', run: 'Coffee run', draw: drawCoffeeItem },
+  2: { name: 'script', plural: 'scripts', run: 'Script run', draw: drawScriptItem },
+};
+const dropItem = w => DROP_ITEMS[w] || DROP_ITEMS[1];
+
+function buildDropSprite(px, world = 1) {
+  const c = document.createElement('canvas');
+  c.width = c.height = px;
+  const ctx = c.getContext('2d');
+  ctx.scale(px / 100, px / 100);
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath(); ctx.arc(50, 54, 42, 0, Math.PI * 2); ctx.fill();
+  const g = ctx.createRadialGradient(42, 36, 6, 50, 50, 44);
+  g.addColorStop(0, '#FFFDF6'); g.addColorStop(0.7, '#F6E7CF'); g.addColorStop(1, '#D9BE96');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(50, 50, 42, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#F4B83A'; ctx.lineWidth = 3.5;
+  ctx.beginPath(); ctx.arc(50, 50, 41, 0, Math.PI * 2); ctx.stroke();
+  dropItem(world).draw(ctx);
   return c;
 }
 
@@ -1814,6 +1841,7 @@ const Board = {
         return;
       }
       const a = k[r1][c1], b = k[r2][c2];
+      if (r2 === r1 + 1 && t1.drop && !t2.drop) { moves.push({ a: { r: r1, c: c1 }, b: { r: r2, c: c2 } }); return; }
       if ((a < 0 && b < 0) || a === b) return;          // a drop can swap if the other tile makes a match
       k[r1][c1] = b; k[r2][c2] = a;
       if (this.matchesAt(k, r1, c1) || this.matchesAt(k, r2, c2)) {
@@ -1910,7 +1938,7 @@ const LEVELS = [
     '........',
     '........',
     '........'] },
-  /* 6 */ { moves: 22, kinds: 4, goals: [], drops: 2, dropsMax: 1, tip: 'Coffee run! Clear the tiles under the coffee to bring it down.', layout: [
+  /* 6 */ { moves: 20, kinds: 4, goals: [], drops: 2, dropsMax: 1, tip: 'Coffee run! Swipe the coffee down or clear the tiles under it.', layout: [
     '........',
     '........',
     '...d....',
@@ -1938,7 +1966,7 @@ const LEVELS = [
     '........',
     '........',
     '........'] },
-  /* 10 */ { moves: 28, kinds: 5, goals: [], drops: 3, dropsMax: 2, tip: 'Act 1 boss board — show the city what you’ve got!', layout: [
+  /* 10 */ { moves: 24, kinds: 5, goals: [], drops: 3, dropsMax: 2, tip: 'Act 1 boss board — show the city what you’ve got!', layout: [
     '........',
     '........',
     '.d....d.',
@@ -1965,8 +1993,7 @@ const LEVELS = [
     '........',
     '.i....i.',
     '........'] },
-  /* 13 */ { moves: 26, kinds: 6, goals: [['collect', 'dryer', 22]], tip: 'All six styles are in the salon now!' },
-  /* 14 */ { moves: 22, kinds: 5, goals: [], tip: "Chained tiles can't move. Match them to break free!", layout: [
+  /* 13 */ { moves: 22, kinds: 5, goals: [], tip: "Chained tiles can't move. Match them to break free!", layout: [
     '........',
     '........',
     '.hh..hh.',
@@ -1975,22 +2002,31 @@ const LEVELS = [
     '.hh..hh.',
     '........',
     '........'] },
-  /* 15 */ { moves: 20, kinds: 5, goals: [], breather: true, layout: [
+  /* 14 */ { moves: 22, kinds: 5, goals: [], tip: 'Darker boxes take more hits.', layout: [
     '........',
     '........',
+    '..BBBB..',
     '........',
+    '........',
+    '..BBBB..',
+    '........',
+    '........'] },
+  /* 15 */ { moves: 22, kinds: 5, goals: [], drops: 1, dropsMax: 1, breather: true, tip: 'Quick coffee break!', layout: [
+    '........',
+    '........',
+    '....d...',
     'jjjjjjjj',
     '........',
     '........',
     '........',
     '........'] },
-  /* 16 */ { moves: 29, kinds: 6, goals: [['collect', 'spray', 18]], layout: [
+  /* 16 */ { moves: 28, kinds: 6, goals: [['collect', 'dryer', 18]], drops: 2, dropsMax: 1, tip: 'All six styles are in the salon now!', layout: [
     '........',
     '........',
-    'b......b',
-    'bb....bb',
-    'bb....bb',
-    'b......b',
+    '..d.....',
+    '........',
+    '........',
+    '........',
     '........',
     '........'] },
   /* 17 */ { moves: 27, kinds: 6, goals: [], layout: [
@@ -2002,26 +2038,34 @@ const LEVELS = [
     '..j..j..',
     '.j....j.',
     '........'] },
-  /* 18 */ { moves: 28, kinds: 6, goals: [['collect', 'scissors', 18]], layout: [
+  /* 18 */ { moves: 28, kinds: 6, goals: [], drops: 2, dropsMax: 1, tip: 'Chains block the way — break them to keep the coffee moving!', layout: [
     '........',
+    '........',
+    '.h.d..h.',
+    '.h....h.',
     '...hh...',
     '........',
-    '.h....h.',
-    '.h....h.',
-    '........',
-    '...hh...',
-    '........'] },
-  /* 19 */ { moves: 22, kinds: 6, goals: [], tip: 'Darker boxes take more hits.', layout: [
-    '........',
-    '........',
-    '..BBBB..',
-    '........',
-    '........',
-    '..BBBB..',
     '........',
     '........'] },
-  /* 20 */ { moves: 28, kinds: 5, goals: [['score', 36000]], breather: true },
-  /* 21 */ { moves: 26, kinds: 6, goals: [], layout: [
+  /* 19 */ { moves: 29, kinds: 6, goals: [['collect', 'spray', 18]], layout: [
+    '........',
+    '........',
+    'b......b',
+    'bb....bb',
+    'bb....bb',
+    'b......b',
+    '........',
+    '........'] },
+  /* 20 */ { moves: 28, kinds: 6, goals: [], drops: 2, dropsMax: 1, tip: 'Act 2 boss board — every obstacle at once!', layout: [
+    '........',
+    '.b.d..b.',
+    '..i..i..',
+    '.h.jj.h.',
+    '.h.jj.h.',
+    '..i..i..',
+    '.b....b.',
+    '........'] },
+  /* 21 */ { moves: 26, kinds: 6, goals: [], tip: 'Act 3: Master Boards — everything you’ve learned!', layout: [
     '........',
     '.jjjjjj.',
     '.J....J.',
@@ -2030,38 +2074,46 @@ const LEVELS = [
     '.J....J.',
     '.jjjjjj.',
     '........'] },
-  /* 22 */ { moves: 30, kinds: 6, goals: [], layout: [
+  /* 22 */ { moves: 32, kinds: 6, goals: [], layout: [
     '........',
     '.I.bb.I.',
     '........',
-    'i......i',
-    'i......i',
+    '.i....i.',
+    '.i....i.',
     '........',
     '.I.bb.I.',
     '........'] },
-  /* 23 */ { moves: 29, kinds: 6, goals: [], layout: [
+  /* 23 */ { moves: 29, kinds: 6, goals: [], drops: 2, dropsMax: 1, layout: [
     '........',
     '.jj..jj.',
-    '.jh..hj.',
+    '.jhd.hj.',
     '...hh...',
     '...hh...',
     '.jh..hj.',
     '.jj..jj.',
     '........'] },
-  /* 24 */ { moves: 24, kinds: 6, goals: [['collect', 'comb', 20], ['collect', 'bow', 20], ['collect', 'curler', 20]] },
-  /* 25 */ { moves: 28, kinds: 5, goals: [], breather: true, layout: [
+  /* 24 */ { moves: 25, kinds: 6, goals: [['collect', 'comb', 18], ['collect', 'bow', 18], ['collect', 'curler', 18]], drops: 1, dropsMax: 1, layout: [
     '........',
     '........',
-    '...bb...',
+    '....d...',
+    '........',
+    '........',
+    '........',
+    '........',
+    '........'] },
+  /* 25 */ { moves: 26, kinds: 5, goals: [], drops: 1, dropsMax: 1, breather: true, tip: 'Coffee break before the big finish.', layout: [
+    '........',
+    '........',
+    '...bbd..',
     '.j....j.',
     '.j....j.',
     '...ii...',
     '........',
     '........'] },
-  /* 26 */ { moves: 28, kinds: 6, goals: [], layout: [
+  /* 26 */ { moves: 28, kinds: 6, goals: [], drops: 2, dropsMax: 1, layout: [
     '........',
     '.BX..XB.',
-    '.B....B.',
+    '.B.d..B.',
     '........',
     '........',
     '.B....B.',
@@ -2085,7 +2137,7 @@ const LEVELS = [
     '........',
     '.i.hh.i.',
     '........'] },
-  /* 29 */ { moves: 30, kinds: 6, goals: [], layout: [
+  /* 29 */ { moves: 30, kinds: 6, goals: [], drops: 1, dropsMax: 1, layout: [
     '........',
     '.jj..jj.',
     '.j.bb.j.',
@@ -2094,17 +2146,15 @@ const LEVELS = [
     '.j.bb.j.',
     '.jj..jj.',
     '........'] },
-  /* 30 */ { moves: 32, kinds: 6, goals: [['collect', 'bow', 20]], tip: 'Grand finale!', layout: [
-    '...hh...',
-    '.jjjjjj.',
-    '.jI..Ij.',
+  /* 30 */ { moves: 33, kinds: 6, goals: [['collect', 'bow', 16]], drops: 2, dropsMax: 1, tip: 'World 1 finale — the whole city is watching!', layout: [
+    '........',
+    '.jjhhjj.',
+    '.jI.dIj.',
     '.j.BB.j.',
     '.j.BB.j.',
     '.jI..Ij.',
     '.jjjjjj.',
-    '...hh...'] },
-
-  /* ===== WORLD 2 · BACKSTAGE (levels 31–60) ===== */
+    '........'] },
   /* 31 */ { moves: 24, kinds: 5, goals: [['collect', 'clap', 24], ['collect', 'lipstick', 24]], tip: 'Welcome backstage! New styles, same rules.' },
   /* 32 */ { moves: 26, kinds: 6, goals: [], layout: [
     '........',
@@ -2124,19 +2174,19 @@ const LEVELS = [
     '.i....i.',
     '..i..i..',
     '........'] },
-  /* 34 */ { moves: 28, kinds: 6, goals: [], layout: [
+  /* 34 */ { moves: 29, kinds: 6, drops: 2, dropsMax: 1, tip: 'Script run! Get the pages to set — swipe them down.', goals: [], layout: [
     '........',
-    '........',
+    '...d....',
     '.h.bb.h.',
     '.h.bb.h.',
     '........',
-    '.hh..hh.',
+    '.h....h.',
     '........',
     '........'] },
   /* 35 */ { moves: 24, kinds: 5, goals: [['score', 21000]], breather: true },
-  /* 36 */ { moves: 27, kinds: 6, goals: [['collect', 'mirror', 18]], layout: [
+  /* 36 */ { moves: 27, kinds: 6, drops: 1, dropsMax: 1, goals: [['collect', 'mirror', 18]], layout: [
     '........',
-    '........',
+    '...d....',
     '..JJJJ..',
     '..J..J..',
     '..J..J..',
@@ -2152,9 +2202,9 @@ const LEVELS = [
     '.bB..Bb.',
     '.bb..bb.',
     '........'] },
-  /* 38 */ { moves: 29, kinds: 6, goals: [['collect', 'reel', 16]], layout: [
+  /* 38 */ { moves: 31, kinds: 6, drops: 2, dropsMax: 1, goals: [['collect', 'reel', 16]], layout: [
     '........',
-    '.h....h.',
+    '.h.d..h.',
     '..h..h..',
     '...hh...',
     '...hh...',
@@ -2170,10 +2220,10 @@ const LEVELS = [
     '.jI..Ij.',
     '.jj..jj.',
     '........'] },
-  /* 40 */ { moves: 26, kinds: 5, goals: [['collect', 'brush', 30]], breather: true, layout: [
+  /* 40 */ { moves: 27, kinds: 6, goals: [['collect', 'brush', 18]], drops: 2, dropsMax: 1, tip: 'Act 1 boss board — big scene, no retakes!', layout: [
     '........',
     '........',
-    '........',
+    '...d....',
     '.jjjjjj.',
     '.jjjjjj.',
     '........',
@@ -2197,10 +2247,10 @@ const LEVELS = [
     '..h..h..',
     '........',
     '........'] },
-  /* 43 */ { moves: 30, kinds: 6, goals: [], layout: [
+  /* 43 */ { moves: 31, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
     '........',
     '.JJJJJJ.',
-    '.J.bb.J.',
+    '.Jdbb.J.',
     '.J.bb.J.',
     '.J....J.',
     '.JJJJJJ.',
@@ -2215,18 +2265,18 @@ const LEVELS = [
     '........',
     '..I..I..',
     '........'] },
-  /* 45 */ { moves: 25, kinds: 5, goals: [['score', 27000]], breather: true, layout: [
+  /* 45 */ { moves: 25, kinds: 5, drops: 1, dropsMax: 1, goals: [['score', 27000]], breather: true, layout: [
     '........',
-    '........',
+    '...d....',
     '...bb...',
     '..b..b..',
     '..b..b..',
     '...bb...',
     '........',
     '........'] },
-  /* 46 */ { moves: 29, kinds: 6, goals: [['collect', 'clap', 22]], layout: [
+  /* 46 */ { moves: 29, kinds: 6, drops: 1, dropsMax: 1, goals: [['collect', 'clap', 22]], layout: [
     '........',
-    '.XX..XX.',
+    '.XXd.XX.',
     '........',
     '...jj...',
     '...jj...',
@@ -2251,31 +2301,31 @@ const LEVELS = [
     '........',
     '..i..i..',
     '........'] },
-  /* 49 */ { moves: 28, kinds: 6, goals: [], layout: [
+  /* 49 */ { moves: 29, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
     '........',
-    '.Bb..bB.',
+    '.Bbd.bB.',
     '.bJ..Jb.',
     '...JJ...',
     '...JJ...',
     '.bJ..Jb.',
     '.Bb..bB.',
     '........'] },
-  /* 50 */ { moves: 30, kinds: 6, goals: [['collect', 'wig', 30]], breather: true, tip: 'Halfway through the shoot!', layout: [
+  /* 50 */ { moves: 30, kinds: 6, goals: [['collect', 'wig', 16]], drops: 2, dropsMax: 1, tip: 'Act 2 boss board — the director is watching!', layout: [
     '........',
-    '........',
+    '.b.d..b.',
     '.j.jj.j.',
+    '.h....h.',
+    '.h....h.',
     '.j.jj.j.',
-    '........',
-    '........',
-    '........',
+    '.b....b.',
     '........'] },
-  /* 51 */ { moves: 27, kinds: 6, goals: [], layout: [
+  /* 51 */ { moves: 29, kinds: 6, goals: [], layout: [
     '........',
-    '.HH..HH.',
+    '.H.h.hH.',
     '........',
-    '..hhhh..',
+    '..h..h..',
     '........',
-    '.HH..HH.',
+    '.H.h.hH.',
     '........',
     '........'] },
   /* 52 */ { moves: 28, kinds: 6, goals: [], layout: [
@@ -2287,9 +2337,9 @@ const LEVELS = [
     '.JJJJJJ.',
     '.JJJJJJ.',
     '........'] },
-  /* 53 */ { moves: 30, kinds: 6, goals: [['collect', 'brush', 18]], layout: [
+  /* 53 */ { moves: 30, kinds: 6, drops: 1, dropsMax: 1, goals: [['collect', 'brush', 18]], layout: [
     '........',
-    '.b.XX.b.',
+    '.bdXX.b.',
     '.b....b.',
     '..IIII..',
     '........',
@@ -2305,17 +2355,25 @@ const LEVELS = [
     '.hj..jh.',
     '.jh..hj.',
     '........'] },
-  /* 55 */ { moves: 26, kinds: 5, goals: [['collect', 'lipstick', 34]], breather: true },
-  /* 56 */ { moves: 28, kinds: 6, goals: [], layout: [
+  /* 55 */ { moves: 26, kinds: 5, drops: 1, dropsMax: 1, goals: [['collect', 'lipstick', 34]], breather: true , layout: [
     '........',
-    '.XXXXXX.',
     '........',
+    '...d....',
+    '........',
+    '........',
+    '........',
+    '........',
+    '........'] },
+  /* 56 */ { moves: 31, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '........',
+    '.XX..XX.',
+    '...d....',
     '.jjjjjj.',
     '.jjjjjj.',
     '........',
     '........',
     '........'] },
-  /* 57 */ { moves: 32, kinds: 6, goals: [['collect', 'reel', 18], ['collect', 'clap', 18]], layout: [
+  /* 57 */ { moves: 34, kinds: 6, goals: [['collect', 'reel', 18], ['collect', 'clap', 18]], layout: [
     '........',
     '..ih.hi.',
     '........',
@@ -2324,10 +2382,10 @@ const LEVELS = [
     '........',
     '..ih.hi.',
     '........'] },
-  /* 58 */ { moves: 29, kinds: 6, goals: [], layout: [
+  /* 58 */ { moves: 31, kinds: 6, drops: 1, dropsMax: 1, goals: [], layout: [
     '........',
     '.JbJJbJ.',
-    '.b....b.',
+    '.b.d..b.',
     '.J.II.J.',
     '.J.II.J.',
     '.b....b.',
@@ -2342,13 +2400,13 @@ const LEVELS = [
     '.H....H.',
     '..h..h..',
     '........'] },
-  /* 60 */ { moves: 36, kinds: 6, goals: [['collect', 'lipstick', 16]], tip: 'Opening night — the big finale!', layout: [
-    '........',
+  /* 60 */ { moves: 39, kinds: 6, drops: 2, dropsMax: 1, goals: [['collect', 'lipstick', 16]], tip: 'Opening night — the big finale!', layout: [
+    '...d....',
     '.jjhhjj.',
     '.jI..Ij.',
     '.j.XX.j.',
     '.j.XX.j.',
-    '.jI..Ij.',
+    '.ji..ij.',
     '.jjhhjj.',
     '........'] },
   /* 61 */ { moves: 26, kinds: 5, goals: [['collect', 'trophy', 24], ['collect', 'bouquet', 24]], tip: 'Welcome to the red carpet!' },
@@ -3085,7 +3143,9 @@ const Render = {
       const a = 0.45 + 0.35 * Math.sin(now / 250);
       ctx.fillStyle = `rgba(244,184,58,${a.toFixed(2)})`;
       for (let c = 0; c < Board.cols; c++) {
-        const cx = (c + 0.5) * s, y = H - s * 0.13;
+        const er = Game.exitRow(c);
+        if (er < 0) continue;
+        const cx = (c + 0.5) * s, y = (er + 1) * s - s * 0.13;
         ctx.beginPath(); ctx.moveTo(cx - s * 0.12, y - s * 0.06); ctx.lineTo(cx + s * 0.12, y - s * 0.06); ctx.lineTo(cx, y + s * 0.07); ctx.closePath(); ctx.fill();
       }
     }
@@ -3133,7 +3193,7 @@ const Input = {
     Game.armIdle();
     if (Game.mode === 'hammer') {
       const ht = Board.grid[cell.r][cell.c];
-      if (ht && ht.drop) { UI.toast("Can't smash the coffee — bring it down!"); return; }
+      if (ht && ht.drop) { UI.toast(`Can't smash the ${dropItem(World.current).name} — bring it down!`, false, 'oops'); return; }
       if (ht || Board.cells[cell.r][cell.c].box) Game.hammerAt(cell);
       return;
     }
@@ -3219,9 +3279,9 @@ const Game = {
     this.score = 0;
     UI.setScore(0);
 
-    World.apply(worldOf(n));
     this.dropsToSpawn = lv.drops.total - lv.drops.initial;
     Board.setup(lv.spec, lv.kinds);
+    World.apply(worldOf(n));                     // after the board exists (it redraws)
     UI.showLevelHud(lv);
     UI.setMoves(this.movesLeft);
     UI.updateGoals();
@@ -3266,11 +3326,34 @@ const Game = {
     if (this.locked) { this._hintTimer = setTimeout(() => this.showHint(silent), 250); return; }
     const moves = Board.findMoves();
     if (!moves.length) return;
-    const m = moves[Math.floor(Math.random() * moves.length)];
+    const m = this.bestHint(moves);
     this.hint = { a: m.a, b: m.b, start: performance.now() };
     if (!silent) UI.toast(Lines.hint(), false, 'wink'); else Pip.react('wink', 1500, false);
     Sound.play('twinkle');
     Loop.wake();
+  },
+
+  // On coffee levels, prefer moves that bring a coffee down.
+  bestHint(moves) {
+    const want = this.level && this.level.goals.some(g => g.type === 'drop' && g.have < g.need);
+    if (!want) return moves[Math.floor(Math.random() * moves.length)];
+    let best = null, bestScore = -1;
+    for (const m of moves) {
+      const ta = Board.grid[m.a.r][m.a.c], tb = Board.grid[m.b.r][m.b.c];
+      let sc = Math.random();
+      // swapping a coffee downward
+      if (ta.drop && m.b.r > m.a.r) sc += 30;
+      if (tb.drop && m.a.r > m.b.r) sc += 30;
+      // matches that clear tiles beneath a coffee
+      Board.swap(m.a, m.b);
+      const runs = Board.findMatches();
+      Board.swap(m.a, m.b);
+      runs.forEach(run => run.cells.forEach(p => {
+        for (let r = 0; r < p.r; r++) { const t = Board.grid[r][p.c]; if (t && t.drop) sc += 10 + p.r; }
+      }));
+      if (sc > bestScore) { bestScore = sc; best = m; }
+    }
+    return best;
   },
 
   clearHint() {
@@ -3303,7 +3386,9 @@ const Game = {
 
     const combo = !ta.drop && !tb.drop && (ta.special === 'bomb' || tb.special === 'bomb' || !!(ta.special && tb.special));
     const k = Board.kindsMatrix();
-    const makesMatch = combo || Board.matchesAt(k, ta.r, ta.c) || Board.matchesAt(k, tb.r, tb.c);
+    // a coffee can always be swiped straight down one space (it costs a move)
+    const coffeeDown = (ta.drop && !tb.drop && ta.r > tb.r) || (tb.drop && !ta.drop && tb.r > ta.r);
+    const makesMatch = combo || coffeeDown || Board.matchesAt(k, ta.r, ta.c) || Board.matchesAt(k, tb.r, tb.c);
 
     if (!makesMatch) {
       Board.swap(a, b);
@@ -3388,11 +3473,23 @@ const Game = {
     if (Board.findMoves().length === 0) await this.shuffle();
   },
 
-  // Drops that reach the bottom row get delivered.
-  async deliverDrops() {
-    const r = Board.rows - 1, done = [];
-    for (let c = 0; c < Board.cols; c++) {
+  // Lowest cell in a column a tile can sit in (skips boxes and locked tiles at the bottom).
+  exitRow(c) {
+    if (!Board.grid.length || !Board.cells.length) return -1;
+    for (let r = Board.rows - 1; r >= 0; r--) {
       const t = Board.grid[r][c];
+      if (Board.cells[r][c].box || (t && t.lock)) continue;
+      return r;
+    }
+    return -1;
+  },
+
+  // Drops that reach the bottom of their column get delivered.
+  async deliverDrops() {
+    const done = [];
+    for (let c = 0; c < Board.cols; c++) {
+      const r = this.exitRow(c);
+      const t = r >= 0 && Board.grid[r][c];
       if (t && t.drop) done.push(t);
     }
     if (!done.length) return false;
@@ -3716,7 +3813,7 @@ const Game = {
       for (let i = movers.length, rank = 0; i < open.length; i++, rank++) {
         const r = open[i];
         // Sometimes the top new tile in a column is an ingredient drop.
-        const top = i === open.length - 1;
+        const top = i === open.length - 1 && this.exitRow(c) >= Board.rows - 2;   // only where it can get out
         const onBoard = Board.dropsOnBoard();
         const wantDrop = top && this.dropsToSpawn > 0 && onBoard < ((this.level && this.level.drops.max) || 2) &&
                          (onBoard === 0 || Math.random() < 0.18);
@@ -4054,7 +4151,7 @@ const UI = {
       ice: layered(buildIceSprite(px, 2)),
       chain: layered(buildChainSprite(px, 1)),
       box: buildBoxSprite(px, 1).toDataURL(),
-      drop: buildDropSprite(px).toDataURL(),
+      drop: buildDropSprite(px, World.current).toDataURL(),
     };
   },
 
@@ -4422,8 +4519,11 @@ const UI = {
                              how: 'Include the frozen tiles in a match. Thick ice takes two.' };
       case 'chain': return { icon: this.icons.chain, title: `Break the chains (${left})`,
                              how: "Chained tiles can't move. Match them where they sit to set them free." };
-      case 'drop':  return { icon: this.icons.drop,  title: `Coffee run: deliver ${left}`,
-                             how: 'Clear the tiles under each coffee so it drops to the bottom row (follow the gold arrows).' };
+      case 'drop': {
+        const it = dropItem(w);
+        return { icon: buildDropSprite(72, w).toDataURL(), title: `${it.run}: deliver ${left}`,
+                 how: `Swipe a ${it.name} down, or clear the tiles under it, until it reaches the bottom (follow the gold arrows).` };
+      }
       case 'box':   return { icon: this.icons.box,   title: `Open the boxes (${left})`,
                              how: 'Make matches right next to a box. Darker boxes take more hits.' };
       case 'score': return { icon: null, title: `Reach ${g.need.toLocaleString()} points`,
