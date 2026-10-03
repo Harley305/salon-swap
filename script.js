@@ -252,7 +252,7 @@ function drawSpray(ctx, t) {
   });
 }
 
-const TILE_TYPES = [
+const SALON_TILES = [
   { id: 'comb',     name: 'Comb', plural: 'Combs',        base: '#3AAFA9', light: '#8BE6DF', dark: '#1D7470', draw: drawComb },
   { id: 'scissors', name: 'Shears', plural: 'Shears',      base: '#FF7E5F', light: '#FFB49E', dark: '#C14A2E', draw: drawScissors },
   { id: 'bow',      name: 'Bow', plural: 'Bows',         base: '#EC5FA5', light: '#FFA3CF', dark: '#A8306C', draw: drawBow },
@@ -260,6 +260,170 @@ const TILE_TYPES = [
   { id: 'dryer',    name: 'Blow Dryer', plural: 'Blow Dryers',  base: '#8C7BEF', light: '#C4B9FF', dark: '#5240B8', draw: drawDryer },
   { id: 'spray',    name: 'Spritz', plural: 'Spritz Bottles',      base: '#7CC243', light: '#B6E68C', dark: '#4A8420', draw: drawSpray },
 ];
+
+/* ----- World 2: Backstage tiles ----- */
+function drawReel(ctx, t) {
+  ctx.fillStyle = WHITE;
+  ctx.beginPath(); ctx.arc(46, 46, 30, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = t.dark;
+  for (let i = 0; i < 5; i++) {
+    const a = -Math.PI / 2 + i * (Math.PI * 2 / 5);
+    ctx.beginPath(); ctx.arc(46 + Math.cos(a) * 17, 46 + Math.sin(a) * 17, 7, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.beginPath(); ctx.arc(46, 46, 4, 0, Math.PI * 2); ctx.fill();
+  // film tail
+  ctx.fillStyle = WHITE;
+  ctx.beginPath();
+  ctx.moveTo(62, 70); ctx.quadraticCurveTo(76, 78, 90, 70); ctx.lineTo(92, 82); ctx.quadraticCurveTo(76, 90, 60, 80);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = t.dark;
+  [[70, 79], [78, 80], [86, 77]].forEach(([x, y]) => { ctx.fillRect(x - 1.5, y - 2, 3, 3.5); });
+}
+
+function drawClap(ctx, t) {
+  // board
+  ctx.fillStyle = WHITE;
+  rr(ctx, 20, 44, 60, 38, 5); ctx.fill();
+  ctx.fillStyle = t.dark;
+  rr(ctx, 26, 58, 48, 4, 2); ctx.fill();
+  rr(ctx, 26, 68, 34, 4, 2); ctx.fill();
+  // striped top bar on the board
+  ctx.save();
+  rr(ctx, 20, 44, 60, 9, 3); ctx.clip();
+  ctx.fillStyle = WHITE; ctx.fillRect(20, 44, 60, 9);
+  ctx.fillStyle = t.dark;
+  for (let x = 14; x < 84; x += 14) { ctx.beginPath(); ctx.moveTo(x, 53); ctx.lineTo(x + 7, 44); ctx.lineTo(x + 14, 44); ctx.lineTo(x + 7, 53); ctx.fill(); }
+  ctx.restore();
+  // open clapper
+  ctx.save();
+  ctx.translate(21, 42); ctx.rotate(-0.32);
+  ctx.fillStyle = WHITE; rr(ctx, 0, -10, 60, 10, 3); ctx.fill();
+  ctx.beginPath(); rr(ctx, 0, -10, 60, 10, 3); ctx.clip();
+  ctx.fillStyle = t.dark;
+  for (let x = -6; x < 64; x += 14) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 7, -10); ctx.lineTo(x + 14, -10); ctx.lineTo(x + 7, 0); ctx.fill(); }
+  ctx.restore();
+  ctx.fillStyle = t.dark;
+  ctx.beginPath(); ctx.arc(22, 43, 3, 0, Math.PI * 2); ctx.fill();
+}
+
+function drawLipstick(ctx, t) {
+  withRotation(ctx, 16, () => {
+    ctx.fillStyle = WHITE;
+    // bullet
+    ctx.beginPath();
+    ctx.moveTo(40, 50); ctx.lineTo(40, 30); ctx.quadraticCurveTo(40, 22, 48, 18); ctx.lineTo(60, 13); ctx.lineTo(60, 50); ctx.closePath();
+    ctx.fill();
+    // collar
+    rr(ctx, 37, 48, 26, 12, 3); ctx.fill();
+    ctx.fillStyle = t.dark; ctx.fillRect(37, 52.5, 26, 2.5);
+    // case
+    ctx.fillStyle = WHITE;
+    rr(ctx, 35, 60, 30, 28, 5); ctx.fill();
+    ctx.fillStyle = t.dark; rr(ctx, 40, 65, 4, 18, 2); ctx.fill();
+  });
+}
+
+function drawStarAward(ctx, t) {
+  const star = (cx, cy, R, r) => {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5, rad = i % 2 ? r : R;
+      ctx.lineTo(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad);
+    }
+    ctx.closePath();
+  };
+  ctx.fillStyle = WHITE;
+  star(50, 50, 36, 15); ctx.fill();
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = WHITE; ctx.lineWidth = 6; ctx.stroke();
+  ctx.fillStyle = t.dark;
+  star(50, 52, 14, 6); ctx.fill();
+}
+
+function drawBrush(ctx, t) {
+  withRotation(ctx, 38, () => {
+    ctx.fillStyle = WHITE;
+    // big fluffy powder-brush head
+    ctx.beginPath();
+    ctx.moveTo(42, 42);
+    ctx.bezierCurveTo(26, 34, 28, 8, 50, 6);
+    ctx.bezierCurveTo(72, 8, 74, 34, 58, 42);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = t.dark; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(44, 16); ctx.quadraticCurveTo(40, 26, 44, 36); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(56, 16); ctx.quadraticCurveTo(60, 26, 56, 36); ctx.stroke();
+    // ferrule
+    rr(ctx, 41, 41, 18, 12, 2); ctx.fill();
+    ctx.fillStyle = t.dark;
+    ctx.fillRect(41, 45, 18, 2); ctx.fillRect(41, 49, 18, 2);
+    // handle
+    ctx.fillStyle = WHITE;
+    ctx.beginPath();
+    ctx.moveTo(43, 53); ctx.lineTo(57, 53); ctx.lineTo(54, 90); ctx.quadraticCurveTo(50, 94, 46, 90); ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = t.dark;
+    ctx.beginPath(); ctx.arc(50, 84, 2.5, 0, Math.PI * 2); ctx.fill();
+  });
+}
+
+function drawMirror(ctx, t) {
+  // stand
+  ctx.fillStyle = WHITE;
+  rr(ctx, 46, 66, 8, 14, 2); ctx.fill();
+  rr(ctx, 32, 78, 36, 7, 3.5); ctx.fill();
+  // frame
+  ctx.beginPath(); ctx.ellipse(50, 42, 25, 28, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = t.dark;
+  ctx.beginPath(); ctx.ellipse(50, 42, 17, 20, 0, 0, Math.PI * 2); ctx.fill();
+  // glass shine
+  ctx.strokeStyle = WHITE; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(41, 37); ctx.lineTo(48, 28); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(43, 45); ctx.lineTo(55, 31); ctx.stroke();
+  // bulbs around the frame
+  ctx.fillStyle = t.light;
+  for (let i = 0; i < 8; i++) {
+    const a = i * Math.PI / 4;
+    ctx.beginPath(); ctx.arc(50 + Math.cos(a) * 21, 42 + Math.sin(a) * 24, 2.6, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+const STAGE_TILES = [
+  { id: 'reel',     name: 'Film Reel',  plural: 'Film Reels',  base: '#3AAFA9', light: '#8BE6DF', dark: '#1D7470', draw: drawReel },
+  { id: 'clap',     name: 'Clapboard',  plural: 'Clapboards',  base: '#FF7E5F', light: '#FFB49E', dark: '#C14A2E', draw: drawClap },
+  { id: 'lipstick', name: 'Lipstick',   plural: 'Lipsticks',   base: '#EC5FA5', light: '#FFA3CF', dark: '#A8306C', draw: drawLipstick },
+  { id: 'star',     name: 'Star',       plural: 'Stars',       base: '#F4B83A', light: '#FFDF8A', dark: '#A8730B', draw: drawStarAward },
+  { id: 'brush',    name: 'Brush',      plural: 'Brushes',     base: '#8C7BEF', light: '#C4B9FF', dark: '#5240B8', draw: drawBrush },
+  { id: 'mirror',   name: 'Mirror',     plural: 'Mirrors',     base: '#7CC243', light: '#E9FFD2', dark: '#4A8420', draw: drawMirror },
+];
+
+/* ----- Worlds -----
+   World 1 (levels 1–30): the road, salon tiles.
+   World 2 (levels 31+):  backstage, studio tiles. */
+const WORLDS = [
+  null,
+  { n: 1, name: 'The Road',  tiles: SALON_TILES },
+  { n: 2, name: 'Backstage', tiles: STAGE_TILES },
+];
+const worldOf = level => (level > 30 ? 2 : 1);
+const tilesFor = level => WORLDS[worldOf(level)].tiles;
+
+// The tiles currently in play (swapped in place when the world changes).
+const TILE_TYPES = SALON_TILES.slice();
+
+const World = {
+  current: 1,
+  apply(w) {
+    document.body.dataset.world = String(w);
+    if (w === this.current) return;
+    this.current = w;
+    TILE_TYPES.length = 0;
+    WORLDS[w].tiles.forEach(t => TILE_TYPES.push(t));
+    Render.sprites = [];                       // rebuild tile pictures
+    if (typeof UI !== 'undefined' && UI.icons) { UI.buildIcons(); UI.refreshHero(); }
+    Render.layout();
+  },
+};
 
 const BOMB = -2;   // kind used by the Glam Ball (never matches by color)
 
@@ -412,7 +576,7 @@ const Save = (() => {
     savedAt: 0,
     settings: { muted: false, showDebug: CONFIG.showDebug },
     progress: { unlocked: 1, stars: {}, best: {}, fails: {} },
-    help: { howTo: false, seen: {}, carriedOver: false },
+    help: { howTo: false, seen: {}, carriedOver: false, world: 1 },
     boosters: { hammer: 2, shuffle: 2, moves: 2 },    // Phase 7
     daily: { lastClaim: null, streak: 0 },            // Phase 7
     stats: { levelsWon: 0 },
@@ -477,6 +641,14 @@ const Save = (() => {
 
   return {
     load, write,
+    // Replace this device's progress with a loaded backup (file or code).
+    importData(obj) {
+      if (!obj || typeof obj !== 'object' || typeof obj.v !== 'number' || !obj.progress) return false;
+      data = migrate(obj);
+      data.help.carriedOver = true;          // never re-apply the ?beat link on top
+      write();
+      return true;
+    },
     get data() { return data; },
     get ok() { return available; },
     VERSION,
@@ -1449,6 +1621,254 @@ const LEVELS = [
     '.jI..Ij.',
     '.jjjjjj.',
     '...hh...'] },
+
+  /* ===== WORLD 2 · BACKSTAGE (levels 31–60) ===== */
+  /* 31 */ { moves: 24, kinds: 5, goals: [['collect', 'clap', 24], ['collect', 'lipstick', 24]], tip: 'Welcome backstage! New styles, same rules.' },
+  /* 32 */ { moves: 26, kinds: 6, goals: [], layout: [
+    '........',
+    '.jjjjjj.',
+    '.j....j.',
+    '.j.JJ.j.',
+    '.j.JJ.j.',
+    '.j....j.',
+    '.jjjjjj.',
+    '........'] },
+  /* 33 */ { moves: 29, kinds: 6, goals: [['collect', 'star', 16]], layout: [
+    '........',
+    '..i..i..',
+    '........',
+    '.i.ii.i.',
+    '........',
+    '.i....i.',
+    '..i..i..',
+    '........'] },
+  /* 34 */ { moves: 28, kinds: 6, goals: [], layout: [
+    '........',
+    '........',
+    '.h.bb.h.',
+    '.h.bb.h.',
+    '........',
+    '.hh..hh.',
+    '........',
+    '........'] },
+  /* 35 */ { moves: 24, kinds: 5, goals: [['score', 21000]], breather: true },
+  /* 36 */ { moves: 27, kinds: 6, goals: [['collect', 'mirror', 18]], layout: [
+    '........',
+    '........',
+    '..JJJJ..',
+    '..J..J..',
+    '..J..J..',
+    '..JJJJ..',
+    '........',
+    '........'] },
+  /* 37 */ { moves: 29, kinds: 6, goals: [], tip: 'Clear the boxes to make room on stage!', layout: [
+    '........',
+    '.bb..bb.',
+    '.bB..Bb.',
+    '........',
+    '........',
+    '.bB..Bb.',
+    '.bb..bb.',
+    '........'] },
+  /* 38 */ { moves: 29, kinds: 6, goals: [['collect', 'reel', 16]], layout: [
+    '........',
+    '.h....h.',
+    '..h..h..',
+    '...hh...',
+    '...hh...',
+    '..h..h..',
+    '.h....h.',
+    '........'] },
+  /* 39 */ { moves: 27, kinds: 6, goals: [], layout: [
+    '........',
+    '.jj..jj.',
+    '.jI..Ij.',
+    '...jj...',
+    '...jj...',
+    '.jI..Ij.',
+    '.jj..jj.',
+    '........'] },
+  /* 40 */ { moves: 26, kinds: 5, goals: [['collect', 'brush', 30]], breather: true, layout: [
+    '........',
+    '........',
+    '........',
+    '.jjjjjj.',
+    '.jjjjjj.',
+    '........',
+    '........',
+    '........'] },
+  /* 41 */ { moves: 26, kinds: 6, goals: [], layout: [
+    '........',
+    '.BB..BB.',
+    '........',
+    '..IIII..',
+    '........',
+    '.BB..BB.',
+    '........',
+    '........'] },
+  /* 42 */ { moves: 29, kinds: 6, goals: [['collect', 'lipstick', 18], ['collect', 'star', 18]], layout: [
+    '........',
+    '........',
+    '..h..h..',
+    '.h....h.',
+    '.h....h.',
+    '..h..h..',
+    '........',
+    '........'] },
+  /* 43 */ { moves: 30, kinds: 6, goals: [], layout: [
+    '........',
+    '.JJJJJJ.',
+    '.J.bb.J.',
+    '.J.bb.J.',
+    '.J....J.',
+    '.JJJJJJ.',
+    '........',
+    '........'] },
+  /* 44 */ { moves: 30, kinds: 6, goals: [], layout: [
+    '........',
+    '..I..I..',
+    '........',
+    '.h.ii.h.',
+    '.h....h.',
+    '........',
+    '..I..I..',
+    '........'] },
+  /* 45 */ { moves: 25, kinds: 5, goals: [['score', 27000]], breather: true, layout: [
+    '........',
+    '........',
+    '...bb...',
+    '..b..b..',
+    '..b..b..',
+    '...bb...',
+    '........',
+    '........'] },
+  /* 46 */ { moves: 29, kinds: 6, goals: [['collect', 'clap', 22]], layout: [
+    '........',
+    '.XX..XX.',
+    '........',
+    '...jj...',
+    '...jj...',
+    '........',
+    '.XX..XX.',
+    '........'] },
+  /* 47 */ { moves: 32, kinds: 6, goals: [], layout: [
+    '........',
+    '.jjjjjj.',
+    '.jhhhhj.',
+    '.j....j.',
+    '.j....j.',
+    '.jhhhhj.',
+    '.jjjjjj.',
+    '........'] },
+  /* 48 */ { moves: 29, kinds: 6, goals: [['collect', 'mirror', 16], ['collect', 'reel', 16]], layout: [
+    '........',
+    '..i..i..',
+    '........',
+    '.i.II.i.',
+    '.i.II.i.',
+    '........',
+    '..i..i..',
+    '........'] },
+  /* 49 */ { moves: 28, kinds: 6, goals: [], layout: [
+    '........',
+    '.Bb..bB.',
+    '.bJ..Jb.',
+    '...JJ...',
+    '...JJ...',
+    '.bJ..Jb.',
+    '.Bb..bB.',
+    '........'] },
+  /* 50 */ { moves: 30, kinds: 6, goals: [['collect', 'star', 30]], breather: true, tip: 'Halfway through Backstage!', layout: [
+    '........',
+    '........',
+    '.j.jj.j.',
+    '.j.jj.j.',
+    '........',
+    '........',
+    '........',
+    '........'] },
+  /* 51 */ { moves: 27, kinds: 6, goals: [], layout: [
+    '........',
+    '.HH..HH.',
+    '........',
+    '..hhhh..',
+    '........',
+    '.HH..HH.',
+    '........',
+    '........'] },
+  /* 52 */ { moves: 28, kinds: 6, goals: [], layout: [
+    '........',
+    '.JJJJJJ.',
+    '.JJJJJJ.',
+    '........',
+    '........',
+    '.JJJJJJ.',
+    '.JJJJJJ.',
+    '........'] },
+  /* 53 */ { moves: 30, kinds: 6, goals: [['collect', 'brush', 18]], layout: [
+    '........',
+    '.b.XX.b.',
+    '.b....b.',
+    '..IIII..',
+    '........',
+    '.b....b.',
+    '.b.XX.b.',
+    '........'] },
+  /* 54 */ { moves: 28, kinds: 6, goals: [], layout: [
+    '........',
+    '.jh..hj.',
+    '.hj..jh.',
+    '...ii...',
+    '...ii...',
+    '.hj..jh.',
+    '.jh..hj.',
+    '........'] },
+  /* 55 */ { moves: 26, kinds: 5, goals: [['collect', 'lipstick', 34]], breather: true },
+  /* 56 */ { moves: 28, kinds: 6, goals: [], layout: [
+    '........',
+    '.XXXXXX.',
+    '........',
+    '.jjjjjj.',
+    '.jjjjjj.',
+    '........',
+    '........',
+    '........'] },
+  /* 57 */ { moves: 32, kinds: 6, goals: [['collect', 'reel', 18], ['collect', 'clap', 18]], layout: [
+    '........',
+    '..ih.hi.',
+    '........',
+    '.H....H.',
+    '..h..h..',
+    '........',
+    '..ih.hi.',
+    '........'] },
+  /* 58 */ { moves: 29, kinds: 6, goals: [], layout: [
+    '........',
+    '.JbJJbJ.',
+    '.b....b.',
+    '.J.II.J.',
+    '.J.II.J.',
+    '.b....b.',
+    '.JbJJbJ.',
+    '........'] },
+  /* 59 */ { moves: 31, kinds: 6, goals: [['collect', 'mirror', 16], ['collect', 'star', 16]], layout: [
+    '........',
+    '..h..h..',
+    '.H....H.',
+    '..jjjj..',
+    '..jjjj..',
+    '.H....H.',
+    '..h..h..',
+    '........'] },
+  /* 60 */ { moves: 36, kinds: 6, goals: [['collect', 'lipstick', 16]], tip: 'Opening night — the big finale!', layout: [
+    '...hh...',
+    '.JJJJJJ.',
+    '.JI..IJ.',
+    '.J.XX.J.',
+    '.J.XX.J.',
+    '.JI..IJ.',
+    '.JJJJJJ.',
+    '...hh...'] },
 ];
 
 /* Levels after the handmade ones are generated — the same level number
@@ -1465,7 +1885,7 @@ function seededRandom(seed) {
 
 function generateLevel(n) {
   const rnd = seededRandom(n * 7919 + 13);
-  const tier = Math.min(1, (n - LEVELS.length) / 60);   // ramps over 60 levels, then holds
+  const tier = Math.min(1, Math.max(0, (n - 30) / 70));   // keeps ramping after the handmade levels, then holds
   const breather = n % 5 === 0;
   const kinds = breather ? 5 : 6;
   let moves = Math.round(29 - 3 * tier) + (breather ? 3 : 0);
@@ -1494,7 +1914,7 @@ function generateLevel(n) {
 
   const goals = [];
   if (rnd() < 0.45) {
-    goals.push(['collect', TILE_TYPES[Math.floor(rnd() * kinds)].id, Math.round(16 + 12 * tier)]);
+    goals.push(['collect', tilesFor(n)[Math.floor(rnd() * kinds)].id, Math.round(16 + 12 * tier)]);
     moves += 2;
   }
   return { moves, kinds, goals, breather, layout: grid.map(row => row.join('')) };
@@ -1525,7 +1945,7 @@ function buildLevel(n) {
   }
 
   const goals = raw.goals.map(g => {
-    if (g[0] === 'collect') return { type: 'collect', kind: TILE_TYPES.findIndex(t => t.id === g[1]), need: g[2], have: 0 };
+    if (g[0] === 'collect') return { type: 'collect', kind: tilesFor(n).findIndex(t => t.id === g[1]), need: g[2], have: 0 };
     if (g[0] === 'score') return { type: 'score', need: g[1], have: 0 };
     return { type: g[0], need: counts[g[0]] || 0, have: 0 };
   });
@@ -2049,6 +2469,7 @@ const Game = {
     this.score = 0;
     UI.setScore(0);
 
+    World.apply(worldOf(n));
     Board.setup(lv.spec, lv.kinds);
     UI.showLevelHud(lv);
     UI.setMoves(this.movesLeft);
@@ -2754,8 +3175,7 @@ const UI = {
     document.title = `${CONFIG.playerName}'s ${CONFIG.gameName}`;
 
     this.buildIcons();
-    $('heroTiles').innerHTML = this.icons.tiles
-      .map((src, i) => `<img src="${src}" alt="" style="animation-delay:${(i * 0.18).toFixed(2)}s">`).join('');
+    this.refreshHero();
 
     // Sound can only start after her first tap (iPhone rule).
     const unlock = () => Sound.unlock();
@@ -2770,6 +3190,7 @@ const UI = {
     this.updateBoosters();
 
     $('btnPlay').addEventListener('click', () => this.openMap());
+    $('btnSaves').addEventListener('click', () => this.showSaves());
     $('goals').addEventListener('click', () => this.showGoalsHelp());
     $('btnHelpMap').addEventListener('click', () => this.showHowTo(0));
     $('btnHelpGame').addEventListener('click', () => { if (!Game.locked) this.showHowTo(0); });
@@ -2801,6 +3222,7 @@ const UI = {
     ['title', 'map', 'game'].forEach(s => {
       $('screen' + s[0].toUpperCase() + s.slice(1)).hidden = s !== name;
     });
+    if (name !== 'game') World.apply(worldOf(Save.data.progress.unlocked));
     if (name === 'game') Render.layout();
     Music.play(name === 'game' ? 'emerald' : 'road');
     if (name === 'title') {
@@ -2808,6 +3230,11 @@ const UI = {
       $('btnPlay').textContent = next > 1 ? `Continue · Level ${next}` : 'Play';
     }
     Loop.wake();
+  },
+
+  refreshHero() {
+    $('heroTiles').innerHTML = this.icons.tiles
+      .map((src, i) => `<img src="${src}" alt="" style="animation-delay:${(i * 0.18).toFixed(2)}s">`).join('');
   },
 
   buildIcons() {
@@ -2946,6 +3373,7 @@ const UI = {
   renderMap() {
     const p = Save.data.progress;
     const total = Math.max(LEVELS.length, p.unlocked + 3);
+    const W1 = 30;                                    // last level of World 1
     const scroll = $('mapScroll'), path = $('mapPath');
     const W = scroll.clientWidth || 360;
     const gap = 92, padTop = 80, padBottom = 110;
@@ -2960,7 +3388,7 @@ const UI = {
       pts.push([x, y]);
       const stars = p.stars[n] || 0;
       const state = n > p.unlocked ? 'locked' : n === p.unlocked ? 'current' : 'done';
-      nodes += `<button class="node ${state}${n % 10 === 0 ? ' milestone' : ''}" data-n="${n}" ` +
+      nodes += `<button class="node ${state}${n % 10 === 0 ? ' milestone' : ''}${n > W1 ? ' w2' : ''}" data-n="${n}" ` +
                `style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px" aria-label="Level ${n}">` +
                `<span class="node-num">${n}</span>` +
                (state === 'done' ? `<span class="node-stars">${'★'.repeat(stars)}<i>${'★'.repeat(3 - stars)}</i></span>` : '') +
@@ -2968,14 +3396,28 @@ const UI = {
     }
     const line = list => list.map((pt, i) => (i ? 'L' : 'M') + pt[0].toFixed(1) + ' ' + pt[1].toFixed(1)).join(' ');
     const reached = Math.min(p.unlocked, total);
+    const road = pts.slice(0, W1), film = pts.slice(W1 - 1);
+    const roadDone = pts.slice(0, Math.min(reached, W1));
+    const filmDone = reached > W1 ? pts.slice(W1 - 1, reached) : [];
+    // banner halfway between level 30 and 31
+    const mx = (pts[W1 - 1][0] + pts[W1][0]) / 2, by = (pts[W1 - 1][1] + pts[W1][1]) / 2;
+    const bx = mx > W / 2 ? W * 0.27 : W * 0.73;      // the open side, away from the nodes
     path.innerHTML =
       `<svg class="map-line" width="${W}" height="${H}" aria-hidden="true">` +
-      `<path class="road-edge" d="${line(pts)}"/>` +
-      `<path class="road" d="${line(pts)}"/>` +
-      `<path class="road-glow" d="${line(pts.slice(0, reached))}"/>` +
-      `<path class="road-done" d="${line(pts.slice(0, reached))}"/>` +
-      `<path class="road-brick" d="${line(pts)}"/>` +
-      `<path class="road-lane" d="${line(pts)}"/></svg>` + nodes;
+      `<path class="road-edge" d="${line(road)}"/>` +
+      `<path class="road" d="${line(road)}"/>` +
+      `<path class="road-glow" d="${line(roadDone)}"/>` +
+      `<path class="road-done" d="${line(roadDone)}"/>` +
+      `<path class="road-brick" d="${line(road)}"/>` +
+      `<path class="road-lane" d="${line(road)}"/>` +
+      `<path class="film-base" d="${line(film)}"/>` +
+      `<path class="film-holes" d="${line(film)}"/>` +
+      `<path class="film-mid" d="${line(film)}"/>` +
+      `<path class="film-frames" d="${line(film)}"/>` +
+      (filmDone.length > 1 ? `<path class="film-glow" d="${line(filmDone)}"/><path class="film-done" d="${line(filmDone)}"/>` : '') +
+      `</svg>` +
+      `<div class="world-banner" style="left:${bx.toFixed(1)}px;top:${by.toFixed(1)}px">` +
+      `<span>World 2</span>Backstage</div>` + nodes;
 
     const totalStars = Object.values(p.stars).reduce((a, b) => a + b, 0);
     $('mapStars').textContent = `★ ${totalStars}`;
@@ -2994,13 +3436,164 @@ const UI = {
     $('modal').hidden = true;
   },
 
+  /* ----- Save & load (backup file or code) ----- */
+  saveSummary(d) {
+    const p = d.progress;
+    const stars = Object.values(p.stars || {}).reduce((a, b) => a + b, 0);
+    const done = Math.max(0, (p.unlocked || 1) - 1);
+    return `${done} level${done === 1 ? '' : 's'} done · ★ ${stars}`;
+  },
+
+  saveCode() {
+    const json = JSON.stringify(Save.data);
+    return 'SALON1-' + btoa(unescape(encodeURIComponent(json)));
+  },
+
+  readCode(text) {
+    try {
+      const t = String(text).trim();
+      const body = t.startsWith('SALON1-') ? t.slice(7) : t;
+      if (body.startsWith('{')) return JSON.parse(body);              // a pasted save file
+      return JSON.parse(decodeURIComponent(escape(atob(body.replace(/\s+/g, '')))));
+    } catch (e) { return null; }
+  },
+
+  showSaves(note = '') {
+    Save.write();
+    this.showModal(`
+      <div class="panel-kicker">Your progress</div>
+      <div class="panel-title">Save &amp; Load</div>
+      <div class="save-now">${this.saveSummary(Save.data)}</div>
+      <div class="panel-note">The game saves automatically on this device. Make a backup to move it to another phone or link.</div>
+      ${note ? `<div class="save-note">${note}</div>` : ''}
+      <div class="save-grid">
+        <button class="btn" data-act="download">⬇️ Save file</button>
+        <button class="btn" data-act="upload">⬆️ Load file</button>
+        <button class="btn btn-ghost" data-act="copy">Copy code</button>
+        <button class="btn btn-ghost" data-act="paste">Paste code</button>
+      </div>
+      <div class="panel-btns"><button class="btn btn-ghost" data-act="close">Close</button></div>`,
+      {
+        download: () => this.downloadSave(),
+        upload: () => this.pickSaveFile(),
+        copy: () => this.copySaveCode(),
+        paste: () => this.showPasteCode(),
+      });
+  },
+
+  downloadSave() {
+    const blob = new Blob([JSON.stringify(Save.data, null, 1)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'salon-swap-save.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    this.showSaves('Saved! On iPhone it’s in the Files app → Downloads.');
+  },
+
+  pickSaveFile() {
+    let input = $('saveFileInput');
+    if (!input) {
+      input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json,application/json,text/plain';
+      input.id = 'saveFileInput';
+      input.hidden = true;
+      document.body.appendChild(input);
+      input.addEventListener('change', () => {
+        const f = input.files && input.files[0];
+        input.value = '';
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = () => this.confirmLoad(this.readCode(r.result));
+        r.readAsText(f);
+      });
+    }
+    input.click();
+  },
+
+  copySaveCode() {
+    const code = this.saveCode();
+    const done = () => this.showSaves('Code copied! Paste it into Notes or a text to keep it.');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(done, () => this.showCodeBox(code));
+    } else {
+      this.showCodeBox(code);
+    }
+  },
+
+  // Fallback when copying isn't allowed: show the code so it can be selected by hand.
+  showCodeBox(code) {
+    this.showModal(`
+      <div class="panel-kicker">Save code</div>
+      <div class="panel-title">Copy this</div>
+      <textarea class="save-code" readonly>${esc(code)}</textarea>
+      <div class="panel-note">Press and hold the code → Select All → Copy.</div>
+      <div class="panel-btns"><button class="btn btn-big" data-act="back">Done</button></div>`,
+      { back: () => this.showSaves() });
+    const ta = document.querySelector('.save-code');
+    if (ta) { ta.focus(); ta.select(); }
+  },
+
+  showPasteCode() {
+    this.showModal(`
+      <div class="panel-kicker">Load a backup</div>
+      <div class="panel-title">Paste code</div>
+      <textarea class="save-code" id="pasteBox" placeholder="Paste your SALON1-… code here"></textarea>
+      <div class="panel-btns">
+        <button class="btn btn-big" data-act="check">Load</button>
+        <button class="btn btn-ghost" data-act="back">Back</button>
+      </div>`,
+      {
+        check: () => this.confirmLoad(this.readCode(this._pasted || '')),
+        back: () => this.showSaves(),
+      });
+    const box = $('pasteBox');
+    this._pasted = '';
+    box.addEventListener('input', () => { this._pasted = box.value; });
+  },
+
+  confirmLoad(obj) {
+    if (!obj || typeof obj.v !== 'number' || !obj.progress) {
+      this.showSaves("That didn't look like a Salon Swap save. Try again?");
+      return;
+    }
+    this.showModal(`
+      <div class="panel-kicker">Load this save?</div>
+      <div class="panel-title save-title">${this.saveSummary(obj)}</div>
+      <div class="panel-note">This replaces the progress on this device (now: ${this.saveSummary(Save.data)}).</div>
+      <div class="panel-btns">
+        <button class="btn btn-big btn-gold" data-act="yes">Load it</button>
+        <button class="btn btn-ghost" data-act="no">Cancel</button>
+      </div>`,
+      {
+        yes: () => {
+          Save.importData(obj);
+          this.updateBoosters();
+          this.updateSoundButtons();
+          this.showScreen('title');
+          this.showSaves('Loaded! You’re all caught up.');
+        },
+        no: () => this.showSaves(),
+      });
+  },
+
   // Plain-words explanation of a goal: what to do + how to do it.
-  goalText(g) {
+  tileIcons(w) {
+    this._tileIcons = this._tileIcons || {};
+    if (!this._tileIcons[w]) this._tileIcons[w] = WORLDS[w].tiles.map(t => buildTileSprite(t, 72).toDataURL());
+    return this._tileIcons[w];
+  },
+
+  goalText(g, w = World.current) {
     const left = Math.max(0, g.need - g.have);
     switch (g.type) {
       case 'collect': {
-        const t = TILE_TYPES[g.kind];
-        return { icon: this.icons.tiles[g.kind], title: `Collect ${left} ${t.plural}`,
+        const t = WORLDS[w].tiles[g.kind];
+        return { icon: this.tileIcons(w)[g.kind], title: `Collect ${left} ${t.plural}`,
                  how: `Match ${t.plural.toLowerCase()} in rows of 3 or more. Each one cleared counts.` };
       }
       case 'gel':   return { icon: this.icons.gel,   title: `Clear the pink gel (${left})`,
@@ -3017,9 +3610,9 @@ const UI = {
     return { icon: null, title: '', how: '' };
   },
 
-  goalRows(goals, markNew) {
+  goalRows(goals, markNew, w = World.current) {
     return goals.map(g => {
-      const t = this.goalText(g);
+      const t = this.goalText(g, w);
       const fresh = markNew && g.type !== 'collect' && g.type !== 'score' && !Save.data.help.seen[g.type];
       const icon = t.icon ? `<img src="${t.icon}" alt="">` : '<span class="gr-star">★</span>';
       return `<div class="goal-row">${icon}<div class="gr-text">` +
@@ -3028,14 +3621,32 @@ const UI = {
     }).join('');
   },
 
+  showWorldIntro(w, then) {
+    const icons = this.tileIcons(w);
+    const tiles = WORLDS[w].tiles.map((t, i) =>
+      `<div class="wi-tile"><img src="${icons[i]}" alt=""><span>${t.name}</span></div>`).join('');
+    this.showModal(`
+      <div class="panel-kicker">World ${w}</div>
+      <div class="panel-title">${WORLDS[w].name}</div>
+      <div class="ht-text">You made it down the road, ${esc(CONFIG.playerName)}! Now it's showtime — meet the new styles:</div>
+      <div class="wi-grid">${tiles}</div>
+      <div class="panel-note">Same rules as before, just a little tougher.</div>
+      <div class="panel-btns"><button class="btn btn-big btn-gold" data-act="go">Let's go!</button></div>`,
+      { go: () => { Save.data.help.world = Math.max(Save.data.help.world || 1, w); Save.write(); then(); } });
+    Confetti.burst(90);
+    Sound.play('fanfare');
+  },
+
   showIntro(n) {
+    const w = worldOf(n);
+    if (w > (Save.data.help.world || 1)) { this.showWorldIntro(w, () => this.showIntro(n)); return; }
     const lv = buildLevel(n);
     const best = Save.data.progress.stars[n] || 0;
     this.showModal(`
       <div class="panel-kicker">Level</div>
       <div class="panel-title">${n}</div>
       <div class="panel-label">Your goals</div>
-      <div class="goal-rows">${this.goalRows(lv.goals, true)}</div>
+      <div class="goal-rows">${this.goalRows(lv.goals, true, worldOf(n))}</div>
       <div class="panel-moves">Finish them in <b>${lv.moves + Game.assistFor(n)}</b> moves</div>
       ${best ? `<div class="panel-best">${'★'.repeat(best)}<i>${'★'.repeat(3 - best)}</i></div>` : ''}
       <div class="panel-btns">
@@ -3118,7 +3729,8 @@ const UI = {
         <button class="btn btn-big" data-act="next">Next level</button>
         <button class="btn btn-ghost" data-act="map">Level map</button>
       </div>`,
-      { next: () => Game.startLevel(n + 1), map: () => this.openMap() });
+      { next: () => (worldOf(n + 1) > (Save.data.help.world || 1) ? this.showIntro(n + 1) : Game.startLevel(n + 1)),
+        map: () => this.openMap() });
     Confetti.burst(160);
     Sound.play('heelClicks');
     Sound.play('fanfare', 0.55);
@@ -3169,7 +3781,7 @@ const Background = {
       document.body.insertBefore(el, document.body.firstChild);
     }
     const rnd = seededRandom(20261002);
-    let html = '<div class="bg-glow"></div><div class="bg-moon"></div>';
+    let html = '<div class="scene scene-road"><div class="bg-glow"></div><div class="bg-moon"></div>';
 
     for (let i = 0; i < 46; i++) {
       const size = (1.5 + rnd() * 2.5).toFixed(1);
@@ -3187,7 +3799,8 @@ const Background = {
         <stop offset="0" stop-color="#2f8a6c"/><stop offset="1" stop-color="#1c5a4c"/></linearGradient></defs>
       <path d="M0 22 C 40 8, 90 10, 130 18 S 190 30, 200 26 S 260 6, 310 14 S 380 26, 400 16 L400 40 L0 40Z" fill="url(#hillG)" opacity=".75"/>
       <path d="M0 30 C 60 20, 120 24, 170 32 L 230 32 C 280 22, 340 20, 400 28 L400 40 L0 40Z" fill="#1c5a4c"/>
-    </svg>`;
+    </svg></div>`;
+    html += this.stage();
 
     for (let i = 0; i < 22; i++) {
       const kind = i % 5 === 0 ? ' star' : i % 4 === 0 ? ' pink' : '';
@@ -3199,6 +3812,32 @@ const Background = {
     }
     el.innerHTML = html;
     $('roadBricks').style.backgroundImage = `url(${this.brickTile()})`;
+  },
+
+  // World 2: a theater stage — curtains, marquee bulbs, sweeping spotlights.
+  stage() {
+    let bulbs = '';
+    for (let i = 0; i < 26; i++) bulbs += `<i style="animation-delay:${(i % 3) * 0.35}s"></i>`;
+    const chair = `<svg class="prop prop-chair" viewBox="0 0 60 70"><g fill="#0d0912">
+        <rect x="8" y="10" width="44" height="14" rx="2"/><rect x="8" y="34" width="44" height="6" rx="2"/>
+        <rect x="10" y="10" width="4" height="58"/><rect x="46" y="10" width="4" height="58"/>
+        <path d="M12 40 L48 68 L44 70 L10 44Z"/><path d="M48 40 L12 68 L16 70 L50 44Z"/></g>
+        <text x="30" y="21" text-anchor="middle" font-size="8" font-weight="700" fill="#F4B83A" font-family="Fredoka, sans-serif">${esc(CONFIG.playerName.toUpperCase())}</text></svg>`;
+    const camera = `<svg class="prop prop-camera" viewBox="0 0 70 80"><g fill="#0d0912">
+        <circle cx="20" cy="14" r="11"/><circle cx="42" cy="14" r="11"/>
+        <rect x="10" y="22" width="40" height="22" rx="3"/><path d="M50 27 L66 20 L66 46 L50 39Z"/>
+        <path d="M30 44 L14 80 L18 80 L30 52 L42 80 L46 80Z"/><rect x="28" y="44" width="4" height="36"/></g>
+        <circle cx="20" cy="14" r="4" fill="#3a2a40"/><circle cx="42" cy="14" r="4" fill="#3a2a40"/></svg>`;
+    return `<div class="scene scene-stage">
+      <div class="stage-wall"></div>
+      <div class="stage-spot s1"></div><div class="stage-spot s2"></div><div class="stage-spot s3"></div>
+      <div class="stage-floor"><div class="floor-plane"></div></div>
+      <div class="stage-pool"></div>
+      ${chair}${camera}
+      <div class="curtain curtain-l"></div><div class="curtain curtain-r"></div>
+      <div class="valance"></div>
+      <div class="marquee">${bulbs}</div>
+    </div>`;
   },
 
   // One tile of golden bricks (2 rows, offset), repeated along the road.
