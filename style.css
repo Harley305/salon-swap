@@ -766,3 +766,62 @@ body[data-screen="game"] .road-bricks { animation-play-state: paused; }
   .bg-star, .bg-spark, .bg-glow, .road-bricks { animation: none; }
   .bg-spark { display: none; }
 }
+
+/* ---------- Goal explanations & how-to ---------- */
+.goals-wrap { flex: 1; min-width: 0; }
+.goals-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--mist);
+  opacity: .7;
+  margin: 0 0 4px 2px;
+}
+#goals { cursor: pointer; }
+.help-btn { width: 36px; height: 36px; font-size: 18px; border-radius: 12px; align-self: flex-end; }
+
+.goal-rows { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; text-align: left; }
+.goal-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px 8px 8px;
+  border-radius: 16px;
+  background: rgba(23,37,42,.5);
+  border: 2px solid rgba(222,242,241,.15);
+}
+.goal-row img { width: 44px; height: 44px; flex: none; }
+.gr-star { width: 44px; text-align: center; font-size: 34px; color: var(--gold); flex: none; line-height: 1; }
+.gr-title { font-size: 17px; font-weight: 700; line-height: 1.2; }
+.gr-how { font-size: 13.5px; line-height: 1.3; color: var(--mist); opacity: .85; margin-top: 2px; }
+.gr-new {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 7px;
+  border-radius: 8px;
+  background: var(--pink);
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 1px;
+  vertical-align: 2px;
+}
+.panel-moves b { color: var(--gold); }
+
+.ht-title { font-size: 32px; }
+.ht-art { margin: 16px 0 6px; display: flex; justify-content: center; min-height: 64px; }
+.ht-row { display: flex; gap: 6px; }
+.ht-row img { width: 56px; height: 56px; }
+.ht-swap  { animation: ht-swap 2.2s ease-in-out infinite; }
+.ht-swap2 { animation: ht-swap2 2.2s ease-in-out infinite; }
+@keyframes ht-swap  { 0%, 30% { transform: translateX(0); } 50%, 100% { transform: translateX(62px); } }
+@keyframes ht-swap2 { 0%, 30% { transform: translateX(0); } 50%, 100% { transform: translateX(-62px); } }
+.ht-glow { filter: drop-shadow(0 0 8px rgba(244,184,58,.8)); animation: bob 2.4s ease-in-out infinite; }
+.ht-goals { justify-content: center; flex: none; }
+.ht-stars { font-size: 52px; color: var(--gold); letter-spacing: 6px; text-shadow: 0 0 18px rgba(244,184,58,.6); }
+.ht-text { font-size: 16px; line-height: 1.45; color: var(--mist); margin-top: 8px; }
+.ht-text b { color: var(--white); }
+.ht-dots { display: flex; justify-content: center; gap: 6px; margin-top: 16px; }
+.ht-dots i { width: 8px; height: 8px; border-radius: 4px; background: rgba(222,242,241,.25); }
+.ht-dots i.on { width: 22px; background: var(--turq); }
+.panel { max-height: calc(100% - 24px); overflow-y: auto; }

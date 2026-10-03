@@ -61,6 +61,11 @@ const CONFIG = {
   musicVolume: 0.55,  // 0–1
   sfxVolume: 0.85,    // 0–1
   idleHintMs: 7000,   // show a quiet hint after this long without a move
+
+  // She finished levels 1–30 on the old link before the game moved to GitHub.
+  // First visit here marks them complete (1★ each) so she continues at 31.
+  // Set to 0 to turn this off.
+  alreadyBeatThrough: 30,
   showDebug: false,   // test info line under the board; tap the big title to toggle
 
   // ===== Chris's messages =====
@@ -248,12 +253,12 @@ function drawSpray(ctx, t) {
 }
 
 const TILE_TYPES = [
-  { id: 'comb',     name: 'Comb',        base: '#3AAFA9', light: '#8BE6DF', dark: '#1D7470', draw: drawComb },
-  { id: 'scissors', name: 'Shears',      base: '#FF7E5F', light: '#FFB49E', dark: '#C14A2E', draw: drawScissors },
-  { id: 'bow',      name: 'Bow',         base: '#EC5FA5', light: '#FFA3CF', dark: '#A8306C', draw: drawBow },
-  { id: 'curler',   name: 'Curler',      base: '#F4B83A', light: '#FFDF8A', dark: '#A8730B', draw: drawCurler },
-  { id: 'dryer',    name: 'Blow Dryer',  base: '#8C7BEF', light: '#C4B9FF', dark: '#5240B8', draw: drawDryer },
-  { id: 'spray',    name: 'Spritz',      base: '#7CC243', light: '#B6E68C', dark: '#4A8420', draw: drawSpray },
+  { id: 'comb',     name: 'Comb', plural: 'Combs',        base: '#3AAFA9', light: '#8BE6DF', dark: '#1D7470', draw: drawComb },
+  { id: 'scissors', name: 'Shears', plural: 'Shears',      base: '#FF7E5F', light: '#FFB49E', dark: '#C14A2E', draw: drawScissors },
+  { id: 'bow',      name: 'Bow', plural: 'Bows',         base: '#EC5FA5', light: '#FFA3CF', dark: '#A8306C', draw: drawBow },
+  { id: 'curler',   name: 'Curler', plural: 'Curlers',      base: '#F4B83A', light: '#FFDF8A', dark: '#A8730B', draw: drawCurler },
+  { id: 'dryer',    name: 'Blow Dryer', plural: 'Blow Dryers',  base: '#8C7BEF', light: '#C4B9FF', dark: '#5240B8', draw: drawDryer },
+  { id: 'spray',    name: 'Spritz', plural: 'Spritz Bottles',      base: '#7CC243', light: '#B6E68C', dark: '#4A8420', draw: drawSpray },
 ];
 
 const BOMB = -2;   // kind used by the Glam Ball (never matches by color)
@@ -407,6 +412,7 @@ const Save = (() => {
     savedAt: 0,
     settings: { muted: false, showDebug: CONFIG.showDebug },
     progress: { unlocked: 1, stars: {}, best: {}, fails: {} },
+    help: { howTo: false, seen: {}, carriedOver: false },
     boosters: { hammer: 2, shuffle: 2, moves: 2 },    // Phase 7
     daily: { lastClaim: null, streak: 0 },            // Phase 7
     stats: { levelsWon: 0 },
@@ -2062,6 +2068,7 @@ const Game = {
     UI.updateDebug();
     UI.updateBoosters();
     if (lv.tip) UI.toast(lv.tip, true);
+    if (!Save.data.help.howTo) setTimeout(() => UI.showHowTo(0, true), 400);
     this.armIdle();
   },
 
@@ -2763,6 +2770,9 @@ const UI = {
     this.updateBoosters();
 
     $('btnPlay').addEventListener('click', () => this.openMap());
+    $('goals').addEventListener('click', () => this.showGoalsHelp());
+    $('btnHelpMap').addEventListener('click', () => this.showHowTo(0));
+    $('btnHelpGame').addEventListener('click', () => { if (!Game.locked) this.showHowTo(0); });
     $('btnMapBack').addEventListener('click', () => this.showScreen('title'));
     $('btnMap').addEventListener('click', () => { Game.quit(); this.openMap(); });
     $('mapPath').addEventListener('click', e => {
@@ -2984,21 +2994,115 @@ const UI = {
     $('modal').hidden = true;
   },
 
+  // Plain-words explanation of a goal: what to do + how to do it.
+  goalText(g) {
+    const left = Math.max(0, g.need - g.have);
+    switch (g.type) {
+      case 'collect': {
+        const t = TILE_TYPES[g.kind];
+        return { icon: this.icons.tiles[g.kind], title: `Collect ${left} ${t.plural}`,
+                 how: `Match ${t.plural.toLowerCase()} in rows of 3 or more. Each one cleared counts.` };
+      }
+      case 'gel':   return { icon: this.icons.gel,   title: `Clear the pink gel (${left})`,
+                             how: 'Make matches on top of the pink squares. Darker pink needs two.' };
+      case 'ice':   return { icon: this.icons.ice,   title: `Break the ice (${left})`,
+                             how: 'Include the frozen tiles in a match. Thick ice takes two.' };
+      case 'chain': return { icon: this.icons.chain, title: `Break the chains (${left})`,
+                             how: "Chained tiles can't move. Match them where they sit to set them free." };
+      case 'box':   return { icon: this.icons.box,   title: `Open the boxes (${left})`,
+                             how: 'Make matches right next to a box. Darker boxes take more hits.' };
+      case 'score': return { icon: null, title: `Reach ${g.need.toLocaleString()} points`,
+                             how: 'Bigger matches, combos and chain reactions score the most.' };
+    }
+    return { icon: null, title: '', how: '' };
+  },
+
+  goalRows(goals, markNew) {
+    return goals.map(g => {
+      const t = this.goalText(g);
+      const fresh = markNew && g.type !== 'collect' && g.type !== 'score' && !Save.data.help.seen[g.type];
+      const icon = t.icon ? `<img src="${t.icon}" alt="">` : '<span class="gr-star">★</span>';
+      return `<div class="goal-row">${icon}<div class="gr-text">` +
+             `<div class="gr-title">${t.title}${fresh ? ' <span class="gr-new">NEW</span>' : ''}</div>` +
+             `<div class="gr-how">${t.how}</div></div></div>`;
+    }).join('');
+  },
+
   showIntro(n) {
     const lv = buildLevel(n);
     const best = Save.data.progress.stars[n] || 0;
     this.showModal(`
       <div class="panel-kicker">Level</div>
       <div class="panel-title">${n}</div>
-      <div class="panel-label">Goals</div>
-      <div class="goals goals-big">${this.goalsHtml(lv.goals, false)}</div>
-      <div class="panel-moves"><b>${lv.moves + Game.assistFor(n)}</b> moves</div>
+      <div class="panel-label">Your goals</div>
+      <div class="goal-rows">${this.goalRows(lv.goals, true)}</div>
+      <div class="panel-moves">Finish them in <b>${lv.moves + Game.assistFor(n)}</b> moves</div>
       ${best ? `<div class="panel-best">${'★'.repeat(best)}<i>${'★'.repeat(3 - best)}</i></div>` : ''}
       <div class="panel-btns">
         <button class="btn btn-big" data-act="play">Play</button>
         <button class="btn btn-ghost" data-act="close">Not now</button>
       </div>`,
-      { play: () => { this.showScreen('game'); Game.startLevel(n); } });
+      { play: () => {
+        lv.goals.forEach(g => { Save.data.help.seen[g.type] = true; });
+        Save.write();
+        this.showScreen('game');
+        Game.startLevel(n);
+      } });
+  },
+
+  // Tap the goals while playing → explanation, with live counts.
+  showGoalsHelp() {
+    if (!Game.level || Game.state !== 'play' || Game.locked) return;
+    this.showModal(`
+      <div class="panel-kicker">Level ${Game.level.n}</div>
+      <div class="panel-title">Goals</div>
+      <div class="goal-rows">${this.goalRows(Game.level.goals.filter(g =>
+        g.type === 'score' ? Game.score < g.need : g.have < g.need), false) ||
+        '<div class="gr-how">All done — keep matching!</div>'}</div>
+      <div class="panel-moves"><b>${Game.movesLeft}</b> moves left</div>
+      <div class="panel-btns"><button class="btn btn-big" data-act="close">Got it</button></div>`);
+  },
+
+  HOWTO: [
+    { title: 'Swap & match',
+      text: 'Swipe a tile into its neighbor (or tap one, then the other). Line up <b>3 or more</b> of the same and they clear.',
+      art: 'match' },
+    { title: 'Finish your goals',
+      text: 'The goals are at the top of the screen. Complete them all <b>before the moves run out</b> to win. Tap the goals any time for a reminder.',
+      art: 'goals' },
+    { title: 'Make power tiles',
+      text: '<b>4 in a row</b> → Line tile (clears a row).<br><b>L or T shape</b> → Glitter Blast.<br><b>5 in a row</b> → Glam Ball (clears a color).<br>Swap two power tiles together for a combo!',
+      art: 'power' },
+    { title: 'Stars & helpers',
+      text: 'Score more for up to <b>3 stars</b>. Stuck? Use the 🔨 hammer, 🌪️ twister or <b>+5</b> moves under the board.',
+      art: 'stars' },
+  ],
+
+  showHowTo(i = 0, first = false) {
+    const page = this.HOWTO[i];
+    const last = i === this.HOWTO.length - 1;
+    const T = this.icons.tiles;
+    const art = {
+      match: `<div class="ht-row"><img src="${T[0]}"><img src="${T[0]}"><img src="${T[1]}" class="ht-swap"><img src="${T[0]}" class="ht-swap2"></div>`,
+      goals: `<div class="goals ht-goals"><div class="goal"><img src="${T[2]}"><span class="goal-num">20</span></div>` +
+             `<div class="goal"><img src="${this.icons.ice}"><span class="goal-num">4</span></div></div>`,
+      power: `<div class="ht-row"><img src="${T[3]}" class="ht-glow"><img src="${T[4]}" class="ht-glow"><img src="${Render.bombSprite ? Render.bombSprite.toDataURL() : T[5]}" class="ht-glow"></div>`,
+      stars: '<div class="ht-stars">★★★</div>',
+    }[page.art];
+    this.showModal(`
+      <div class="panel-kicker">How to play · ${i + 1}/${this.HOWTO.length}</div>
+      <div class="panel-title ht-title">${page.title}</div>
+      <div class="ht-art">${art}</div>
+      <div class="ht-text">${page.text}</div>
+      <div class="ht-dots">${this.HOWTO.map((_, j) => `<i class="${j === i ? 'on' : ''}"></i>`).join('')}</div>
+      <div class="panel-btns">
+        <button class="btn btn-big" data-act="${last ? 'done' : 'next'}">${last ? "Let's play!" : 'Next'}</button>
+        ${!last ? '<button class="btn btn-ghost" data-act="done">Skip</button>' : ''}
+      </div>`,
+      {
+        next: () => this.showHowTo(i + 1, first),
+        done: () => { Save.data.help.howTo = true; Save.write(); },
+      });
   },
 
   showWin(n, stars, score) {
@@ -3027,7 +3131,7 @@ const UI = {
       <div class="panel-kicker">Level ${lv.n}</div>
       <div class="panel-title">Out of moves</div>
       <div class="panel-label">Still to go</div>
-      <div class="goals goals-big">${this.goalsHtml(left, true)}</div>
+      <div class="goal-rows">${this.goalRows(left, false)}</div>
       <div class="panel-btns">
         ${Save.data.boosters.moves > 0
           ? `<button class="btn btn-big btn-gold" data-act="more">+5 moves <small>(${Save.data.boosters.moves} left)</small></button>`
@@ -3189,6 +3293,17 @@ function boot() {
   Input.init();
   UI.init();
   Background.init();
+
+  // One-time: carry over the 30 levels she beat on the old link.
+  const p = Save.data.progress, h = Save.data.help;
+  if (CONFIG.alreadyBeatThrough && !h.carriedOver) {
+    for (let n = 1; n <= CONFIG.alreadyBeatThrough; n++) if (!p.stars[n]) p.stars[n] = 1;
+    p.unlocked = Math.max(p.unlocked, CONFIG.alreadyBeatThrough + 1);
+    h.carriedOver = true;
+    h.howTo = h.howTo || false;
+    ['gel', 'ice', 'chain', 'box'].forEach(t => { h.seen[t] = true; });
+    Save.write();
+  }
 
   const ro = new ResizeObserver(() => Render.layout());
   ro.observe($('boardArea'));

@@ -31,6 +31,7 @@
       <button class="icon-btn" id="btnMapBack" type="button" aria-label="Back to title">‹</button>
       <div class="map-title">Level Map</div>
       <div class="map-stars" id="mapStars">★ 0</div>
+      <button class="icon-btn" id="btnHelpMap" type="button" aria-label="How to play">?</button>
     </header>
     <div class="map-scroll scrollable" id="mapScroll">
       <div class="map-path" id="mapPath"></div>
@@ -55,7 +56,11 @@
     </header>
 
     <div class="goals-row">
-      <div class="goals" id="goals"></div>
+      <button class="icon-btn help-btn" id="btnHelpGame" type="button" aria-label="How to play">?</button>
+      <div class="goals-wrap">
+        <div class="goals-label">Goals · tap for help</div>
+        <div class="goals" id="goals" role="button" aria-label="Explain the goals"></div>
+      </div>
       <div class="stat stat-score">
         <span class="stat-label">Score</span>
         <span class="stat-value" id="score">0</span>
