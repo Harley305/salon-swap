@@ -4817,13 +4817,37 @@ const UI = {
         <button class="btn btn-ghost" data-act="paste">Paste code</button>
       </div>
       ${Save.data.help.finale ? '<div class="panel-btns"><button class="btn" data-act="credits">🎬 Watch the credits</button></div>' : ''}
-      <div class="panel-btns"><button class="btn btn-ghost" data-act="close">Close</button></div>`,
+      <div class="panel-btns"><button class="btn btn-ghost" data-act="close">Close</button></div>
+      <button class="save-restart" data-act="restart" type="button">↺ Start over from level 1</button>`,
       {
+        restart: () => this.showRestart(),
         credits: () => this.showFinale(),
         download: () => this.downloadSave(),
         upload: () => this.pickSaveFile(),
         copy: () => this.copySaveCode(),
         paste: () => this.showPasteCode(),
+      });
+  },
+
+  showRestart() {
+    this.showModal(`
+      <div class="panel-kicker">Start over?</div>
+      <div class="panel-title save-title">Back to level 1</div>
+      <div class="panel-note">This clears the progress on this device (now: ${this.saveSummary(Save.data)}). Tip: tap “Copy code” first if you might want it back.</div>
+      <div class="panel-btns">
+        <button class="btn btn-big btn-gold" data-act="yes">Yes, start over</button>
+        <button class="btn btn-ghost" data-act="no">Cancel</button>
+      </div>`,
+      {
+        yes: () => {
+          Save.write = () => {};                     // don't let the leave-page autosave put it back
+          try {
+            localStorage.setItem('msalon.save.old', JSON.stringify(Save.data));   // quiet safety copy
+            localStorage.removeItem('msalon.save'); localStorage.removeItem('msalon.save.bak');
+          } catch (e) {}
+          location.replace(location.pathname);
+        },
+        no: () => this.showSaves(),
       });
   },
 

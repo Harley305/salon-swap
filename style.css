@@ -122,6 +122,7 @@ body {
   cursor: pointer;
 }
 .screen-title .hero-tiles {
+  pointer-events: none;            /* decoration only — never block the buttons */
   position: absolute;
   left: 50%;
   top: calc(var(--horizon) + 4vh);
@@ -827,7 +828,7 @@ body[data-screen="game"] .road-bricks { animation-play-state: paused; }
 .panel { max-height: calc(100% - 24px); overflow-y: auto; }
 
 /* ---------- Save & load ---------- */
-.title-btns { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.title-btns { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .btn-small { min-height: 40px; font-size: 15px; padding: 0 18px; background: rgba(12,26,34,.55); }
 .save-now { margin-top: 6px; font-size: 18px; font-weight: 700; color: var(--gold); }
 .save-note {
@@ -1314,3 +1315,9 @@ body[data-world="3"] .bg-spark.pink { background: radial-gradient(circle, #fff 0
   background: linear-gradient(180deg, #FFE08A, #C48A14); color: #3a2400; font-size: 13px; font-weight: 700;
 }
 .node-crown { position: absolute; left: 50%; top: -20px; transform: translateX(-50%); font-size: 20px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
+
+.save-restart {
+  display: block; margin: 14px auto 0; padding: 6px 10px;
+  background: none; border: 0; color: var(--mist); opacity: .7;
+  font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer;
+}
