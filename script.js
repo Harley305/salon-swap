@@ -101,6 +101,7 @@ const CONFIG = {
   // Extra win lines per world (mixed in with yours above).
   worldWinMessages: {
     2: ["That's a wrap on that one!", 'Check the gate — we got it!', 'Perfect take!', 'Moving on — next setup!'],
+    4: ['That’s a print!', 'Golden hour, golden take!', 'Location scouts are jealous!', 'Moving to the next setup!'],
     3: ['Order up!', 'The crew says thank you!', 'Seconds, anyone?', 'Chef’s kiss!'],
     6: ['And the award goes to… {name}!', "{name}, you've earned this one.", 'Standing ovation!', 'Speech! Speech!'],
   },
@@ -705,12 +706,133 @@ const CRAFT_TILES = [
   { id: 'avocado', name: 'Avocado', plural: 'Avocados', base: '#7CC243', light: '#B6E68C', dark: '#3F7A18', draw: drawAvocado },
 ];
 
+/* World 4 · On Location: out in the desert and down by the beach. */
+function drawCompass(ctx, t) {
+  ctx.fillStyle = WHITE;
+  ctx.beginPath(); ctx.arc(50, 52, 32, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = t.dark;
+  ctx.beginPath(); ctx.arc(50, 52, 25, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = WHITE;                                          // ring loop
+  rr(ctx, 45, 14, 10, 8, 3); ctx.fill();
+  // tick marks
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 2;
+  for (let i = 0; i < 8; i++) {
+    const a = i * Math.PI / 4, r1 = i % 2 ? 21 : 18;
+    ctx.beginPath(); ctx.moveTo(50 + Math.cos(a) * r1, 52 + Math.sin(a) * r1);
+    ctx.lineTo(50 + Math.cos(a) * 24, 52 + Math.sin(a) * 24); ctx.stroke();
+  }
+  // needle
+  ctx.fillStyle = '#FF5A4E';
+  ctx.beginPath(); ctx.moveTo(50, 33); ctx.lineTo(56, 52); ctx.lineTo(44, 52); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = WHITE;
+  ctx.beginPath(); ctx.moveTo(50, 71); ctx.lineTo(56, 52); ctx.lineTo(44, 52); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = t.dark;
+  ctx.beginPath(); ctx.arc(50, 52, 3, 0, Math.PI * 2); ctx.fill();
+}
+
+function drawParasol(ctx, t) {
+  withRotation(ctx, -14, () => {
+    ctx.fillStyle = WHITE;                                        // canopy
+    ctx.beginPath(); ctx.moveTo(14, 46); ctx.quadraticCurveTo(50, 2, 86, 46); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = t.dark;                                       // stripes
+    ctx.beginPath(); ctx.moveTo(50, 17); ctx.quadraticCurveTo(38, 26, 32, 46); ctx.lineTo(42, 46); ctx.quadraticCurveTo(45, 28, 50, 17); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(50, 17); ctx.quadraticCurveTo(62, 26, 68, 46); ctx.lineTo(58, 46); ctx.quadraticCurveTo(55, 28, 50, 17); ctx.fill();
+    ctx.fillStyle = WHITE;                                        // scalloped edge
+    [20, 32, 44, 56, 68, 80].forEach(x => { ctx.beginPath(); ctx.arc(x, 46, 6, 0, Math.PI); ctx.fill(); });
+    rr(ctx, 47.5, 46, 5, 40, 2.5); ctx.fill();                   // pole
+    ctx.beginPath(); ctx.arc(50, 13, 3.5, 0, Math.PI * 2); ctx.fill();
+  });
+}
+
+function drawShell(ctx, t) {
+  ctx.fillStyle = WHITE;
+  ctx.beginPath();
+  ctx.moveTo(50, 80);
+  ctx.bezierCurveTo(22, 74, 14, 46, 22, 34);
+  ctx.quadraticCurveTo(50, 8, 78, 34);
+  ctx.bezierCurveTo(86, 46, 78, 74, 50, 80);
+  ctx.fill();
+  ctx.fillStyle = WHITE;                                          // hinge
+  rr(ctx, 40, 76, 20, 9, 4); ctx.fill();
+  ctx.strokeStyle = t.dark; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
+  [-28, -14, 0, 14, 28].forEach(dx => {
+    ctx.beginPath(); ctx.moveTo(50, 76); ctx.quadraticCurveTo(50 + dx * 0.6, 50, 50 + dx, 26 + Math.abs(dx) * 0.25); ctx.stroke();
+  });
+  sparkle(ctx, 76, 22, 6, WHITE);
+}
+
+function drawSun(ctx, t) {
+  ctx.fillStyle = WHITE;
+  for (let i = 0; i < 12; i++) {
+    const a = i * Math.PI / 6;
+    ctx.save(); ctx.translate(50, 50); ctx.rotate(a);
+    ctx.beginPath(); ctx.moveTo(-5, -26); ctx.lineTo(0, -40); ctx.lineTo(5, -26); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  ctx.beginPath(); ctx.arc(50, 50, 23, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = t.dark;                                         // happy face
+  ctx.beginPath(); ctx.arc(42, 46, 3, 0, Math.PI * 2); ctx.arc(58, 46, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = t.dark; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(50, 52, 9, 0.2 * Math.PI, 0.8 * Math.PI); ctx.stroke();
+}
+
+function drawShades(ctx, t) {
+  withRotation(ctx, -10, () => {
+    ctx.fillStyle = WHITE;
+    rr(ctx, 8, 36, 84, 7, 3.5); ctx.fill();                       // top bar
+    [29, 71].forEach(x => { rr(ctx, x - 20, 38, 40, 30, 13); ctx.fill(); });   // frames
+    ctx.fillStyle = t.dark;
+    [29, 71].forEach(x => { rr(ctx, x - 15.5, 42, 31, 22, 10); ctx.fill(); }); // lenses
+    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+    [[22, 47], [64, 47]].forEach(([x, y]) => { ctx.beginPath(); ctx.moveTo(x, y + 10); ctx.lineTo(x + 8, y); ctx.lineTo(x + 12, y); ctx.lineTo(x + 4, y + 10); ctx.closePath(); ctx.fill(); });
+  });
+}
+
+function drawCactus(ctx, t) {
+  ctx.fillStyle = WHITE;
+  rr(ctx, 41, 16, 18, 64, 9); ctx.fill();                        // trunk
+  rr(ctx, 20, 36, 12, 26, 6); ctx.fill();                        // left arm
+  rr(ctx, 20, 52, 26, 11, 5.5); ctx.fill();
+  rr(ctx, 68, 28, 12, 26, 6); ctx.fill();                        // right arm
+  rr(ctx, 54, 44, 26, 11, 5.5); ctx.fill();
+  ctx.fillStyle = t.dark;                                         // ribs
+  rr(ctx, 49, 22, 2.4, 52, 1.2); ctx.fill();
+  ctx.fillStyle = '#EC5FA5';                                      // a little flower on top
+  [[0, -5], [5, 0], [0, 5], [-5, 0]].forEach(([dx, dy]) => { ctx.beginPath(); ctx.arc(50 + dx, 16 + dy, 4, 0, Math.PI * 2); ctx.fill(); });
+  ctx.fillStyle = '#FFE08A'; ctx.beginPath(); ctx.arc(50, 16, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#C98A52';                                      // pot
+  ctx.beginPath(); ctx.moveTo(30, 78); ctx.lineTo(70, 78); ctx.lineTo(65, 92); ctx.lineTo(35, 92); ctx.closePath(); ctx.fill();
+}
+
+const LOCATION_TILES = [
+  { id: 'compass',    name: 'Compass',    plural: 'Compasses',  base: '#3AAFA9', light: '#8BE6DF', dark: '#1D7470', draw: drawCompass },
+  { id: 'parasol',    name: 'Beach Umbrella', plural: 'Beach Umbrellas', base: '#FF7E5F', light: '#FFB49E', dark: '#C14A2E', draw: drawParasol },
+  { id: 'shell',      name: 'Seashell',   plural: 'Seashells',  base: '#EC5FA5', light: '#FFA3CF', dark: '#A8306C', draw: drawShell },
+  { id: 'sun',        name: 'Sunshine',   plural: 'Suns',       base: '#F4B83A', light: '#FFDF8A', dark: '#A8730B', draw: drawSun },
+  { id: 'shades',     name: 'Sunglasses', plural: 'Sunglasses', base: '#8C7BEF', light: '#C4B9FF', dark: '#5240B8', draw: drawShades },
+  { id: 'cactus',     name: 'Cactus',     plural: 'Cacti',      base: '#7CC243', light: '#B6E68C', dark: '#3F7A18', draw: drawCactus },
+];
+
+function drawWaterItem(ctx) {
+  // crew water bottle with a turquoise label and cap
+  ctx.fillStyle = 'rgba(190,235,255,0.95)';
+  rr(ctx, 36, 30, 28, 50, 9); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(40, 32); ctx.lineTo(44, 22); ctx.lineTo(56, 22); ctx.lineTo(60, 32); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#3AAFA9';
+  rr(ctx, 43, 13, 14, 10, 3); ctx.fill();                         // cap
+  rr(ctx, 36, 46, 28, 16, 2); ctx.fill();                         // label
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath(); ctx.moveTo(50, 49); ctx.quadraticCurveTo(56, 56, 50, 59); ctx.quadraticCurveTo(44, 56, 50, 49); ctx.fill();  // drop
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  rr(ctx, 40, 34, 4, 10, 2); ctx.fill(); rr(ctx, 40, 66, 4, 9, 2); ctx.fill();
+}
+
 /* ----- Worlds -----
    World 1 · City Streets      (1–30):    the road into town, salon tiles.
    World 2 · The Studio Set    (31–60):   backstage, film-set tiles.
    World 3 · The Crafty Table  (61–90):   crew food, cascades.
-   World 4 · On Location       (91–120):  coming soon (uses the Crafty Table look for now).
-   World 5 · The Wrap Party    (121–150): coming soon.
+   World 4 · On Location       (91–120):  desert & beach shoots, golden hour.
+   World 5 · The Wrap Party    (121–150): coming soon (uses the Crafty Table look for now).
    World 6 · Cinematic Credits (151–180): the red carpet, award tiles, the finale. */
 const WORLDS = [
   null,
@@ -720,13 +842,14 @@ const WORLDS = [
     blurb: "You made it onto the set, {name}! Time to work with the stars — here's your new kit:" },
   { n: 3, name: 'The Crafty Table', tiles: CRAFT_TILES,
     blurb: "Break time, {name}! The crafty table is loaded — chain those cascades and keep the crew fed:" },
-  null,
+  { n: 4, name: 'On Location', tiles: LOCATION_TILES,
+    blurb: "Pack the van, {name} — we're shooting out on location! Sun, sand and long days. Here's what's in the kit:" },
   null,
   { n: 6, name: 'Cinematic Credits', tiles: AWARD_TILES,
     blurb: "From the chair to the spotlight, {name}. Tonight the industry says thank you — dress for the carpet:" },
 ];
 const WORLD_NAMES = [null, 'City Streets', 'The Studio Set', 'The Crafty Table', 'On Location', 'The Wrap Party', 'Cinematic Credits'];
-const worldOf = level => (level > 150 ? 6 : level > 60 ? 3 : level > 30 ? 2 : 1);
+const worldOf = level => (level > 150 ? 6 : level > 120 ? 3 : level > 90 ? 4 : level > 60 ? 3 : level > 30 ? 2 : 1);
 
 /* Every world has three 10-level acts; the last level of each act is a boss board. */
 const ACT_NAMES = ['Introduction', 'Obstacles', 'Master Board'];
@@ -813,6 +936,7 @@ const DROP_ITEMS = {
   1: { name: 'coffee', plural: 'coffees', run: 'Coffee run', draw: drawCoffeeItem },
   2: { name: 'script', plural: 'scripts', run: 'Script run', draw: drawScriptItem },
   3: { name: 'cake slice', plural: 'cake slices', run: 'Dessert run', draw: drawCakeItem },
+  4: { name: 'water bottle', plural: 'water bottles', run: 'Water run', draw: drawWaterItem },
 };
 const dropItem = w => DROP_ITEMS[w] || DROP_ITEMS[1];
 
@@ -2823,10 +2947,265 @@ const LEVELS = [
     '.ji..ij.',
     '.jjhhjj.',
     '........'] },
+  /* ===== WORLD 4 · ON LOCATION (levels 91–120) ===== */
+  /* 91 */ { moves: 25, kinds: 5, goals: [['collect', 'sun', 24], ['collect', 'shell', 24]], tip: 'We’re on location! Sun, sand and a long day of shooting.' },
+  /* 92 */ { moves: 28, kinds: 6, goals: [], layout: [
+    '........',
+    '........',
+    '.j.jj.j.',
+    '..j..j..',
+    '..j..j..',
+    '.j.jj.j.',
+    '........',
+    '........'] },
+  /* 93 */ { moves: 29, kinds: 6, drops: 2, dropsMax: 1, goals: [['collect', 'cactus', 16]], tip: 'Water run! It’s hot out here — get the water down to the crew.', layout: [
+    '...d....',
+    '........',
+    '........',
+    '.j....j.',
+    '.j....j.',
+    '........',
+    '........',
+    '........'] },
+  /* 94 */ { moves: 30, kinds: 6, goals: [['collect', 'compass', 18]], layout: [
+    '........',
+    '........',
+    '..i..i..',
+    '...ii...',
+    '...ii...',
+    '..i..i..',
+    '........',
+    '........'] },
+  /* 95 */ { moves: 25, kinds: 5, goals: [['score', 20000]], breather: true },
+  /* 96 */ { moves: 30, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '....d...',
+    '........',
+    '.h....h.',
+    '........',
+    '..h..h..',
+    '........',
+    '........',
+    '........'] },
+  /* 97 */ { moves: 30, kinds: 6, goals: [], tip: 'Equipment cases everywhere — clear a path for the camera!', layout: [
+    '........',
+    '........',
+    '.b....b.',
+    '.bj..jb.',
+    '.bj..jb.',
+    '.b....b.',
+    '........',
+    '........'] },
+  /* 98 */ { moves: 31, kinds: 6, drops: 2, dropsMax: 1, goals: [['collect', 'parasol', 18]], layout: [
+    '..d.....',
+    '........',
+    '.jj..jj.',
+    '........',
+    '...ii...',
+    '........',
+    '.jj..jj.',
+    '........'] },
+  /* 99 */ { moves: 35, kinds: 6, goals: [], layout: [
+    '........',
+    '.i.hh.i.',
+    '........',
+    '..i..i..',
+    '..i..i..',
+    '........',
+    '.i.hh.i.',
+    '........'] },
+  /* 100 */ { moves: 33, kinds: 6, drops: 3, dropsMax: 1, goals: [['collect', 'shades', 18]], tip: 'Act 1 boss board — the sun is going down fast!', layout: [
+    '...d....',
+    '........',
+    '.jjjjjj.',
+    '.j.bb.j.',
+    '.j....j.',
+    '.jjjjjj.',
+    '........',
+    '........'] },
+  /* 101 */ { moves: 30, kinds: 6, goals: [], tip: 'Act 2: the weather has other plans — obstacles everywhere!', layout: [
+    '........',
+    '.J....J.',
+    '..JJJJ..',
+    '........',
+    '........',
+    '..JJJJ..',
+    '.J....J.',
+    '........'] },
+  /* 102 */ { moves: 33, kinds: 6, goals: [['collect', 'sun', 18], ['collect', 'compass', 18]], layout: [
+    '........',
+    '..I..I..',
+    '.i....i.',
+    '........',
+    '........',
+    '.i....i.',
+    '..I..I..',
+    '........'] },
+  /* 103 */ { moves: 35, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '...d....',
+    '........',
+    '.B....B.',
+    '..jjjj..',
+    '..jjjj..',
+    '........',
+    '.B....B.',
+    '........'] },
+  /* 104 */ { moves: 35, kinds: 6, goals: [['collect', 'shell', 18]], layout: [
+    '........',
+    '.H....H.',
+    '........',
+    '..i..i..',
+    '..i..i..',
+    '...hh...',
+    '.H....H.',
+    '........'] },
+  /* 105 */ { moves: 27, kinds: 5, drops: 1, dropsMax: 1, goals: [['collect', 'sun', 34]], breather: true, layout: [
+    '........',
+    '....d...',
+    '........',
+    '........',
+    '........',
+    '........',
+    '........',
+    '........'] },
+  /* 106 */ { moves: 33, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '..d.....',
+    '........',
+    '.XX..XX.',
+    '........',
+    '..jjjj..',
+    '..jjjj..',
+    '........',
+    '........'] },
+  /* 107 */ { moves: 34, kinds: 6, goals: [['collect', 'parasol', 18], ['collect', 'shades', 18]], tip: 'Is that a twister on the horizon? Hold on to your hat, Pip!', layout: [
+    '........',
+    '..h..h..',
+    '.I....I.',
+    '...ii...',
+    '...ii...',
+    '.I....I.',
+    '..h..h..',
+    '........'] },
+  /* 108 */ { moves: 32, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '....d...',
+    '.b.JJ.b.',
+    '.J....J.',
+    '.J.ii.J.',
+    '.J....J.',
+    '.b.JJ.b.',
+    '........',
+    '........'] },
+  /* 109 */ { moves: 32, kinds: 6, goals: [], layout: [
+    '........',
+    '.hJ..Jh.',
+    '.J....J.',
+    '...bb...',
+    '...bb...',
+    '.J....J.',
+    '.hJ..Jh.',
+    '........'] },
+  /* 110 */ { moves: 39, kinds: 6, drops: 2, dropsMax: 1, goals: [['collect', 'sun', 16]], tip: 'Act 2 boss board — sandstorm on set!', layout: [
+    '...d....',
+    '.jjjjjj.',
+    '.ji..ij.',
+    '.j.bb.j.',
+    '.j....j.',
+    '.ji..ij.',
+    '.jjjjjj.',
+    '........'] },
+  /* 111 */ { moves: 32, kinds: 6, goals: [], tip: 'Act 3: Master Boards — the big outdoor scene!', layout: [
+    '........',
+    '.JJ..JJ.',
+    '.J.hh.J.',
+    '........',
+    '........',
+    '.J.hh.J.',
+    '.JJ..JJ.',
+    '........'] },
+  /* 112 */ { moves: 36, kinds: 6, goals: [['collect', 'shell', 18], ['collect', 'compass', 18]], layout: [
+    '........',
+    '.H.ii.H.',
+    '........',
+    '.i.HH.i.',
+    '........',
+    '.H.ii.H.',
+    '........',
+    '........'] },
+  /* 113 */ { moves: 37, kinds: 6, drops: 2, dropsMax: 1, goals: [['collect', 'cactus', 16]], layout: [
+    '..d.....',
+    '........',
+    '.b.XX.b.',
+    '.b....b.',
+    '..iiii..',
+    '........',
+    '.b....b.',
+    '........'] },
+  /* 114 */ { moves: 33, kinds: 6, goals: [], layout: [
+    '........',
+    '.jjjjjj.',
+    '.jJJJJj.',
+    '........',
+    '........',
+    '.jJJJJj.',
+    '.jjjjjj.',
+    '........'] },
+  /* 115 */ { moves: 28, kinds: 5, drops: 1, dropsMax: 1, goals: [['score', 22000]], breather: true, layout: [
+    '........',
+    '...d....',
+    '........',
+    '........',
+    '........',
+    '........',
+    '........',
+    '........'] },
+  /* 116 */ { moves: 36, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '....d...',
+    '.hj..jh.',
+    '.jh..hj.',
+    '...ii...',
+    '...ii...',
+    '.jh..hj.',
+    '.hj..jh.',
+    '........'] },
+  /* 117 */ { moves: 36, kinds: 6, goals: [['collect', 'shades', 18], ['collect', 'sun', 18]], layout: [
+    '........',
+    '..ih.hi.',
+    '........',
+    '.B....B.',
+    '..h..h..',
+    '........',
+    '..ih.hi.',
+    '........'] },
+  /* 118 */ { moves: 40, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '...d....',
+    '.JbJJbJ.',
+    '.b....b.',
+    '.J.ii.J.',
+    '.J.ii.J.',
+    '.b....b.',
+    '.JbJJbJ.',
+    '........'] },
+  /* 119 */ { moves: 34, kinds: 6, goals: [['collect', 'parasol', 16], ['collect', 'shell', 16]], layout: [
+    '........',
+    '..H..H..',
+    '.b....b.',
+    '..JJJJ..',
+    '..JJJJ..',
+    '.b....b.',
+    '..H..H..',
+    '........'] },
+  /* 120 */ { moves: 43, kinds: 6, drops: 2, dropsMax: 1, goals: [['collect', 'compass', 16]], tip: 'World 4 finale — magic hour, one take only!', layout: [
+    '....d...',
+    '.jjhhjj.',
+    '.jI..Ij.',
+    '.j.XX.j.',
+    '.j.XX.j.',
+    '.ji..ij.',
+    '.jjhhjj.',
+    '........'] },
 ];
 
 /* World 6 · Cinematic Credits (levels 151–180): the red carpet and the awards.
-   Levels 91–150 (Worlds 4–5) are generated until they get their own handmade boards. */
+   Levels 121–150 (World 5) are generated until they get their own handmade boards. */
 const LEVELS_W6 = [
   /* ===== WORLD 6 · CINEMATIC CREDITS (levels 151–180) ===== */
   /* 151 */ { moves: 26, kinds: 5, goals: [['collect', 'trophy', 24], ['collect', 'bouquet', 24]], tip: 'Welcome to the red carpet — the final world!' },
@@ -4724,8 +5103,11 @@ const UI = {
     const seg = (a, b) => pts.slice(Math.max(0, a - 1), Math.min(b, pts.length));
     const doneSeg = (a, b) => (reached > a ? seg(a, Math.min(b, reached)) : []);
     const W5 = 150;                                   // last level before the red carpet
-    const road = seg(1, W1), film = seg(W1, W2), table = seg(W2, W5), carpet = seg(W5, total);
-    const roadDone = seg(1, Math.min(reached, W1)), filmDone = doneSeg(W1, W2), tableDone = doneSeg(W2, W5), carpetDone = doneSeg(W5, total);
+    const W3 = 90, W4 = 120;
+    const road = seg(1, W1), film = seg(W1, W2), carpet = seg(W5, total);
+    const roadDone = seg(1, Math.min(reached, W1)), filmDone = doneSeg(W1, W2), carpetDone = doneSeg(W5, total);
+    const tables = [[W2, W3], [W4, W5]].map(([a, b]) => [seg(a, b), doneSeg(a, b)]);
+    const dirt = seg(W3, W4), dirtDone = doneSeg(W3, W4);
     const d = list => (list.length > 1 ? line(list) : '');
     // banners on the open side of the path
     const banner = (num, name, x0, y) => {
@@ -4733,7 +5115,7 @@ const UI = {
       return `<div class="world-banner wb${num}" style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px"><span>World ${num}</span>${name}</div>`;
     };
     const mid = (a, b) => [(pts[a - 1][0] + pts[b - 1][0]) / 2, (pts[a - 1][1] + pts[b - 1][1]) / 2];
-    const m2 = mid(W1, W1 + 1), m3 = mid(W2, Math.min(W2 + 1, total)), m6 = total > W5 ? mid(W5, W5 + 1) : null;
+    const m2 = mid(W1, W1 + 1), m3 = mid(W2, Math.min(W2 + 1, total)), m6 = total > W5 ? mid(W5, W5 + 1) : null, m4 = total > W3 ? mid(W3, W3 + 1) : null;
     path.innerHTML =
       `<svg class="map-line" width="${W}" height="${H}" aria-hidden="true">` +
       `<path class="road-edge" d="${d(road)}"/>` +
@@ -4747,11 +5129,16 @@ const UI = {
       `<path class="film-mid" d="${d(film)}"/>` +
       `<path class="film-frames" d="${d(film)}"/>` +
       `<path class="film-glow" d="${d(filmDone)}"/><path class="film-done" d="${d(filmDone)}"/>` +
-      `<path class="table-edge" d="${d(table)}"/>` +
-      `<path class="table" d="${d(table)}"/>` +
-      `<path class="table-check" d="${d(table)}"/>` +
-      `<path class="table-glow" d="${d(tableDone)}"/><path class="table-done" d="${d(tableDone)}"/>` +
-      `<path class="table-dots" d="${d(table)}"/>` +
+      tables.map(([table, tableDone]) =>
+        `<path class="table-edge" d="${d(table)}"/>` +
+        `<path class="table" d="${d(table)}"/>` +
+        `<path class="table-check" d="${d(table)}"/>` +
+        `<path class="table-glow" d="${d(tableDone)}"/><path class="table-done" d="${d(tableDone)}"/>` +
+        `<path class="table-dots" d="${d(table)}"/>`).join('') +
+      `<path class="dirt-edge" d="${d(dirt)}"/>` +
+      `<path class="dirt" d="${d(dirt)}"/>` +
+      `<path class="dirt-glow" d="${d(dirtDone)}"/><path class="dirt-done" d="${d(dirtDone)}"/>` +
+      `<path class="dirt-tracks" d="${d(dirt)}"/>` +
       `<path class="carpet-edge" d="${d(carpet)}"/>` +
       `<path class="carpet" d="${d(carpet)}"/>` +
       `<path class="carpet-glow" d="${d(carpetDone)}"/><path class="carpet-done" d="${d(carpetDone)}"/>` +
@@ -4760,6 +5147,7 @@ const UI = {
       banner(1, WORLDS[1].name, pts[0][0], pts[0][1] + 58) +
       banner(2, WORLDS[2].name, m2[0], m2[1]) +
       (total > W2 ? banner(3, WORLDS[3].name, m3[0], m3[1]) : '') +
+      (m4 ? banner(4, WORLDS[4].name, m4[0], m4[1]) : '') +
       (m6 ? banner(6, WORLDS[6].name, m6[0], m6[1]) : '') +
       nodes;
 
@@ -5054,7 +5442,7 @@ const UI = {
     const lv = buildLevel(n);
     const best = Save.data.progress.stars[n] || 0;
     const take = (Save.data.progress.fails[n] || 0) + 1;
-    const kicker = w === 2 ? `Scene · Take ${take}` : w === 3 ? 'Order up' : w === 6 ? 'Category' : 'Level';
+    const kicker = w === 2 ? `Scene · Take ${take}` : w === 3 ? 'Order up' : w === 4 ? `Call sheet · Day ${n - 90}` : w === 6 ? 'Category' : 'Level';
     this.showModal(`
       <div class="panel-act">World ${w} · Act ${actOf(n)} — ${ACT_NAMES[actOf(n) - 1]}</div>
       ${isBoss(n) ? '<div class="boss-tag">👑 Boss board</div>' : ''}
@@ -5211,7 +5599,7 @@ const UI = {
     }
     const w = worldOf(n);
     const msg = Lines.win(w);
-    const [kick, head] = w === 2 ? [`Scene ${n}`, "That's a wrap!"] : w === 3 ? [`Order ${n}`, 'Delicious!']
+    const [kick, head] = w === 2 ? [`Scene ${n}`, "That's a wrap!"] : w === 3 ? [`Order ${n}`, 'Delicious!'] : w === 4 ? [`Day ${n - 90}`, 'That’s a print!']
       : w === 6 ? [`Category ${n}`, 'Winner!'] : [`Level ${n}`, 'Complete!'];
     Pip.react('cheer', 3000);
     this.showModal(`
@@ -5242,6 +5630,7 @@ const UI = {
     const take = (Save.data.progress.fails[lv.n] || 0) + 1;
     const [kick, head, again] = w === 2 ? [`Scene ${lv.n} · Take ${take - 1}`, 'Cut!', `Take ${take}`]
       : w === 3 ? [`Order ${lv.n}`, 'Out of snacks!', 'Try again']
+      : w === 4 ? [`Day ${lv.n - 90}`, 'We lost the light!', 'Go again']
       : w === 6 ? [`Category ${lv.n}`, 'So close!', 'Try again'] : [`Level ${lv.n}`, 'Out of moves', 'Try again'];
     this.showModal(`
       <div class="panel-kicker">${kick}</div>
@@ -5307,6 +5696,7 @@ const Background = {
     </svg></div>`;
     html += this.stage();
     html += this.craft();
+    html += this.location();
     html += this.awards();
 
     for (let i = 0; i < 22; i++) {
@@ -5346,6 +5736,31 @@ const Background = {
         <i class="f-urn"></i><i class="f-cake"></i><i class="f-bowl"></i><i class="f-pot"></i>
       </div>
       ${steam}
+    </div>`;
+  },
+
+  // World 4: on location — golden-hour desert, mesas, base-camp trailers, a dirt road.
+  location() {
+    const rnd = seededRandom(9191);
+    let dust = '';
+    for (let i = 0; i < 14; i++) {
+      dust += `<i class="dust" style="left:${(rnd() * 100).toFixed(1)}%;top:${(56 + rnd() * 40).toFixed(1)}%;` +
+              `animation-delay:-${(rnd() * 8).toFixed(1)}s;animation-duration:${(6 + rnd() * 6).toFixed(1)}s"></i>`;
+    }
+    return `<div class="scene scene-loc">
+      <div class="lo-sky"></div>
+      <div class="lo-sun"></div>
+      <svg class="lo-mesas" viewBox="0 0 400 60" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 60 L0 34 L28 34 L34 22 L78 22 L86 36 L120 36 L126 30 L150 30 L158 42 L210 42 L216 26 L262 26 L270 14 L300 14 L308 30 L346 30 L352 38 L400 38 L400 60Z" fill="#7a3b4f" opacity=".75"/>
+        <path d="M0 60 L0 46 L60 46 L68 38 L110 38 L118 48 L180 48 L230 50 L290 44 L300 36 L338 36 L346 48 L400 48 L400 60Z" fill="#5a2a40"/>
+      </svg>
+      <div class="lo-ground"></div>
+      <div class="lo-road"><div class="dirt-plane"></div></div>
+      <div class="lo-camp">
+        <i class="trailer t1"></i><i class="trailer t2"></i><i class="tent"></i><i class="cactus-s c1"></i><i class="cactus-s c2"></i>
+      </div>
+      <i class="tumble"></i>
+      ${dust}
     </div>`;
   },
 

@@ -1009,7 +1009,7 @@ body[data-world="2"] .bg-spark.pink { background: radial-gradient(circle, #fff 0
 
 /* ---------- World 6: Cinematic Credits (awards night) ---------- */
 .scene-awards { display: none; }
-body[data-world="6"] .scene-road, body[data-world="6"] .scene-stage, body[data-world="6"] .scene-craft { display: none; }
+body[data-world="6"] .scene-road, body[data-world="6"] .scene-stage, body[data-world="6"] .scene-craft, body[data-world="6"] .scene-loc { display: none; }
 body[data-world="6"] .scene-awards { display: block; }
 body[data-world="6"] { background: linear-gradient(180deg, #0a0c1c 0%, #141a33 55%, #1b1530 100%); }
 body[data-world="6"] .bg-spark { background: radial-gradient(circle, #fff 0%, rgba(255,224,140,.95) 35%, rgba(244,184,58,0) 70%); }
@@ -1193,6 +1193,97 @@ body[data-world="3"] .bg-spark.pink { background: radial-gradient(circle, #fff 0
 
 @media (prefers-reduced-motion: reduce) {
   .scene-craft .bulb, .scene-craft .steam { animation: none; }
+}
+
+/* ---------- World 4: On Location ---------- */
+.scene-loc { display: none; }
+body[data-world="4"] .scene-road, body[data-world="4"] .scene-stage, body[data-world="4"] .scene-craft, body[data-world="4"] .scene-awards { display: none; }
+body[data-world="4"] .scene-loc { display: block; }
+body[data-world="4"] { background: linear-gradient(180deg, #3b1d3f 0%, #b4563f 55%, #6b3a24 100%); }
+body[data-world="4"] .bg-spark { background: radial-gradient(circle, #fff 0%, rgba(255,214,140,.9) 35%, rgba(244,184,58,0) 70%); }
+body[data-world="4"] .bg-spark.pink { background: radial-gradient(circle, #fff 0%, rgba(255,170,140,.9) 35%, rgba(255,126,95,0) 70%); }
+
+/* golden-hour sky */
+.lo-sky {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, #2c1a44 0%, #6b2f5a 22%, #d0603f 44%, #f7a84a 54%, #ffd27a 58%);
+}
+.lo-sun {
+  position: absolute; left: 50%; top: calc(var(--horizon, 52vh) - 13vh); width: 22vh; height: 22vh; margin-left: -11vh;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff4c8 0%, #ffd27a 45%, #f7a84a 70%, rgba(247,168,74,0) 71%);
+  box-shadow: 0 0 80px 30px rgba(255,200,110,.45);
+  animation: sun-pulse 6s ease-in-out infinite alternate;
+}
+@keyframes sun-pulse { from { transform: scale(1); } to { transform: scale(1.04); } }
+.lo-mesas { position: absolute; left: 0; right: 0; top: calc(var(--horizon, 52vh) - 9vh); width: 100%; height: 10vh; }
+.lo-ground {
+  position: absolute; left: 0; right: 0; top: var(--horizon, 52vh); bottom: 0;
+  background: linear-gradient(180deg, #c27a45 0%, #a65e33 40%, #7a3f22 100%);
+}
+/* dirt road with tire tracks running to the horizon */
+.lo-road {
+  position: absolute; left: 0; right: 0; top: var(--horizon, 52vh); bottom: 0;
+  overflow: hidden; perspective: 240px; perspective-origin: 50% 0;
+}
+.dirt-plane {
+  position: absolute; left: 50%; bottom: 0; width: 170px; height: 1400px; margin-left: -85px;
+  transform-origin: 50% 100%; transform: rotateX(78deg);
+  background:
+    linear-gradient(90deg, transparent 0 22%, rgba(90,45,22,.55) 22% 30%, transparent 30% 70%, rgba(90,45,22,.55) 70% 78%, transparent 78%),
+    repeating-linear-gradient(0deg, rgba(255,230,190,.08) 0 18px, transparent 18px 40px),
+    linear-gradient(90deg, #a86a3e, #d9a066 30%, #e4b07a 50%, #d9a066 70%, #a86a3e);
+  box-shadow: 0 0 40px 10px rgba(255,190,110,.25);
+}
+/* base camp silhouettes on the horizon */
+.lo-camp { position: absolute; left: 0; right: 0; top: calc(var(--horizon, 52vh) - 6vh); height: 7vh; }
+.lo-camp i { position: absolute; bottom: 0; background: #3a1c2c; }
+.lo-camp .trailer { height: 4.2vh; border-radius: .8vh; }
+.lo-camp .trailer::after { content: ''; position: absolute; left: 18%; top: 22%; width: 64%; height: 26%;
+  background: repeating-linear-gradient(90deg, rgba(255,214,140,.85) 0 1.4vh, transparent 1.4vh 2.4vh); }
+.lo-camp .t1 { left: 6%; width: 13vh; }
+.lo-camp .t2 { right: 8%; width: 11vh; }
+.lo-camp .tent { left: 24%; width: 0; height: 0; background: none; border-left: 3.4vh solid transparent; border-right: 3.4vh solid transparent; border-bottom: 4vh solid #3a1c2c; }
+.lo-camp .cactus-s { width: 1.4vh; height: 5vh; border-radius: .7vh; }
+.lo-camp .cactus-s::before, .lo-camp .cactus-s::after { content: ''; position: absolute; width: 1vh; height: 2.4vh; background: #3a1c2c; border-radius: .5vh; }
+.lo-camp .cactus-s::before { left: -1.2vh; top: 1vh; }
+.lo-camp .cactus-s::after { right: -1.2vh; top: .4vh; }
+.lo-camp .c1 { left: 72%; }
+.lo-camp .c2 { left: 86%; height: 3.6vh; }
+/* a tumbleweed rolling past now and then */
+.scene-loc .tumble {
+  position: absolute; top: calc(var(--horizon, 52vh) + 6vh); left: -10vh; width: 5vh; height: 5vh;
+  border-radius: 50%; border: 2px dashed rgba(90,45,22,.85); box-shadow: inset 0 0 0 4px rgba(120,70,30,.35);
+  animation: tumble 14s linear infinite;
+}
+@keyframes tumble {
+  0%   { transform: translateX(0) translateY(0) rotate(0); opacity: 0; }
+  5%   { opacity: 1; }
+  25%  { transform: translateX(40vw) translateY(-1.5vh) rotate(360deg); }
+  50%  { transform: translateX(80vw) translateY(0) rotate(720deg); opacity: 1; }
+  55%, 100% { transform: translateX(120vw) translateY(0) rotate(900deg); opacity: 0; }
+}
+.scene-loc .dust {
+  position: absolute; width: 3px; height: 3px; border-radius: 50%;
+  background: rgba(255,230,190,.7);
+  animation: dust-drift 8s linear infinite;
+}
+@keyframes dust-drift { from { transform: translateX(0); opacity: 0; } 20% { opacity: .9; } to { transform: translateX(18vw); opacity: 0; } }
+
+/* map: dirt-road trail for World 4 */
+.map-line .dirt-edge   { stroke: #6b3a24; stroke-width: 30; opacity: .85; }
+.map-line .dirt        { stroke: #d9a066; stroke-width: 24; opacity: .55; }
+.map-line .dirt-glow   { stroke: rgba(255,190,110,.5); stroke-width: 42; filter: blur(7px); }
+.map-line .dirt-done   { stroke: #e4b07a; stroke-width: 24; }
+.map-line .dirt-tracks { stroke: rgba(90,45,22,.55); stroke-width: 14; stroke-dasharray: 3 5; }
+.node.w4:not(.current):not(.locked) {
+  background: radial-gradient(circle at 35% 30%, #fff1c7, #F4B83A 55%, #a8641b);
+  box-shadow: 0 5px 0 #7a4410, 0 10px 18px rgba(0,0,0,.35);
+}
+.world-banner.wb4 { background: linear-gradient(180deg, #d0603f, #7a2f3f); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lo-sun, .scene-loc .tumble, .scene-loc .dust { animation: none; }
 }
 
 /* ---------- Finale ---------- */
