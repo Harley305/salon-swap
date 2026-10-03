@@ -101,10 +101,11 @@ const CONFIG = {
   // Extra win lines per world (mixed in with yours above).
   worldWinMessages: {
     2: ["That's a wrap on that one!", 'Check the gate — we got it!', 'Perfect take!', 'Moving on — next setup!'],
-    3: ['And the award goes to… {name}!', "{name}, you've earned this one.", 'Standing ovation!', 'Speech! Speech!'],
+    3: ['Order up!', 'The crew says thank you!', 'Seconds, anyone?', 'Chef’s kiss!'],
+    6: ['And the award goes to… {name}!', "{name}, you've earned this one.", 'Standing ovation!', 'Speech! Speech!'],
   },
 
-  // ===== Level 90 finale: end credits =====
+  // ===== Level 180 finale: end credits =====
   fullName: 'Myesha Starks',
   awardTitle: 'Best Hair Department',
   credits: [                     // her real credits — add more anytime
@@ -573,20 +574,159 @@ const AWARD_TILES = [
   { id: 'flute',    name: 'Toast',        plural: 'Toasts',        base: '#7CC243', light: '#B6E68C', dark: '#4A8420', draw: drawFlute },
 ];
 
+
+/* World 3 · The Crafty Table: crew food. White icons with a dark accent, like the others. */
+function drawDonut(ctx, t) {
+  ctx.fillStyle = WHITE;
+  ctx.beginPath(); ctx.arc(50, 52, 31, 0, Math.PI * 2); ctx.arc(50, 52, 10, 0, Math.PI * 2, true); ctx.fill('evenodd');
+  // icing with a drippy edge
+  ctx.fillStyle = t.dark;
+  ctx.beginPath();
+  for (let i = 0; i <= 24; i++) {
+    const a = (i / 24) * Math.PI * 2, r = 25 + (i % 3 === 0 ? 3.5 : 0);
+    const x = 50 + Math.cos(a) * r, y = 50 + Math.sin(a) * r;
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  }
+  ctx.closePath();
+  ctx.arc(50, 50, 12, 0, Math.PI * 2, true);
+  ctx.fill('evenodd');
+  // sprinkles
+  const cols = ['#FFE08A', '#FFFFFF', '#FFA3CF'];
+  [[36, 38, 20], [62, 36, -30], [68, 54, 60], [40, 64, -50], [56, 68, 10], [32, 52, 80], [50, 30, -10]].forEach(([x, y, d], i) => {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(d * Math.PI / 180);
+    ctx.fillStyle = cols[i % 3]; rr(ctx, -3.5, -1.3, 7, 2.6, 1.3); ctx.fill();
+    ctx.restore();
+  });
+}
+
+function drawTaco(ctx, t) {
+  withRotation(ctx, -10, () => {
+    // fillings piled above the shell
+    ctx.fillStyle = '#7CC243';
+    for (let i = 0; i < 7; i++) { ctx.beginPath(); ctx.arc(22 + i * 9.3, 42 - Math.sin(i * 0.9) * 3, 7, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = '#FF3B3B';
+    [[32, 37], [50, 33], [67, 38]].forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill(); });
+    ctx.fillStyle = '#FFE08A';
+    [[41, 36], [59, 35]].forEach(([x, y]) => { rr(ctx, x - 4, y - 2.5, 8, 5, 2); ctx.fill(); });
+    // shell: a U-shaped tortilla
+    ctx.fillStyle = WHITE;
+    ctx.beginPath(); ctx.moveTo(14, 44); ctx.arc(50, 44, 36, Math.PI, 0, true); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = t.dark;
+    [[30, 58], [50, 66], [70, 58], [40, 72], [60, 72], [24, 48], [76, 48]].forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 2.3, 0, Math.PI * 2); ctx.fill(); });
+  });
+}
+
+function drawCupcake(ctx, t) {
+  // wrapper
+  ctx.fillStyle = WHITE;
+  ctx.beginPath(); ctx.moveTo(28, 52); ctx.lineTo(72, 52); ctx.lineTo(65, 84); ctx.lineTo(35, 84); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = t.dark; ctx.lineWidth = 2.4;
+  [36, 44, 50, 56, 64].forEach((x, i) => { ctx.beginPath(); ctx.moveTo(x, 54); ctx.lineTo(38 + i * 6, 82); ctx.stroke(); });
+  // frosting swirl
+  ctx.fillStyle = WHITE;
+  ctx.beginPath(); ctx.ellipse(50, 50, 27, 9, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(50, 40, 21, 8.5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(50, 31, 13, 7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(44, 28); ctx.quadraticCurveTo(50, 14, 56, 22); ctx.lineTo(52, 28); ctx.fill();
+  // cherry
+  ctx.fillStyle = '#FF3B5C';
+  ctx.beginPath(); ctx.arc(57, 18, 6.5, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#4A8420'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(58, 12); ctx.quadraticCurveTo(60, 5, 66, 4); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.beginPath(); ctx.arc(55, 16, 1.8, 0, Math.PI * 2); ctx.fill();
+}
+
+function drawBurger(ctx, t) {
+  ctx.fillStyle = WHITE;                                          // top bun
+  ctx.beginPath(); ctx.moveTo(20, 46); ctx.quadraticCurveTo(22, 18, 50, 18); ctx.quadraticCurveTo(78, 18, 80, 46); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = t.dark;                                         // sesame
+  [[36, 30], [50, 25], [63, 31], [44, 37], [58, 39]].forEach(([x, y]) => {
+    ctx.beginPath(); ctx.ellipse(x, y, 2.6, 1.6, 0.4, 0, Math.PI * 2); ctx.fill();
+  });
+  ctx.fillStyle = '#7CC243';                                      // lettuce
+  ctx.beginPath(); ctx.moveTo(17, 48);
+  for (let i = 0; i <= 8; i++) ctx.lineTo(17 + i * 8.25, 48 + (i % 2 ? 6 : 0));
+  ctx.lineTo(83, 52); ctx.lineTo(17, 52); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#FFD23F';                                      // cheese
+  ctx.beginPath(); ctx.moveTo(20, 51); ctx.lineTo(80, 51); ctx.lineTo(70, 60); ctx.lineTo(62, 56); ctx.lineTo(30, 56); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#6B3E26';                                      // patty
+  rr(ctx, 18, 55, 64, 11, 5.5); ctx.fill();
+  ctx.fillStyle = WHITE;                                          // bottom bun
+  rr(ctx, 21, 67, 58, 13, 6); ctx.fill();
+}
+
+function drawGrapes(ctx, t) {
+  ctx.strokeStyle = '#6B3E26'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(50, 26); ctx.quadraticCurveTo(52, 16, 58, 12); ctx.stroke();
+  ctx.fillStyle = '#7CC243';
+  ctx.beginPath(); ctx.moveTo(52, 20); ctx.quadraticCurveTo(66, 10, 76, 20); ctx.quadraticCurveTo(64, 28, 52, 20); ctx.fill();
+  const rows = [[36, 50, 64], [43, 57], [36, 50, 64], [43, 57], [50]];
+  rows.forEach((xs, r) => xs.forEach(x => {
+    const y = 34 + r * 11;
+    ctx.fillStyle = WHITE;
+    ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = t.light;
+    ctx.beginPath(); ctx.arc(x - 2.5, y - 2.5, 2.2, 0, Math.PI * 2); ctx.fill();
+  }));
+}
+
+function drawAvocado(ctx, t) {
+  withRotation(ctx, 18, () => {
+    ctx.fillStyle = t.dark;                                        // skin
+    ctx.beginPath();
+    ctx.moveTo(50, 12);
+    ctx.bezierCurveTo(64, 12, 68, 34, 74, 50);
+    ctx.bezierCurveTo(82, 72, 68, 88, 50, 88);
+    ctx.bezierCurveTo(32, 88, 18, 72, 26, 50);
+    ctx.bezierCurveTo(32, 34, 36, 12, 50, 12);
+    ctx.fill();
+    ctx.fillStyle = WHITE;                                         // flesh
+    ctx.beginPath();
+    ctx.moveTo(50, 18);
+    ctx.bezierCurveTo(60, 18, 63, 36, 68, 50);
+    ctx.bezierCurveTo(75, 69, 64, 82, 50, 82);
+    ctx.bezierCurveTo(36, 82, 25, 69, 32, 50);
+    ctx.bezierCurveTo(37, 36, 40, 18, 50, 18);
+    ctx.fill();
+    ctx.fillStyle = '#8A4F2C';                                     // pit
+    ctx.beginPath(); ctx.arc(50, 62, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.beginPath(); ctx.arc(46, 58, 3.5, 0, Math.PI * 2); ctx.fill();
+  });
+}
+
+const CRAFT_TILES = [
+  { id: 'donut',   name: 'Donut',   plural: 'Donuts',   base: '#3AAFA9', light: '#8BE6DF', dark: '#1D7470', draw: drawDonut },
+  { id: 'taco',    name: 'Taco',    plural: 'Tacos',    base: '#FF7E5F', light: '#FFB49E', dark: '#C14A2E', draw: drawTaco },
+  { id: 'cupcake', name: 'Cupcake', plural: 'Cupcakes', base: '#EC5FA5', light: '#FFA3CF', dark: '#A8306C', draw: drawCupcake },
+  { id: 'burger',  name: 'Slider',  plural: 'Sliders',  base: '#F4B83A', light: '#FFDF8A', dark: '#A8730B', draw: drawBurger },
+  { id: 'grapes',  name: 'Grapes',  plural: 'Grapes',   base: '#8C7BEF', light: '#C4B9FF', dark: '#5240B8', draw: drawGrapes },
+  { id: 'avocado', name: 'Avocado', plural: 'Avocados', base: '#7CC243', light: '#B6E68C', dark: '#3F7A18', draw: drawAvocado },
+];
+
 /* ----- Worlds -----
-   World 1 · Breaking In  (levels 1–30):  the road to the city, salon tiles.
-   World 2 · On Set       (levels 31–60): backstage, film-set tiles.
-   World 3 · Awards Night (levels 61–90+): the red carpet, award tiles. */
+   World 1 · City Streets      (1–30):    the road into town, salon tiles.
+   World 2 · The Studio Set    (31–60):   backstage, film-set tiles.
+   World 3 · The Crafty Table  (61–90):   crew food, cascades.
+   World 4 · On Location       (91–120):  coming soon (uses the Crafty Table look for now).
+   World 5 · The Wrap Party    (121–150): coming soon.
+   World 6 · Cinematic Credits (151–180): the red carpet, award tiles, the finale. */
 const WORLDS = [
   null,
   { n: 1, name: 'City Streets', tiles: SALON_TILES,
     blurb: '' },
   { n: 2, name: 'The Studio Set', tiles: STAGE_TILES,
     blurb: "You made it onto the set, {name}! Time to work with the stars — here's your new kit:" },
-  { n: 3, name: 'Awards Night', tiles: AWARD_TILES,
+  { n: 3, name: 'The Crafty Table', tiles: CRAFT_TILES,
+    blurb: "Break time, {name}! The crafty table is loaded — chain those cascades and keep the crew fed:" },
+  null,
+  null,
+  { n: 6, name: 'Cinematic Credits', tiles: AWARD_TILES,
     blurb: "From the chair to the spotlight, {name}. Tonight the industry says thank you — dress for the carpet:" },
 ];
-const worldOf = level => (level > 60 ? 3 : level > 30 ? 2 : 1);
+const WORLD_NAMES = [null, 'City Streets', 'The Studio Set', 'The Crafty Table', 'On Location', 'The Wrap Party', 'Cinematic Credits'];
+const worldOf = level => (level > 150 ? 6 : level > 60 ? 3 : level > 30 ? 2 : 1);
 
 /* Every world has three 10-level acts; the last level of each act is a boss board. */
 const ACT_NAMES = ['Introduction', 'Obstacles', 'Master Board'];
@@ -651,9 +791,28 @@ function drawScriptItem(ctx) {
   ctx.restore();
 }
 
+function drawCakeItem(ctx) {
+  // a slice of layer cake with a cherry on top
+  ctx.fillStyle = '#FFF4E4';                                   // plate
+  ctx.beginPath(); ctx.ellipse(50, 74, 30, 7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#E9A86A';                                   // sponge side
+  ctx.beginPath(); ctx.moveTo(24, 46); ctx.lineTo(70, 34); ctx.lineTo(76, 42); ctx.lineTo(76, 70); ctx.lineTo(24, 72); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#3AAFA9';                                   // turquoise filling layers
+  ctx.fillRect(24, 54, 52, 4); ctx.fillRect(24, 63, 52, 3.5);
+  ctx.fillStyle = '#FFA3CF';                                   // frosting top
+  ctx.beginPath(); ctx.moveTo(22, 46); ctx.lineTo(70, 32); ctx.lineTo(78, 41); ctx.lineTo(30, 50); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#FFA3CF';
+  [[30, 50], [42, 47], [54, 45], [66, 43]].forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI); ctx.fill(); });
+  ctx.fillStyle = '#FF3B5C';                                   // cherry
+  ctx.beginPath(); ctx.arc(50, 34, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#4A8420'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(51, 28); ctx.quadraticCurveTo(53, 20, 59, 18); ctx.stroke();
+}
+
 const DROP_ITEMS = {
   1: { name: 'coffee', plural: 'coffees', run: 'Coffee run', draw: drawCoffeeItem },
   2: { name: 'script', plural: 'scripts', run: 'Script run', draw: drawScriptItem },
+  3: { name: 'cake slice', plural: 'cake slices', run: 'Dessert run', draw: drawCakeItem },
 };
 const dropItem = w => DROP_ITEMS[w] || DROP_ITEMS[1];
 
@@ -2409,8 +2568,269 @@ const LEVELS = [
     '.ji..ij.',
     '.jjhhjj.',
     '........'] },
-  /* 61 */ { moves: 26, kinds: 5, goals: [['collect', 'trophy', 24], ['collect', 'bouquet', 24]], tip: 'Welcome to the red carpet!' },
-  /* 62 */ { moves: 28, kinds: 6, goals: [], layout: [
+  /* ===== WORLD 3 · THE CRAFTY TABLE (levels 61–90) ===== */
+  /* 61 */ { moves: 24, kinds: 5, goals: [['collect', 'donut', 24], ['collect', 'cupcake', 24]], tip: 'Break time! Big combos set off cascades — keep the crew fed.' },
+  /* 62 */ { moves: 27, kinds: 6, goals: [], layout: [
+    '........',
+    '........',
+    '..jjjj..',
+    '.j....j.',
+    '.j....j.',
+    '..jjjj..',
+    '........',
+    '........'] },
+  /* 63 */ { moves: 29, kinds: 6, drops: 2, dropsMax: 1, goals: [['collect', 'taco', 16]], tip: 'Dessert run! Slide the cake down to the crew.', layout: [
+    '...d....',
+    '........',
+    '........',
+    '..j..j..',
+    '..j..j..',
+    '........',
+    '........',
+    '........'] },
+  /* 64 */ { moves: 30, kinds: 6, goals: [['collect', 'burger', 18]], layout: [
+    '........',
+    '........',
+    '...ii...',
+    '..i..i..',
+    '..i..i..',
+    '...ii...',
+    '........',
+    '........'] },
+  /* 65 */ { moves: 24, kinds: 5, goals: [['score', 20000]], breather: true },
+  /* 66 */ { moves: 31, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '....d...',
+    '........',
+    '.h....h.',
+    '........',
+    '........',
+    '.h....h.',
+    '........',
+    '........'] },
+  /* 67 */ { moves: 29, kinds: 6, goals: [], tip: 'Clear the crates off the snack table!', layout: [
+    '........',
+    '........',
+    '.b.jj.b.',
+    '.b....b.',
+    '.b....b.',
+    '.b.jj.b.',
+    '........',
+    '........'] },
+  /* 68 */ { moves: 29, kinds: 6, drops: 2, dropsMax: 1, goals: [['collect', 'grapes', 18]], layout: [
+    '..d.....',
+    '........',
+    '.jj..jj.',
+    '........',
+    '...ii...',
+    '........',
+    '.jj..jj.',
+    '........'] },
+  /* 69 */ { moves: 29, kinds: 6, goals: [], layout: [
+    '........',
+    '.i.hh.i.',
+    '........',
+    '..i..i..',
+    '..i..i..',
+    '........',
+    '.i.hh.i.',
+    '........'] },
+  /* 70 */ { moves: 32, kinds: 6, drops: 3, dropsMax: 1, goals: [['collect', 'avocado', 18]], tip: 'Act 1 boss board — lunch rush!', layout: [
+    '...d....',
+    '........',
+    '.jjjjjj.',
+    '.j.bb.j.',
+    '.j....j.',
+    '.jjjjjj.',
+    '........',
+    '........'] },
+  /* 71 */ { moves: 28, kinds: 6, goals: [], tip: 'Act 2: the table gets crowded — obstacles everywhere!', layout: [
+    '........',
+    '.J....J.',
+    '..JJJJ..',
+    '........',
+    '........',
+    '..JJJJ..',
+    '.J....J.',
+    '........'] },
+  /* 72 */ { moves: 31, kinds: 6, goals: [['collect', 'donut', 18], ['collect', 'taco', 18]], layout: [
+    '........',
+    '..I..I..',
+    '.i....i.',
+    '........',
+    '........',
+    '.i....i.',
+    '..I..I..',
+    '........'] },
+  /* 73 */ { moves: 30, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '...d....',
+    '........',
+    '.B....B.',
+    '..jjjj..',
+    '..jjjj..',
+    '........',
+    '.B....B.',
+    '........'] },
+  /* 74 */ { moves: 31, kinds: 6, goals: [['collect', 'cupcake', 18]], layout: [
+    '........',
+    '.H....H.',
+    '...hh...',
+    '.i....i.',
+    '.i....i.',
+    '...hh...',
+    '.H....H.',
+    '........'] },
+  /* 75 */ { moves: 26, kinds: 5, drops: 1, dropsMax: 1, goals: [['collect', 'burger', 34]], breather: true, layout: [
+    '........',
+    '....d...',
+    '........',
+    '........',
+    '........',
+    '........',
+    '........',
+    '........'] },
+  /* 76 */ { moves: 31, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '..d.....',
+    '........',
+    '.XX..XX.',
+    '........',
+    '..jjjj..',
+    '..jjjj..',
+    '........',
+    '........'] },
+  /* 77 */ { moves: 31, kinds: 6, goals: [['collect', 'avocado', 18], ['collect', 'grapes', 18]], tip: 'Something green and sparkly is on the menu today…', layout: [
+    '........',
+    '..h..h..',
+    '.I....I.',
+    '...ii...',
+    '...ii...',
+    '.I....I.',
+    '..h..h..',
+    '........'] },
+  /* 78 */ { moves: 31, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '....d...',
+    '.b.JJ.b.',
+    '.J....J.',
+    '.J.ii.J.',
+    '.J....J.',
+    '.b.JJ.b.',
+    '........',
+    '........'] },
+  /* 79 */ { moves: 31, kinds: 6, goals: [], layout: [
+    '........',
+    '.hJ..Jh.',
+    '.J....J.',
+    '...bb...',
+    '...bb...',
+    '.J....J.',
+    '.hJ..Jh.',
+    '........'] },
+  /* 80 */ { moves: 36, kinds: 6, drops: 2, dropsMax: 1, goals: [['collect', 'taco', 16]], tip: 'Act 2 boss board — the whole crew is starving!', layout: [
+    '...d....',
+    '.jjjjjj.',
+    '.ji..ij.',
+    '.j.bb.j.',
+    '.j....j.',
+    '.ji..ij.',
+    '.jjjjjj.',
+    '........'] },
+  /* 81 */ { moves: 31, kinds: 6, goals: [], tip: 'Act 3: Master Boards — chef’s special!', layout: [
+    '........',
+    '.JJ..JJ.',
+    '.J.hh.J.',
+    '........',
+    '........',
+    '.J.hh.J.',
+    '.JJ..JJ.',
+    '........'] },
+  /* 82 */ { moves: 34, kinds: 6, goals: [['collect', 'grapes', 18], ['collect', 'donut', 18]], layout: [
+    '........',
+    '.H.ii.H.',
+    '........',
+    '.i.HH.i.',
+    '........',
+    '.H.ii.H.',
+    '........',
+    '........'] },
+  /* 83 */ { moves: 36, kinds: 6, drops: 2, dropsMax: 1, goals: [['collect', 'cupcake', 16]], layout: [
+    '..d.....',
+    '........',
+    '.b.XX.b.',
+    '.b....b.',
+    '..iiii..',
+    '........',
+    '.b....b.',
+    '........'] },
+  /* 84 */ { moves: 32, kinds: 6, goals: [], layout: [
+    '........',
+    '.jjjjjj.',
+    '.jJJJJj.',
+    '........',
+    '........',
+    '.jJJJJj.',
+    '.jjjjjj.',
+    '........'] },
+  /* 85 */ { moves: 28, kinds: 5, drops: 1, dropsMax: 1, goals: [['score', 22000]], breather: true, layout: [
+    '........',
+    '...d....',
+    '........',
+    '........',
+    '........',
+    '........',
+    '........',
+    '........'] },
+  /* 86 */ { moves: 36, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '....d...',
+    '.hj..jh.',
+    '.jh..hj.',
+    '...ii...',
+    '...ii...',
+    '.jh..hj.',
+    '.hj..jh.',
+    '........'] },
+  /* 87 */ { moves: 35, kinds: 6, goals: [['collect', 'burger', 18], ['collect', 'avocado', 18]], layout: [
+    '........',
+    '..ih.hi.',
+    '........',
+    '.B....B.',
+    '..h..h..',
+    '........',
+    '..ih.hi.',
+    '........'] },
+  /* 88 */ { moves: 38, kinds: 6, drops: 2, dropsMax: 1, goals: [], layout: [
+    '...d....',
+    '.JbJJbJ.',
+    '.b....b.',
+    '.J.ii.J.',
+    '.J.ii.J.',
+    '.b....b.',
+    '.JbJJbJ.',
+    '........'] },
+  /* 89 */ { moves: 33, kinds: 6, goals: [['collect', 'taco', 16], ['collect', 'cupcake', 16]], layout: [
+    '........',
+    '..H..H..',
+    '.b....b.',
+    '..JJJJ..',
+    '..JJJJ..',
+    '.b....b.',
+    '..H..H..',
+    '........'] },
+  /* 90 */ { moves: 40, kinds: 6, drops: 2, dropsMax: 1, goals: [['collect', 'donut', 16]], tip: 'World 3 finale — dinner is served!', layout: [
+    '....d...',
+    '.jjhhjj.',
+    '.jI..Ij.',
+    '.j.XX.j.',
+    '.j.XX.j.',
+    '.ji..ij.',
+    '.jjhhjj.',
+    '........'] },
+];
+
+/* World 6 · Cinematic Credits (levels 151–180): the red carpet and the awards.
+   Levels 91–150 (Worlds 4–5) are generated until they get their own handmade boards. */
+const LEVELS_W6 = [
+  /* ===== WORLD 6 · CINEMATIC CREDITS (levels 151–180) ===== */
+  /* 151 */ { moves: 26, kinds: 5, goals: [['collect', 'trophy', 24], ['collect', 'bouquet', 24]], tip: 'Welcome to the red carpet — the final world!' },
+  /* 152 */ { moves: 28, kinds: 6, goals: [], layout: [
     '........',
     '..jjjj..',
     '.j....j.',
@@ -2419,7 +2839,7 @@ const LEVELS = [
     '.j....j.',
     '..jjjj..',
     '........'] },
-  /* 63 */ { moves: 28, kinds: 6, goals: [['collect', 'camera', 18]], layout: [
+  /* 153 */ { moves: 28, kinds: 6, goals: [['collect', 'camera', 18]], layout: [
     '........',
     '.b....b.',
     '.bb..bb.',
@@ -2428,7 +2848,7 @@ const LEVELS = [
     '.bb..bb.',
     '.b....b.',
     '........'] },
-  /* 64 */ { moves: 29, kinds: 6, goals: [], layout: [
+  /* 154 */ { moves: 29, kinds: 6, goals: [], layout: [
     '........',
     '.JJ..JJ.',
     '.J.hh.J.',
@@ -2437,8 +2857,8 @@ const LEVELS = [
     '.J.hh.J.',
     '.JJ..JJ.',
     '........'] },
-  /* 65 */ { moves: 25, kinds: 5, goals: [['score', 23000]], breather: true },
-  /* 66 */ { moves: 29, kinds: 6, goals: [['collect', 'envelope', 18]], layout: [
+  /* 155 */ { moves: 25, kinds: 5, goals: [['score', 23000]], breather: true },
+  /* 156 */ { moves: 29, kinds: 6, goals: [['collect', 'envelope', 18]], layout: [
     '........',
     '..i..i..',
     '.i.BB.i.',
@@ -2447,7 +2867,7 @@ const LEVELS = [
     '.i....i.',
     '..i..i..',
     '........'] },
-  /* 67 */ { moves: 30, kinds: 6, goals: [], layout: [
+  /* 157 */ { moves: 30, kinds: 6, goals: [], layout: [
     '........',
     '.jjjjjj.',
     '.jJJJJj.',
@@ -2456,7 +2876,7 @@ const LEVELS = [
     '.jJJJJj.',
     '.jjjjjj.',
     '........'] },
-  /* 68 */ { moves: 31, kinds: 6, goals: [['collect', 'ribbon', 16], ['collect', 'flute', 16]], layout: [
+  /* 158 */ { moves: 31, kinds: 6, goals: [['collect', 'ribbon', 16], ['collect', 'flute', 16]], layout: [
     '........',
     '.h....h.',
     '...hh...',
@@ -2465,7 +2885,7 @@ const LEVELS = [
     '...hh...',
     '.h....h.',
     '........'] },
-  /* 69 */ { moves: 30, kinds: 6, goals: [], layout: [
+  /* 159 */ { moves: 30, kinds: 6, goals: [], layout: [
     '........',
     '.X....X.',
     '..b..b..',
@@ -2474,7 +2894,7 @@ const LEVELS = [
     '..b..b..',
     '.X....X.',
     '........'] },
-  /* 70 */ { moves: 28, kinds: 5, goals: [['collect', 'trophy', 32]], breather: true, layout: [
+  /* 160 */ { moves: 28, kinds: 5, goals: [['collect', 'trophy', 32]], breather: true, layout: [
     '........',
     '........',
     '..jjjj..',
@@ -2483,7 +2903,7 @@ const LEVELS = [
     '..jjjj..',
     '........',
     '........'] },
-  /* 71 */ { moves: 30, kinds: 6, goals: [], layout: [
+  /* 161 */ { moves: 30, kinds: 6, goals: [], layout: [
     '........',
     '.i.HH.i.',
     '........',
@@ -2492,7 +2912,7 @@ const LEVELS = [
     '........',
     '.i.HH.i.',
     '........'] },
-  /* 72 */ { moves: 30, kinds: 6, goals: [['collect', 'bouquet', 20]], layout: [
+  /* 162 */ { moves: 30, kinds: 6, goals: [['collect', 'bouquet', 20]], layout: [
     '........',
     '.JJJJJJ.',
     '.J....J.',
@@ -2501,7 +2921,7 @@ const LEVELS = [
     '.J....J.',
     '.JJJJJJ.',
     '........'] },
-  /* 73 */ { moves: 29, kinds: 6, goals: [['collect', 'camera', 18], ['collect', 'envelope', 18]], layout: [
+  /* 163 */ { moves: 29, kinds: 6, goals: [['collect', 'camera', 18], ['collect', 'envelope', 18]], layout: [
     '........',
     '..I..I..',
     '........',
@@ -2510,7 +2930,7 @@ const LEVELS = [
     '........',
     '..I..I..',
     '........'] },
-  /* 74 */ { moves: 31, kinds: 6, goals: [], layout: [
+  /* 164 */ { moves: 31, kinds: 6, goals: [], layout: [
     '........',
     '.BXXXXB.',
     '........',
@@ -2519,7 +2939,7 @@ const LEVELS = [
     '........',
     '........',
     '........'] },
-  /* 75 */ { moves: 27, kinds: 5, goals: [['score', 32000]], breather: true, layout: [
+  /* 165 */ { moves: 27, kinds: 5, goals: [['score', 32000]], breather: true, layout: [
     '........',
     '........',
     '...ii...',
@@ -2528,7 +2948,7 @@ const LEVELS = [
     '...ii...',
     '........',
     '........'] },
-  /* 76 */ { moves: 30, kinds: 6, goals: [['collect', 'flute', 20]], layout: [
+  /* 166 */ { moves: 30, kinds: 6, goals: [['collect', 'flute', 20]], layout: [
     '........',
     '.jh..hj.',
     '.j....j.',
@@ -2537,7 +2957,7 @@ const LEVELS = [
     '.j....j.',
     '.jh..hj.',
     '........'] },
-  /* 77 */ { moves: 30, kinds: 6, goals: [], layout: [
+  /* 167 */ { moves: 30, kinds: 6, goals: [], layout: [
     '........',
     '.Bb..bB.',
     '..I..I..',
@@ -2546,7 +2966,7 @@ const LEVELS = [
     '..I..I..',
     '.Bb..bB.',
     '........'] },
-  /* 78 */ { moves: 30, kinds: 6, goals: [['collect', 'ribbon', 20], ['collect', 'trophy', 20]], layout: [
+  /* 168 */ { moves: 30, kinds: 6, goals: [['collect', 'ribbon', 20], ['collect', 'trophy', 20]], layout: [
     '........',
     '..h..h..',
     '.H....H.',
@@ -2555,7 +2975,7 @@ const LEVELS = [
     '.H....H.',
     '..h..h..',
     '........'] },
-  /* 79 */ { moves: 31, kinds: 6, goals: [], layout: [
+  /* 169 */ { moves: 31, kinds: 6, goals: [], layout: [
     '........',
     '.JJJJJJ.',
     '.JJJJJJ.',
@@ -2564,7 +2984,7 @@ const LEVELS = [
     '.JJJJJJ.',
     '.JJJJJJ.',
     '........'] },
-  /* 80 */ { moves: 32, kinds: 6, goals: [['collect', 'bouquet', 30]], breather: true, tip: 'Ten more to go — the big night is near!', layout: [
+  /* 170 */ { moves: 32, kinds: 6, goals: [['collect', 'bouquet', 30]], breather: true, tip: 'Ten more to go — the big night is near!', layout: [
     '........',
     '........',
     '.j.jj.j.',
@@ -2573,7 +2993,7 @@ const LEVELS = [
     '.j.jj.j.',
     '........',
     '........'] },
-  /* 81 */ { moves: 31, kinds: 6, goals: [], layout: [
+  /* 171 */ { moves: 31, kinds: 6, goals: [], layout: [
     '........',
     '.H.h.hH.',
     '........',
@@ -2582,7 +3002,7 @@ const LEVELS = [
     '.H.h.hH.',
     '........',
     '........'] },
-  /* 82 */ { moves: 30, kinds: 6, goals: [['collect', 'envelope', 22]], layout: [
+  /* 172 */ { moves: 30, kinds: 6, goals: [['collect', 'envelope', 22]], layout: [
     '........',
     '.X.bb.X.',
     '........',
@@ -2591,7 +3011,7 @@ const LEVELS = [
     '........',
     '.X.bb.X.',
     '........'] },
-  /* 83 */ { moves: 31, kinds: 6, goals: [], layout: [
+  /* 173 */ { moves: 31, kinds: 6, goals: [], layout: [
     '........',
     '.jIjjIj.',
     '.j....j.',
@@ -2600,7 +3020,7 @@ const LEVELS = [
     '.j....j.',
     '.jIjjIj.',
     '........'] },
-  /* 84 */ { moves: 30, kinds: 6, goals: [['collect', 'camera', 20], ['collect', 'flute', 20]], layout: [
+  /* 174 */ { moves: 30, kinds: 6, goals: [['collect', 'camera', 20], ['collect', 'flute', 20]], layout: [
     '........',
     '..b..b..',
     '.h.BB.h.',
@@ -2609,8 +3029,8 @@ const LEVELS = [
     '.h.BB.h.',
     '..b..b..',
     '........'] },
-  /* 85 */ { moves: 28, kinds: 5, goals: [['collect', 'trophy', 36]], breather: true },
-  /* 86 */ { moves: 31, kinds: 6, goals: [], layout: [
+  /* 175 */ { moves: 28, kinds: 5, goals: [['collect', 'trophy', 36]], breather: true },
+  /* 176 */ { moves: 31, kinds: 6, goals: [], layout: [
     '........',
     '.JJJJJJ.',
     '.JhJJhJ.',
@@ -2619,7 +3039,7 @@ const LEVELS = [
     '.JhJJhJ.',
     '.JJJJJJ.',
     '........'] },
-  /* 87 */ { moves: 31, kinds: 6, goals: [['collect', 'ribbon', 18]], layout: [
+  /* 177 */ { moves: 31, kinds: 6, goals: [['collect', 'ribbon', 18]], layout: [
     '........',
     '.I.XX.I.',
     '........',
@@ -2628,7 +3048,7 @@ const LEVELS = [
     '.i....i.',
     '.I.XX.I.',
     '........'] },
-  /* 88 */ { moves: 33, kinds: 6, goals: [], layout: [
+  /* 178 */ { moves: 33, kinds: 6, goals: [], layout: [
     '........',
     '.bjjjjb.',
     '.jh..hj.',
@@ -2637,7 +3057,7 @@ const LEVELS = [
     '.jh..hj.',
     '.bjjjjb.',
     '........'] },
-  /* 89 */ { moves: 31, kinds: 6, goals: [['collect', 'envelope', 20], ['collect', 'bouquet', 20]], layout: [
+  /* 179 */ { moves: 31, kinds: 6, goals: [['collect', 'envelope', 20], ['collect', 'bouquet', 20]], layout: [
     '........',
     '..H..H..',
     '.b....b.',
@@ -2646,7 +3066,7 @@ const LEVELS = [
     '.b....b.',
     '..H..H..',
     '........'] },
-  /* 90 */ { moves: 38, kinds: 6, goals: [['collect', 'trophy', 16]], tip: 'Awards night — this one is for you.', layout: [
+  /* 180 */ { moves: 38, kinds: 6, goals: [['collect', 'trophy', 16]], tip: 'The grand finale — this one is for you.', layout: [
     '........',
     '.jjhhjj.',
     '.jI..Ij.',
@@ -2708,7 +3128,9 @@ function generateLevel(n) {
 
 /* Turn a level entry into everything the game needs. */
 function buildLevel(n) {
-  const raw = n <= LEVELS.length ? LEVELS[n - 1] : generateLevel(n);
+  const raw = n <= LEVELS.length ? LEVELS[n - 1]
+    : n >= 151 && n < 151 + LEVELS_W6.length ? LEVELS_W6[n - 151]
+    : generateLevel(n);
   const layout = raw.layout || [];
   const spec = blankSpec(CONFIG.rows, CONFIG.cols);
   const counts = { gel: 0, ice: 0, chain: 0, box: 0, drop: 0 };
@@ -4301,8 +4723,9 @@ const UI = {
     const W2 = 60;                                    // last level of World 2
     const seg = (a, b) => pts.slice(Math.max(0, a - 1), Math.min(b, pts.length));
     const doneSeg = (a, b) => (reached > a ? seg(a, Math.min(b, reached)) : []);
-    const road = seg(1, W1), film = seg(W1, W2), carpet = seg(W2, total);
-    const roadDone = seg(1, Math.min(reached, W1)), filmDone = doneSeg(W1, W2), carpetDone = doneSeg(W2, total);
+    const W5 = 150;                                   // last level before the red carpet
+    const road = seg(1, W1), film = seg(W1, W2), table = seg(W2, W5), carpet = seg(W5, total);
+    const roadDone = seg(1, Math.min(reached, W1)), filmDone = doneSeg(W1, W2), tableDone = doneSeg(W2, W5), carpetDone = doneSeg(W5, total);
     const d = list => (list.length > 1 ? line(list) : '');
     // banners on the open side of the path
     const banner = (num, name, x0, y) => {
@@ -4310,7 +4733,7 @@ const UI = {
       return `<div class="world-banner wb${num}" style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px"><span>World ${num}</span>${name}</div>`;
     };
     const mid = (a, b) => [(pts[a - 1][0] + pts[b - 1][0]) / 2, (pts[a - 1][1] + pts[b - 1][1]) / 2];
-    const m2 = mid(W1, W1 + 1), m3 = mid(W2, Math.min(W2 + 1, total));
+    const m2 = mid(W1, W1 + 1), m3 = mid(W2, Math.min(W2 + 1, total)), m6 = total > W5 ? mid(W5, W5 + 1) : null;
     path.innerHTML =
       `<svg class="map-line" width="${W}" height="${H}" aria-hidden="true">` +
       `<path class="road-edge" d="${d(road)}"/>` +
@@ -4324,6 +4747,11 @@ const UI = {
       `<path class="film-mid" d="${d(film)}"/>` +
       `<path class="film-frames" d="${d(film)}"/>` +
       `<path class="film-glow" d="${d(filmDone)}"/><path class="film-done" d="${d(filmDone)}"/>` +
+      `<path class="table-edge" d="${d(table)}"/>` +
+      `<path class="table" d="${d(table)}"/>` +
+      `<path class="table-check" d="${d(table)}"/>` +
+      `<path class="table-glow" d="${d(tableDone)}"/><path class="table-done" d="${d(tableDone)}"/>` +
+      `<path class="table-dots" d="${d(table)}"/>` +
       `<path class="carpet-edge" d="${d(carpet)}"/>` +
       `<path class="carpet" d="${d(carpet)}"/>` +
       `<path class="carpet-glow" d="${d(carpetDone)}"/><path class="carpet-done" d="${d(carpetDone)}"/>` +
@@ -4332,6 +4760,7 @@ const UI = {
       banner(1, WORLDS[1].name, pts[0][0], pts[0][1] + 58) +
       banner(2, WORLDS[2].name, m2[0], m2[1]) +
       (total > W2 ? banner(3, WORLDS[3].name, m3[0], m3[1]) : '') +
+      (m6 ? banner(6, WORLDS[6].name, m6[0], m6[1]) : '') +
       nodes;
 
     const totalStars = Object.values(p.stars).reduce((a, b) => a + b, 0);
@@ -4601,7 +5030,7 @@ const UI = {
     const lv = buildLevel(n);
     const best = Save.data.progress.stars[n] || 0;
     const take = (Save.data.progress.fails[n] || 0) + 1;
-    const kicker = w === 2 ? `Scene · Take ${take}` : w === 3 ? 'Category' : 'Level';
+    const kicker = w === 2 ? `Scene · Take ${take}` : w === 3 ? 'Order up' : w === 6 ? 'Category' : 'Level';
     this.showModal(`
       <div class="panel-act">World ${w} · Act ${actOf(n)} — ${ACT_NAMES[actOf(n) - 1]}</div>
       ${isBoss(n) ? '<div class="boss-tag">👑 Boss board</div>' : ''}
@@ -4712,8 +5141,8 @@ const UI = {
         <div class="cr-pips">${[1, 2, 3, 4, 5, 6].map(w => `<img src="${Pip.url(w, 'cheer', 80)}" alt="">`).join('')}</div>
         <div class="cr-role">Selected credits</div>${credits}
         <div class="cr-role">The journey</div>
-        <div class="cr-item">Breaking In · On Set · Awards Night</div>
-        <div class="cr-item">90 levels · ★ ${stars}</div>
+        <div class="cr-item">${[1, 2, 3, 4, 5, 6].map(w => esc((WORLDS[w] || { name: WORLD_NAMES[w] }).name)).join(' · ')}</div>
+        <div class="cr-item">180 levels · ★ ${stars}</div>
         <div class="cr-role">A special thank-you</div>
         <div class="cr-msg">${esc(CONFIG.finaleMessage)}</div>
         <div class="cr-sig">${esc(CONFIG.finaleSignature)}</div>
@@ -4752,13 +5181,14 @@ const UI = {
   },
 
   showWin(n, stars, score) {
-    if (n === 90 && !Save.data.help.finale) {
+    if (n === 180 && !Save.data.help.finale) {
       this.showFinale(() => this.openMap());
       return;
     }
     const w = worldOf(n);
     const msg = Lines.win(w);
-    const [kick, head] = w === 2 ? [`Scene ${n}`, "That's a wrap!"] : w === 3 ? [`Category ${n}`, 'Winner!'] : [`Level ${n}`, 'Complete!'];
+    const [kick, head] = w === 2 ? [`Scene ${n}`, "That's a wrap!"] : w === 3 ? [`Order ${n}`, 'Delicious!']
+      : w === 6 ? [`Category ${n}`, 'Winner!'] : [`Level ${n}`, 'Complete!'];
     Pip.react('cheer', 3000);
     this.showModal(`
       <img class="pip pip-card pip-win" src="${Pip.url(w, 'cheer')}" alt="Pip">
@@ -4785,7 +5215,8 @@ const UI = {
     const w = worldOf(lv.n);
     const take = (Save.data.progress.fails[lv.n] || 0) + 1;
     const [kick, head, again] = w === 2 ? [`Scene ${lv.n} · Take ${take - 1}`, 'Cut!', `Take ${take}`]
-      : w === 3 ? [`Category ${lv.n}`, 'So close!', 'Try again'] : [`Level ${lv.n}`, 'Out of moves', 'Try again'];
+      : w === 3 ? [`Order ${lv.n}`, 'Out of snacks!', 'Try again']
+      : w === 6 ? [`Category ${lv.n}`, 'So close!', 'Try again'] : [`Level ${lv.n}`, 'Out of moves', 'Try again'];
     this.showModal(`
       <div class="panel-kicker">${kick}</div>
       <div class="panel-title">${head}</div>
@@ -4849,6 +5280,7 @@ const Background = {
       <path d="M0 30 C 60 20, 120 24, 170 32 L 230 32 C 280 22, 340 20, 400 28 L400 40 L0 40Z" fill="#1c5a4c"/>
     </svg></div>`;
     html += this.stage();
+    html += this.craft();
     html += this.awards();
 
     for (let i = 0; i < 22; i++) {
@@ -4863,7 +5295,35 @@ const Background = {
     $('roadBricks').style.backgroundImage = `url(${this.brickTile()})`;
   },
 
-  // World 3: awards night — turquoise carpet, velvet ropes, flashes, searchlights.
+  // World 3: the crafty table — string lights, a striped tent, a gingham table in perspective.
+  craft() {
+    const rnd = seededRandom(6161);
+    let bulbs = '';
+    for (let i = 0; i < 15; i++) {
+      const x = 3 + i * 6.7, sag = Math.sin((i / 14) * Math.PI) * 5;
+      const c = ['#FFE08A', '#FFA3CF', '#8BE6DF'][i % 3];
+      bulbs += `<i class="bulb" style="left:${x.toFixed(1)}%;top:${(7 + sag).toFixed(1)}vh;--c:${c};` +
+               `animation-delay:-${(rnd() * 3).toFixed(2)}s"></i>`;
+    }
+    let steam = '';
+    [22, 47, 74].forEach((x, i) => {
+      for (let k = 0; k < 2; k++) {
+        steam += `<i class="steam" style="left:${(x + k * 3).toFixed(1)}%;animation-delay:-${(i * 1.1 + k * 1.7).toFixed(1)}s"></i>`;
+      }
+    });
+    return `<div class="scene scene-craft">
+      <div class="cr-tent"></div>
+      <svg class="cr-lights" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0 6 Q50 18 100 6"/></svg>
+      ${bulbs}
+      <div class="cr-table"><div class="table-plane"></div></div>
+      <div class="cr-food">
+        <i class="f-urn"></i><i class="f-cake"></i><i class="f-bowl"></i><i class="f-pot"></i>
+      </div>
+      ${steam}
+    </div>`;
+  },
+
+  // World 6: awards night — turquoise carpet, velvet ropes, flashes, searchlights.
   awards() {
     const rnd = seededRandom(9090);
     let flashes = '';
