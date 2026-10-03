@@ -987,6 +987,7 @@ const World = {
     document.body.dataset.world = String(w);
     if (w === this.current) return;
     this.current = w;
+    if (typeof Music !== 'undefined') Music.play(songFor(w, document.body.dataset.screen));
     TILE_TYPES.length = 0;
     WORLDS[w].tiles.forEach(t => TILE_TYPES.push(t));
     Render.sprites = [];                       // rebuild tile pictures
@@ -1656,7 +1657,69 @@ const SONGS = {
     { chord: ['G2', 'B3', 'D4', 'G4'],   mel: ['G5', '-', 'B5', '-', 'D6', '-', 'E6', '-'] },
     { chord: ['G2', 'Bb3', 'D4', 'G4'],  mel: ['D6', '-', '-', '-', 'Bb5', '-', 'A5', '-'] },
   ] },
+  // World 2 · "Backstage Swing" — walking bass, brushes and vibes.
+  studio: { bpm: 126, style: 'swing', bars: [
+    { chord: ['G2', 'Bb3', 'D4', 'F4'], mel: ['D5', '-', 'F5', '-', 'A5', 'G5', 'F5', '-'] },
+    { chord: ['C3', 'Bb3', 'E4', 'G4'], mel: ['E5', '-', 'G5', '-', 'Bb5', '-', 'A5', '-'] },
+    { chord: ['F2', 'A3', 'C4', 'E4'],  mel: ['A5', '-', '-', 'G5', 'F5', '-', 'C5', '-'] },
+    { chord: ['D3', 'C4', 'F#4', 'A4'], mel: ['F#5', '-', 'A5', '-', 'C6', '-', '-', '-'] },
+    { chord: ['G2', 'Bb3', 'D4', 'F4'], mel: ['Bb5', '-', 'A5', '-', 'G5', '-', 'D5', '-'] },
+    { chord: ['C3', 'Bb3', 'E4', 'G4'], mel: ['G5', '-', 'E5', '-', 'C5', '-', 'D5', 'E5'] },
+    { chord: ['F2', 'A3', 'C4', 'E4'],  mel: ['F5', '-', '-', '-', 'A5', '-', 'C6', '-'] },
+    { chord: ['C3', 'Bb3', 'E4', 'G4'], mel: ['Bb5', '-', 'G5', '-', 'E5', '-', '-', '-'] },
+  ] },
+  // World 3 · "Snack Break" — bouncy ukulele strums and a little shaker.
+  craft: { bpm: 124, style: 'bounce', bars: [
+    { chord: ['C3', 'C4', 'E4', 'G4'],  mel: ['E5', 'G5', '-', 'E5', 'C5', '-', 'D5', 'E5'] },
+    { chord: ['F2', 'C4', 'F4', 'A4'],  mel: ['F5', '-', 'A5', '-', 'G5', 'F5', 'E5', '-'] },
+    { chord: ['G2', 'B3', 'D4', 'G4'],  mel: ['D5', '-', 'G5', '-', 'B5', '-', 'A5', 'G5'] },
+    { chord: ['C3', 'C4', 'E4', 'G4'],  mel: ['E5', '-', 'C5', '-', '-', '-', 'G4', '-'] },
+    { chord: ['A2', 'C4', 'E4', 'A4'],  mel: ['A5', '-', 'G5', 'E5', 'C5', '-', 'E5', '-'] },
+    { chord: ['F2', 'C4', 'F4', 'A4'],  mel: ['F5', '-', 'E5', 'D5', 'C5', '-', 'A4', '-'] },
+    { chord: ['D3', 'C4', 'F#4', 'A4'], mel: ['F#5', '-', 'A5', '-', 'D6', '-', 'C6', '-'] },
+    { chord: ['G2', 'B3', 'D4', 'F4'],  mel: ['B5', '-', 'G5', '-', 'F5', '-', 'D5', '-'] },
+  ] },
+  // World 4 · "Golden Hour" — boom-chick guitar and a whistled tune out west.
+  location: { bpm: 98, style: 'western', bars: [
+    { chord: ['A2', 'A3', 'C4', 'E4'],  mel: ['E5', '-', '-', '-', 'A5', '-', 'G5', 'E5'] },
+    { chord: ['G2', 'G3', 'B3', 'D4'],  mel: ['D5', '-', '-', '-', 'B4', '-', '-', '-'] },
+    { chord: ['F2', 'F3', 'A3', 'C4'],  mel: ['C5', '-', 'D5', '-', 'E5', '-', 'F5', '-'] },
+    { chord: ['E2', 'E3', 'G#3', 'B3'], mel: ['E5', '-', '-', '-', '-', '-', '-', '-'] },
+    { chord: ['A2', 'A3', 'C4', 'E4'],  mel: ['A5', '-', '-', 'G5', 'E5', '-', 'D5', 'C5'] },
+    { chord: ['C3', 'G3', 'C4', 'E4'],  mel: ['E5', '-', 'G5', '-', 'C6', '-', '-', '-'] },
+    { chord: ['D3', 'F3', 'A3', 'D4'],  mel: ['A5', '-', 'F5', '-', 'D5', '-', 'E5', 'F5'] },
+    { chord: ['E2', 'E3', 'G#3', 'B3'], mel: ['G#5', '-', '-', '-', 'B5', '-', '-', '-'] },
+  ] },
+  // World 5 · "Dance Floor" — four-on-the-floor disco.
+  party: { bpm: 118, style: 'disco', bars: [
+    { chord: ['D2', 'D4', 'F4', 'A4'],   mel: ['A5', '-', 'A5', '-', 'C6', '-', 'A5', 'G5'] },
+    { chord: ['Bb1', 'D4', 'F4', 'Bb4'], mel: ['F5', '-', '-', '-', 'D5', '-', 'F5', '-'] },
+    { chord: ['C2', 'C4', 'E4', 'G4'],   mel: ['G5', '-', 'G5', '-', 'A5', '-', 'G5', 'E5'] },
+    { chord: ['A1', 'C#4', 'E4', 'A4'],  mel: ['E5', '-', '-', '-', 'C#5', '-', '-', '-'] },
+    { chord: ['D2', 'D4', 'F4', 'A4'],   mel: ['D6', '-', 'C6', '-', 'A5', '-', 'F5', '-'] },
+    { chord: ['G1', 'D4', 'G4', 'Bb4'],  mel: ['G5', '-', 'Bb5', '-', 'D6', '-', 'Bb5', '-'] },
+    { chord: ['Bb1', 'D4', 'F4', 'Bb4'], mel: ['A5', '-', 'F5', '-', 'D5', '-', 'F5', 'G5'] },
+    { chord: ['A1', 'C#4', 'E4', 'A4'],  mel: ['A5', '-', '-', '-', 'E5', '-', 'C#5', '-'] },
+  ] },
+  // World 6 · "Her Big Night" — a slow, grand theme for the red carpet.
+  credits: { bpm: 76, style: 'anthem', bars: [
+    { chord: ['Eb2', 'G3', 'Bb3', 'Eb4'], mel: ['Bb5', '-', '-', '-', 'G5', '-', 'Bb5', '-'] },
+    { chord: ['C2', 'G3', 'C4', 'Eb4'],   mel: ['C6', '-', '-', '-', 'Eb6', '-', 'D6', '-'] },
+    { chord: ['Ab1', 'Ab3', 'C4', 'Eb4'], mel: ['C6', '-', 'Bb5', '-', 'Ab5', '-', '-', '-'] },
+    { chord: ['Bb1', 'F3', 'Bb3', 'D4'],  mel: ['Bb5', '-', '-', '-', 'F5', '-', '-', '-'] },
+    { chord: ['Eb2', 'G3', 'Bb3', 'Eb4'], mel: ['G5', '-', 'Bb5', '-', 'Eb6', '-', '-', '-'] },
+    { chord: ['G2', 'G3', 'Bb3', 'D4'],   mel: ['D6', '-', 'C6', '-', 'Bb5', '-', 'G5', '-'] },
+    { chord: ['Ab1', 'Ab3', 'C4', 'Eb4'], mel: ['Ab5', '-', 'C6', '-', 'Eb6', '-', 'F6', '-'] },
+    { chord: ['Bb1', 'F3', 'Bb3', 'D4'],  mel: ['G6', '-', 'F6', '-', 'D6', '-', 'Bb5', '-'] },
+  ] },
 };
+
+// Which tune plays in each world. World 1 keeps its march on the title/map and the dreamy loop in play.
+const WORLD_SONGS = { 1: { map: 'road', game: 'emerald' }, 2: 'studio', 3: 'craft', 4: 'location', 5: 'party', 6: 'credits' };
+function songFor(world, screen) {
+  const s = WORLD_SONGS[world] || WORLD_SONGS[1];
+  return typeof s === 'string' ? s : (screen === 'game' ? s.game : s.map);
+}
 
 const Music = {
   want: null,
@@ -1708,7 +1771,52 @@ const Music = {
     const s = step % 8;
     const ch = bar.chord.map(noteFreq);
     const mel = bar.mel[s];
-    if (song.style === 'march') {
+    if (song.style === 'swing') {
+      const sw = s % 2 ? eighth * 0.32 : 0;                          // swung eighths
+      const t = at + sw;
+      if (s % 2 === 0) {                                           // walking bass
+        const walk = [ch[0], ch[1] / 2, ch[2] / 2, ch[3] / 2][s / 2];
+        S.tone(walk, t, eighth * 1.7, { type: 'triangle', vol: 0.2, bus });
+        S.noiseHit(t, 0.05, { filter: 'highpass', freq: 8000, vol: 0.018, bus });   // ride
+      }
+      if (s === 2 || s === 6) S.noiseHit(t, 0.12, { filter: 'bandpass', freq: 2600, q: 0.6, vol: 0.035, bus });  // brushes
+      if (s === 3 || s === 7) ch.slice(1).forEach(f => S.pluck(f, t, 0.035, eighth * 1.2, bus));
+      if (mel !== '-') S.bell(noteFreq(mel), t, 0.06, eighth * 3.5, bus);
+    } else if (song.style === 'bounce') {
+      if (s === 0 || s === 4) S.tone(s === 0 ? ch[0] : ch[0] * 1.5, at, eighth * 1.5, { type: 'triangle', vol: 0.2, bus });
+      const strum = [1, 0, 1, 1, 0, 1, 1, 0][s];
+      if (strum) ch.slice(1).forEach((f, j) => S.pluck(f, at + j * 0.012, s % 2 ? 0.03 : 0.04, eighth * 1.1, bus));
+      S.noiseHit(at, 0.03, { filter: 'highpass', freq: 6000, vol: s % 2 ? 0.02 : 0.012, bus });   // shaker
+      if (mel !== '-') S.tone(noteFreq(mel), at, eighth * 1.6, { type: 'triangle', vol: 0.07, bus, lowpass: 4000 });
+    } else if (song.style === 'western') {
+      if (s === 0) S.tone(ch[0], at, eighth * 1.8, { type: 'triangle', vol: 0.22, bus });
+      if (s === 4) S.tone(ch[0] * 1.5, at, eighth * 1.8, { type: 'triangle', vol: 0.18, bus });
+      if (s === 2 || s === 6) ch.slice(1).forEach((f, j) => S.pluck(f, at + j * 0.02, 0.04, eighth * 1.3, bus));
+      if (s === 0 || s === 3 || s === 4 || s === 7) S.noiseHit(at, 0.06, { filter: 'lowpass', freq: 900, vol: 0.03, bus });  // clip-clop
+      if (mel !== '-') S.tone(noteFreq(mel), at, eighth * 3, { vol: 0.06, attack: 0.04, bus });          // whistle
+    } else if (song.style === 'disco') {
+      if (s % 2 === 0) S.tone(120, at, 0.22, { vol: 0.28, glide: 45, bus });                                // kick
+      else S.noiseHit(at, 0.12, { filter: 'highpass', freq: 7000, vol: 0.03, bus });                       // open hat
+      if (s === 2 || s === 6) S.noiseHit(at, 0.14, { filter: 'bandpass', freq: 1800, q: 0.8, vol: 0.06, bus }); // clap
+      S.tone(s % 2 ? ch[0] * 2 : ch[0], at, eighth * 0.9, { type: 'square', vol: 0.06, lowpass: 900, bus }); // octave bass
+      if (s === 3 || s === 7) ch.slice(1).forEach(f => S.tone(f, at, eighth * 0.8, { type: 'sawtooth', vol: 0.018, lowpass: 2200, bus }));
+      if (mel !== '-') S.bell(noteFreq(mel), at, 0.065, eighth * 3, bus);
+    } else if (song.style === 'anthem') {
+      if (s === 0) {
+        S.tone(ch[0], at, eighth * 8, { vol: 0.18, attack: 0.08, bus });
+        S.noiseHit(at, 0.5, { filter: 'lowpass', freq: 220, vol: 0.09, bus });                            // soft timpani
+        ch.slice(1).forEach(f => {
+          S.tone(f, at, eighth * 8.5, { type: 'sawtooth', vol: 0.012, attack: 0.5, lowpass: 1400, bus });  // strings
+          S.tone(f * 2, at, eighth * 8.5, { type: 'triangle', vol: 0.02, attack: 0.5, bus });
+        });
+      }
+      const arp = ch.slice(1);
+      S.pluck(arp[[0, 1, 2, 1, 0, 1, 2, 1][s]] * 2, at, 0.025, eighth * 1.8, bus);                        // harp
+      if (mel !== '-') {
+        S.tone(noteFreq(mel), at, eighth * 3.5, { type: 'triangle', vol: 0.07, attack: 0.06, bus });       // horn-ish lead
+        S.bell(noteFreq(mel), at, 0.035, eighth * 3, bus);
+      }
+    } else if (song.style === 'march') {
       if (s === 0) S.tone(ch[0], at, eighth * 1.8, { type: 'triangle', vol: 0.22, bus });
       if (s === 4) S.tone(ch[0] * 1.5, at, eighth * 1.8, { type: 'triangle', vol: 0.17, bus });
       if (s === 2 || s === 6) ch.slice(1).forEach(f => S.pluck(f, at, 0.045, eighth * 1.4, bus));
@@ -5297,7 +5405,7 @@ const UI = {
     });
     if (name !== 'game') World.apply(worldOf(Save.data.progress.unlocked));
     if (name === 'game') Render.layout();
-    Music.play(name === 'game' ? 'emerald' : 'road');
+    Music.play(songFor(World.current, name));
     if (name === 'title') {
       const next = Save.data.progress.unlocked;
       $('btnPlay').textContent = next > 1 ? `Continue · Level ${next}` : 'Play';
