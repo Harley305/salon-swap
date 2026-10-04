@@ -43,6 +43,12 @@ All art, music and characters are original. The Wizard of Oz / Wicked touches ar
 - **💾 Save & Load** (title screen) moves progress to another device with a save file or a copy-and-paste code.
 - **↺ Start over from level 1** is at the bottom of Save & Load.
 
+## If the board ever freezes
+
+The game repairs itself. If a move hits an error, it puts the tiles back in place, fills any gaps, and unlocks the board right away. If a move ever stalls with nothing moving, a safety net unlocks it after about 4 seconds. Progress and stars are never lost.
+
+To change that wait, edit `unstickMs` in CONFIG at the top of `script.js` (4000 = 4 seconds).
+
 ## Test links
 
 Add these to the end of the game address:
