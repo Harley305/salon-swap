@@ -61,6 +61,7 @@ const CONFIG = {
   musicVolume: 0.55,  // 0–1
   sfxVolume: 0.85,    // 0–1
   idleHintMs: 7000,   // show a quiet hint after this long without a move
+  unstickMs: 4000,    // safety net: unlock the board if it sits locked this long with nothing moving
 
   // Special links (add to the end of the game's address):
   //   ?beat=30   → marks levels 1–30 complete (1★ each) so she continues at 31.
@@ -4685,48 +4686,103 @@ const Game = {
     if (!Board.movable(a.r, a.c) || !Board.movable(b.r, b.c)) return;
     this.locked = true;
     this.hint = null;
-    Sound.play('swap');
-    const ta = Board.grid[a.r][a.c], tb = Board.grid[b.r][b.c];
+    try {
+      Sound.play('swap');
+      const ta = Board.grid[a.r][a.c], tb = Board.grid[b.r][b.c];
 
-    Board.swap(a, b);
-    await this.slide([ta, tb], CONFIG.swapMs);
-
-    const combo = !ta.drop && !tb.drop && (ta.special === 'bomb' || tb.special === 'bomb' || !!(ta.special && tb.special));
-    const k = Board.kindsMatrix();
-    // a coffee can always be swiped straight down one space (it costs a move)
-    const coffeeDown = (ta.drop && !tb.drop && ta.r > tb.r) || (tb.drop && !ta.drop && tb.r > ta.r);
-    const makesMatch = combo || coffeeDown || Board.matchesAt(k, ta.r, ta.c) || Board.matchesAt(k, tb.r, tb.c);
-
-    if (!makesMatch) {
       Board.swap(a, b);
-      this.badStreak++;
-      if (this.badStreak >= CONFIG.stuckAfter) {
-        this.badStreak = 0;
-        UI.toast(Lines.stuck(), false, 'think');
-        clearTimeout(this._hintTimer);
-        this._hintTimer = setTimeout(() => this.showHint(), 1700);
+      await this.slide([ta, tb], CONFIG.swapMs);
+
+      const combo = !ta.drop && !tb.drop && (ta.special === 'bomb' || tb.special === 'bomb' || !!(ta.special && tb.special));
+      const k = Board.kindsMatrix();
+      // a coffee can always be swiped straight down one space (it costs a move)
+      const coffeeDown = (ta.drop && !tb.drop && ta.r > tb.r) || (tb.drop && !ta.drop && tb.r > ta.r);
+      const makesMatch = combo || coffeeDown || Board.matchesAt(k, ta.r, ta.c) || Board.matchesAt(k, tb.r, tb.c);
+
+      if (!makesMatch) {
+        Board.swap(a, b);
+        this.badStreak++;
+        if (this.badStreak >= CONFIG.stuckAfter) {
+          this.badStreak = 0;
+          UI.toast(Lines.stuck(), false, 'think');
+          clearTimeout(this._hintTimer);
+          this._hintTimer = setTimeout(() => this.showHint(), 1700);
+        } else {
+          UI.toast(Lines.oops(), false, 'oops');
+        }
+        Sound.play('nope');
+        await this.slide([ta, tb], CONFIG.swapMs + 40, Ease.outBack);
+        this.lastSwap = 'no match';
       } else {
-        UI.toast(Lines.oops(), false, 'oops');
+        this.lastSwap = 'match ✓';
+        this.badStreak = 0;
+        this.clearHint();
+        this.movesLeft--;
+        UI.setMoves(this.movesLeft);
+        const pending = combo ? await this.prepareCombo(ta, tb) : null;
+        await this.resolveBoard([{ r: ta.r, c: ta.c }, { r: tb.r, c: tb.c }], pending);
+
+        if (this.goalsDone()) { await this.win(); return; }
+        if (this.movesLeft <= 0) { await this.lose(); return; }
       }
-      Sound.play('nope');
-      await this.slide([ta, tb], CONFIG.swapMs + 40, Ease.outBack);
-      this.lastSwap = 'no match';
-    } else {
-      this.lastSwap = 'match ✓';
-      this.badStreak = 0;
-      this.clearHint();
-      this.movesLeft--;
-      UI.setMoves(this.movesLeft);
-      const pending = combo ? await this.prepareCombo(ta, tb) : null;
-      await this.resolveBoard([{ r: ta.r, c: ta.c }, { r: tb.r, c: tb.c }], pending);
-
-      if (this.goalsDone()) { await this.win(); return; }
-      if (this.movesLeft <= 0) { await this.lose(); return; }
+    } catch (err) {
+      await this.recover(err, 'swap');
+    } finally {
+      this.unlockIfPlaying();
     }
+  },
 
+  /* ----- safety net -----
+     If anything throws in the middle of a move, the board is repaired and
+     unlocked instead of freezing. Win/lose screens keep the board locked. */
+  unlockIfPlaying() {
+    if (this.state !== 'play') return;
     this.locked = false;
+    this._stuckSince = 0;
     UI.updateDebug();
     this.armIdle();
+  },
+
+  async recover(err, where) {
+    console.error('[Salon Swap] recovered from an error in ' + where + ':', err);
+    this.recoveries = (this.recoveries || 0) + 1;            // for testing
+    await this.repairBoard();
+    if (this.state !== 'play' || !this.level) return;
+    if (this.goalsDone()) await this.win();
+    else if (this.movesLeft <= 0) await this.lose();
+  },
+
+  // Put every tile back in its cell, fill holes, clear leftover matches.
+  async repairBoard() {
+    try {
+      FX.list.length = 0;
+      Board.grid.forEach((row, r) => row.forEach((t, c) => {
+        if (!t) return;
+        if (t.alpha < 0.5) { row[c] = null; return; }       // was mid-pop: finish clearing it
+        Object.assign(t, { r, c, x: c, y: r, scale: 1, alpha: 1, shake: 0, triggered: false });
+      }));
+      await this.collapse();
+      if (Board.findMatches().length) await this.resolveBoard();
+      else if (!Board.findMoves().length) await this.shuffle();
+    } catch (err) {
+      console.error('[Salon Swap] board repair failed:', err);
+    }
+  },
+
+  // Runs every half second: a board locked with nothing animating means a
+  // move got stuck (a promise that never finished). Repair and unlock it.
+  watchdog() {
+    if (this.state !== 'play' || !this.locked || Tweens.busy || this._repairing) {
+      this._stuckSince = 0;
+      return;
+    }
+    const now = performance.now();
+    if (!this._stuckSince) { this._stuckSince = now; return; }
+    if (now - this._stuckSince < CONFIG.unstickMs) return;
+    this._repairing = true;
+    this._stuckSince = 0;
+    this.recover(new Error('board stayed locked with nothing moving'), 'watchdog')
+      .finally(() => { this._repairing = false; this.unlockIfPlaying(); });
   },
 
   /* ----- goals ----- */
@@ -5197,8 +5253,14 @@ const Game = {
       this.locked = true;
       this.clearHint();
       this.selected = null;
-      await this.shuffle('Twister!');
-      this.locked = false;
+      try {
+        await this.shuffle('Twister!');
+      } catch (err) {
+        await this.recover(err, 'shuffle');
+      } finally {
+        this.unlockIfPlaying();
+      }
+      return;
     }
     this.armIdle();
   },
@@ -5211,14 +5273,17 @@ const Game = {
     this.locked = true;
     this.clearHint();
     this.selected = null;
-    Sound.play('hammer');
-    Shake.add(0.4);
-    const set = new Map([[cell.r * Board.cols + cell.c, { r: cell.r, c: cell.c, depth: 0 }]]);
-    await this.resolveBoard([], { set, fx: [{ type: 'ring', r: cell.r, c: cell.c, R: 0, depth: 0 }] });
-    if (this.goalsDone()) { await this.win(); return; }
-    this.locked = false;
-    UI.updateDebug();
-    this.armIdle();
+    try {
+      Sound.play('hammer');
+      Shake.add(0.4);
+      const set = new Map([[cell.r * Board.cols + cell.c, { r: cell.r, c: cell.c, depth: 0 }]]);
+      await this.resolveBoard([], { set, fx: [{ type: 'ring', r: cell.r, c: cell.c, R: 0, depth: 0 }] });
+      if (this.goalsDone()) { await this.win(); return; }
+    } catch (err) {
+      await this.recover(err, 'hammer');
+    } finally {
+      this.unlockIfPlaying();
+    }
   },
 
   // From the "Out of moves" screen: spend a +5 booster and keep playing.
@@ -5281,7 +5346,12 @@ const Game = {
       }
       await wait(250);
       const set = new Map(picks.map(t => [t.r * Board.cols + t.c, { r: t.r, c: t.c, depth: 0 }]));
-      await this.resolveBoard([], { set, fx: [] });
+      try {
+        await this.resolveBoard([], { set, fx: [] });
+      } catch (err) {
+        console.error('[Salon Swap] finale sparkle failed (stars still saved):', err);
+        await this.repairBoard();
+      }
     }
 
     const stars = this.starsFor(this.score);
@@ -6506,5 +6576,7 @@ if (document.fonts && document.fonts.ready) {
 }
 
 // Handy for testing in the console.
+setInterval(() => Game.watchdog(), 500);
+
 window.__game = { Board, Game, Save, Render, Loop, FX, UI, Tweens, BOMB, makeTile, buildLevel, LEVELS, Pip, World,
                   Sound, Music, Particles, Shake, Confetti, Daily };
