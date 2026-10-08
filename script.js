@@ -2060,6 +2060,32 @@ const COMBO_WORDS = { 3: 'Gorgeous!', 4: 'Fabulous!', 5: 'Popular!', 6: 'Wicked!
 
 
 /* ---------- 4d. DAILY GIFT ---------- */
+/* Booster rewards for beating levels (first win only, so replays can't farm them).
+   👑 Boss board (every 10th level): 1 random booster.
+   Last level of a world (30, 60 … 180): a bundle of 2 of each. */
+const LevelRewards = {
+  KINDS: ['hammer', 'shuffle', 'moves'],
+  NAMES: { hammer: '🔨 Hammer', shuffle: '🌪️ Twister', moves: '+5 Moves' },
+  forWin(n) {
+    const out = [];
+    if (isBoss(n)) {
+      const k = this.KINDS[Math.floor(Math.random() * this.KINDS.length)];
+      out.push({ label: '👑 Boss reward', items: { [k]: 1 } });
+    }
+    if (n % 30 === 0 && n <= 180) {
+      out.push({ label: '🏆 ' + WORLD_NAMES[worldOf(n)] + ' cleared', items: { hammer: 2, shuffle: 2, moves: 2 } });
+    }
+    return out;
+  },
+  give(rewards) {
+    const inv = Save.data.boosters;
+    rewards.forEach(r => Object.keys(r.items).forEach(k => { inv[k] = (inv[k] || 0) + r.items[k]; }));
+  },
+  describe(items) {
+    return Object.keys(items).map(k => this.NAMES[k] + (items[k] > 1 ? ' ×' + items[k] : '')).join(' · ');
+  },
+};
+
 const Daily = {
   // Day 1 → 7, then the streak starts over. Missing a day resets to day 1.
   REWARDS: [
@@ -5419,6 +5445,9 @@ const Game = {
 
     const stars = this.starsFor(this.score);
     const p = Save.data.progress;
+    const firstWin = !(p.stars[n] > 0);
+    const rewards = firstWin ? LevelRewards.forWin(n) : [];
+    LevelRewards.give(rewards);
     p.stars[n] = Math.max(p.stars[n] || 0, stars);
     p.best[n] = Math.max(p.best[n] || 0, this.score);
     p.unlocked = Math.max(p.unlocked, n + 1);
@@ -5427,7 +5456,8 @@ const Game = {
     Save.write();
 
     await wait(450);
-    UI.showWin(n, stars, this.score);
+    UI.updateBoosters();
+    UI.showWin(n, stars, this.score, rewards);
   },
 
   async lose() {
@@ -6240,7 +6270,7 @@ const UI = {
     });
   },
 
-  showWin(n, stars, score) {
+  showWin(n, stars, score, rewards = []) {
     if (n === 180 && !Save.data.help.finale) {
       this.showFinale(() => this.openMap());
       return;
@@ -6258,6 +6288,7 @@ const UI = {
         `<span class="bstar${i <= stars ? ' on' : ''}" style="animation-delay:${(0.75 + i * 0.3).toFixed(2)}s">★</span>`).join('')}</div>
       <div class="panel-score">${score.toLocaleString()}</div>
       ${msg ? `<div class="panel-msg">${esc(msg)}</div>` : ''}
+      ${rewards.map(r => `<div class="panel-reward"><b>${r.label}</b>${LevelRewards.describe(r.items)}</div>`).join('')}
       <div class="panel-btns">
         <button class="btn btn-big" data-act="next">Next level</button>
         ${stars < 3 ? `<button class="btn" data-act="again">↻ Play again for ★★★</button>` : ''}
@@ -6270,6 +6301,7 @@ const UI = {
     Sound.play('heelClicks');
     Sound.play('fanfare', 0.55);
     for (let i = 1; i <= stars; i++) Sound.play('star', 0.85 + i * 0.3, i);
+    if (rewards.length) Sound.play('gift');
   },
 
   showLose(lv) {
@@ -6641,5 +6673,5 @@ if (document.fonts && document.fonts.ready) {
 // Handy for testing in the console.
 setInterval(() => Game.watchdog(), 500);
 
-window.__game = { Board, Game, Save, Render, Loop, FX, UI, Tweens, BOMB, makeTile, buildLevel, LEVELS, Pip, World,
+window.__game = { LevelRewards, Board, Game, Save, Render, Loop, FX, UI, Tweens, BOMB, makeTile, buildLevel, LEVELS, Pip, World,
                   Sound, Music, Particles, Shake, Confetti, Daily };
