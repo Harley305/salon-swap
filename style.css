@@ -591,6 +591,19 @@ body {
 }
 .bstar.on:nth-child(2) { animation-name: star-pop-mid; }
 .panel-score { font-size: 30px; font-weight: 700; }
+.panel-reward {
+  margin: 10px auto 0;
+  max-width: 280px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 0 0 3px #F4B83A;
+  font-size: 16px;
+  font-weight: 600;
+  animation: star-pop .5s cubic-bezier(.2,1.6,.4,1) 1.6s both;
+}
+.panel-reward b { display: block; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: #2a8f8a; }
 .panel-msg {
   margin: 14px auto 0;
   max-width: 280px;
