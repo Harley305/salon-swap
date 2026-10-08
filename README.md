@@ -43,6 +43,15 @@ All art, music and characters are original. The Wizard of Oz / Wicked touches ar
 - **💾 Save & Load** (title screen) moves progress to another device with a save file or a copy-and-paste code.
 - **↺ Start over from level 1** is at the bottom of Save & Load.
 
+## Coins & gems
+
+- **Coins:** 30 for clearing a level the first time, 10 for replaying one, and 200 extra for clearing a world.
+- **Gems:** 3 for clearing a world, plus 1 more when every level in that world has ★★★.
+- **🛍️ Shop** (title screen, or tap the coin counter): coins buy boosters (Hammer 75, Twister 60, +5 Moves 90). Gems buy a booster bundle, the light tile style, and Pip's looks from any world.
+- **Get coins:** pretend coin packs (no real money) or replay cleared levels. Edit the pack names and "prices" in `CONFIG → coinPacks` at the top of `script.js`.
+- Free boosters still come from the Daily Gift, boss boards and world clears.
+- Players who already had progress get a one-time "Back pay" for the levels and worlds they'd already cleared.
+
 ## If the board ever freezes
 
 The game repairs itself. If a move hits an error, it puts the tiles back in place, fills any gaps, and unlocks the board right away. If a move ever stalls with nothing moving, a safety net unlocks it after about 4 seconds. Progress and stars are never lost.

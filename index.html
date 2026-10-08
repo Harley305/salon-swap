@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#17252A">
   <title>Myesha's Salon Swap</title>
-  <link rel="stylesheet" href="style.css?v=20261008a">
+  <link rel="stylesheet" href="style.css?v=20261008b">
 </head>
 <body>
 <!-- ===== CodePen HTML panel: copy from here ===== -->
@@ -17,6 +17,7 @@
   <!-- TITLE -->
   <section class="screen screen-title" id="screenTitle">
     <button class="icon-btn sound-btn" id="btnSoundTitle" type="button" aria-label="Sound on">🔊</button>
+    <button class="wallet-chip wallet-title" id="walletTitle" type="button" aria-label="Coins and gems — open the shop">🪙 0 · 💎 0</button>
     <div class="hero">
       <div class="hero-name" id="heroName">Myesha's</div>
       <div class="hero-game" id="heroGame">Salon Swap</div>
@@ -24,6 +25,7 @@
     </div>
     <div class="title-btns">
       <button class="btn btn-big" id="btnPlay" type="button">Play</button>
+      <button class="btn btn-ghost btn-small" id="btnShop" type="button">🛍️ Shop</button>
       <button class="btn btn-ghost btn-small" id="btnSaves" type="button">💾 Save &amp; Load</button>
     </div>
   </section>
@@ -32,8 +34,9 @@
   <section class="screen screen-map" id="screenMap" hidden>
     <header class="map-head">
       <button class="icon-btn" id="btnMapBack" type="button" aria-label="Back to title">‹</button>
-      <div class="map-title">Level Map</div>
+      <div class="map-title">Map</div>
       <div class="map-stars" id="mapStars">★ 0</div>
+      <button class="wallet-chip" id="walletMap" type="button" aria-label="Coins and gems — open the shop">🪙 0 · 💎 0</button>
       <button class="icon-btn" id="btnHelpMap" type="button" aria-label="How to play">?</button>
     </header>
     <div class="map-scroll scrollable" id="mapScroll">
@@ -98,6 +101,6 @@
 
 </div>
 <!-- ===== to here ===== -->
-<script src="script.js?v=20261008a"></script>
+<script src="script.js?v=20261008b"></script>
 </body>
 </html>

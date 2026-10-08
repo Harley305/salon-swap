@@ -63,6 +63,14 @@ const CONFIG = {
   idleHintMs: 7000,   // show a quiet hint after this long without a move
   unstickMs: 4000,    // safety net: unlock the board if it sits locked this long with nothing moving
 
+  // ===== Coin refill packs (pretend store — no real money anywhere) =====
+  // Tapping one gives the coins right away. Change the names and "prices" to anything you like.
+  coinPacks: [
+    { coins: 500,  name: 'Tip jar',    price: '1 hug' },
+    { coins: 1500, name: 'Big tip',    price: '1 kiss' },
+    { coins: 5000, name: 'Wrap bonus', price: '1 date night' },
+  ],
+
   // Special links (add to the end of the game's address):
   //   ?beat=30   → marks levels 1–30 complete (1★ each) so she continues at 31.
   //                Only ever moves progress forward, never back.
@@ -1325,10 +1333,11 @@ const Save = (() => {
     v: VERSION,
     createdAt: Date.now(),
     savedAt: 0,
-    settings: { muted: false, showDebug: CONFIG.showDebug },
+    settings: { muted: false, showDebug: CONFIG.showDebug, pipLook: 0, lightTiles: false },
     progress: { unlocked: 1, stars: {}, best: {}, fails: {} },
     help: { howTo: false, seen: {}, carriedOver: false, world: 1 },
     boosters: { hammer: 2, shuffle: 2, moves: 2 },    // Phase 7
+    wallet: { coins: 0, gems: 0, backpaid: false, worldPaid: {}, perfectPaid: {}, owned: {} },
     daily: { lastClaim: null, streak: 0 },            // Phase 7
     stats: { levelsWon: 0 },
   });
@@ -2086,6 +2095,79 @@ const LevelRewards = {
   },
 };
 
+/* ---------- Coins & gems ----------
+   Coins: 30 for a level's first clear, 10 for a repeat clear, +200 for clearing a world.
+   Gems: 3 for clearing a world, +1 when every level in that world has ★★★.
+   Coins buy boosters; gems buy looks and bundles. Free boosters still come from
+   the Daily Gift and boss / world-clear rewards. */
+const MAX_COINS = 99999;
+const MAX_GEMS = 999;
+const ECON = {
+  firstClear: 30, repeatClear: 10,
+  worldCoins: 200, worldGems: 3, perfectGems: 1,
+  prices: { hammer: 75, shuffle: 60, moves: 90 },
+  bundleGems: 3, bundle: { hammer: 3, shuffle: 3, moves: 3 },
+  lightTilesGems: 4,
+  pipLookGems: 2,
+};
+
+const Wallet = {
+  get d() { return Save.data.wallet; },
+  coins() { return this.d.coins; },
+  gems() { return this.d.gems; },
+  addCoins(n) { const b = this.d.coins; this.d.coins = Math.min(MAX_COINS, b + n); return this.d.coins - b; },
+  addGems(n) { const b = this.d.gems; this.d.gems = Math.min(MAX_GEMS, b + n); return this.d.gems - b; },
+  spendCoins(n) { if (this.d.coins < n) return false; this.d.coins -= n; Save.write(); return true; },
+  spendGems(n) { if (this.d.gems < n) return false; this.d.gems -= n; Save.write(); return true; },
+  owns(id) { return !!this.d.owned[id]; },
+
+  worldDone(w) { return (Save.data.progress.stars[w * 30] || 0) > 0; },
+  perfect(w) {
+    const st = Save.data.progress.stars;
+    for (let n = (w - 1) * 30 + 1; n <= w * 30; n++) if ((st[n] || 0) < 3) return false;
+    return true;
+  },
+
+  // One time: pay for levels she already cleared before coins existed.
+  backpay() {
+    const d = this.d;
+    if (d.backpaid) return null;
+    d.backpaid = true;
+    let coins = 0, gems = 0;
+    const st = Save.data.progress.stars;
+    Object.keys(st).forEach(k => { if (st[k] > 0) coins += ECON.firstClear; });
+    for (let w = 1; w <= 6; w++) {
+      if (!this.worldDone(w)) continue;
+      coins += ECON.worldCoins; gems += ECON.worldGems; d.worldPaid[w] = true;
+      if (this.perfect(w)) { gems += ECON.perfectGems; d.perfectPaid[w] = true; }
+    }
+    this.addCoins(coins); this.addGems(gems);
+    Save.write();
+    return coins || gems ? { coins, gems } : null;
+  },
+
+  // Pay out for a win. Call after the level's stars are saved.
+  forWin(n, firstWin) {
+    const d = this.d, out = { coins: 0, gems: 0, cards: [] };
+    out.coins += this.addCoins(firstWin ? ECON.firstClear : ECON.repeatClear);
+    const w = worldOf(n);
+    if (n <= 180 && n % 30 === 0 && firstWin && !d.worldPaid[w]) {
+      d.worldPaid[w] = true;
+      const c = this.addCoins(ECON.worldCoins), g = this.addGems(ECON.worldGems);
+      out.coins += c; out.gems += g;
+      out.cards.push({ label: '💰 World bonus', text: `🪙 ${c} · 💎 ${g}` });
+    }
+    if (n <= 180 && d.worldPaid[w] && !d.perfectPaid[w] && this.perfect(w)) {
+      d.perfectPaid[w] = true;
+      const g = this.addGems(ECON.perfectGems);
+      out.gems += g;
+      out.cards.push({ label: '✨ Perfect world — all ★★★', text: `💎 +${g}` });
+    }
+    Save.write();
+    return out;
+  },
+};
+
 const Daily = {
   // Day 1 → 7, then the streak starts over. Missing a day resets to day 1.
   REWARDS: [
@@ -2306,7 +2388,13 @@ const Pip = {
     }
   },
 
-  url(world, mood, px = 120, tone = this.tone()) {
+  // A look she bought in the shop keeps Pip in that world's hairstyle (0 = change each world).
+  lookFor(world) {
+    const l = Save.data && Save.data.settings && Save.data.settings.pipLook;
+    return l >= 1 && l <= 6 ? l : world;
+  },
+  url(world, mood, px = 120, tone = this.tone(), raw = false) {
+    if (!raw) world = this.lookFor(world);
     const key = world + ':' + mood + ':' + px + ':' + tone;
     if (!this._cache[key]) {
       const c = document.createElement('canvas');
@@ -4464,7 +4552,8 @@ const Render = {
         ctx.drawImage(this.bombSprite, x, y, size, size);
       } else {
         const cl = Board.cells && Board.cells[t.r] && Board.cells[t.r][t.c];
-        ctx.drawImage((cl && cl.gel && Math.abs(t.y - t.r) < 0.05 ? this.flipSprites : this.sprites)[t.kind], x, y, size, size);
+        const onGel = !!(cl && cl.gel && Math.abs(t.y - t.r) < 0.05);
+        ctx.drawImage((onGel !== !!Save.data.settings.lightTiles ? this.flipSprites : this.sprites)[t.kind], x, y, size, size);
         if (t.special) ctx.drawImage(this.overlays[t.special], x, y, size, size);
       }
       if (t.lock) {
@@ -5321,7 +5410,7 @@ const Game = {
       UI.updateBoosters();
       return;
     }
-    if (!inv[type]) { UI.toast('None left — come back tomorrow for a gift!'); return; }
+    if (!inv[type]) { UI.showShop(); return; }
     if (type === 'hammer') {
       this.mode = 'hammer';
       this.selected = null;
@@ -5452,12 +5541,14 @@ const Game = {
     p.best[n] = Math.max(p.best[n] || 0, this.score);
     p.unlocked = Math.max(p.unlocked, n + 1);
     p.fails[n] = 0;
+    const pay = Wallet.forWin(n, firstWin);
     Save.data.stats.levelsWon = (Save.data.stats.levelsWon || 0) + 1;
     Save.write();
 
     await wait(450);
     UI.updateBoosters();
-    UI.showWin(n, stars, this.score, rewards);
+    UI.renderWallet();
+    UI.showWin(n, stars, this.score, rewards, pay);
   },
 
   async lose() {
@@ -5547,6 +5638,7 @@ const UI = {
 
     $('btnPlay').addEventListener('click', () => this.openMap());
     $('btnSaves').addEventListener('click', () => this.showSaves());
+    ['walletTitle', 'walletMap', 'btnShop'].forEach(id => { const el = $(id); if (el) el.addEventListener('click', () => this.showShop()); });
     $('goals').addEventListener('click', () => this.showGoalsHelp());
     $('btnHelpMap').addEventListener('click', () => this.showHowTo(0));
     $('btnHelpGame').addEventListener('click', () => { if (!Game.locked) this.showHowTo(0); });
@@ -5589,6 +5681,7 @@ const UI = {
       $('screen' + s[0].toUpperCase() + s.slice(1)).hidden = s !== name;
     });
     if (name !== 'game') World.apply(worldOf(Save.data.progress.unlocked));
+    if (name !== 'game') this.renderWallet();
     if (name === 'game') Render.layout();
     Music.play(songFor(World.current, name));
     if (name === 'title') {
@@ -5708,6 +5801,115 @@ const UI = {
       b.classList.toggle('empty', !inv[k]);
       b.classList.toggle('active', k === 'hammer' && Game.mode === 'hammer');
     });
+  },
+
+  /* ----- Coins & gems ----- */
+  renderWallet() {
+    const paid = Wallet.backpay();
+    const txt = `🪙 ${Wallet.coins().toLocaleString()} · 💎 ${Wallet.gems()}`;
+    ['walletTitle', 'walletMap'].forEach(id => { const el = $(id); if (el) el.textContent = txt; });
+    if (paid) {
+      const show = () => { if (!$('modal').hidden) return setTimeout(show, 1200); this.showModal(`
+        <div class="panel-kicker">New: coins &amp; gems</div>
+        <div class="panel-title">Back pay!</div>
+        <div class="ht-text">You get coins for every level you clear and gems for every world. Here's what you've already earned:</div>
+        <div class="panel-reward"><b>Your earnings so far</b>🪙 ${paid.coins.toLocaleString()} · 💎 ${paid.gems}</div>
+        <div class="panel-note">Spend them in the shop — tap your coins anytime.</div>
+        <div class="panel-btns"><button class="btn btn-big btn-gold" data-act="shop">Open the shop</button>
+        <button class="btn btn-ghost" data-act="close">Later</button></div>`,
+        { shop: () => this.showShop() }); };
+      setTimeout(show, 900);
+    }
+  },
+
+  showShop(note = '') {
+    this.renderWallet();
+    const inv = Save.data.boosters, set = Save.data.settings;
+    const B = [['hammer', '🔨', 'Hammer', 'Smash any one tile'], ['shuffle', '🌪️', 'Twister', 'Shuffle the board'], ['moves', '+5', '+5 Moves', 'Five extra moves']];
+    const row = (icon, name, sub, btn) =>
+      `<div class="shop-row"><span class="shop-icon">${icon}</span><span class="shop-text"><b>${name}</b><small>${sub}</small></span>${btn}</div>`;
+    const buyBtn = (act, label, ok) => `<button class="btn shop-buy${ok ? '' : ' off'}" data-act="${act}">${label}</button>`;
+    const coins = Wallet.coins(), gems = Wallet.gems();
+
+    const boosterRows = B.map(([k, ic, nm, sub]) =>
+      row(ic, nm, `${sub} · you have ${inv[k] || 0}`, buyBtn('buy_' + k, `${ECON.prices[k]} 🪙`, coins >= ECON.prices[k]))).join('');
+
+    const lightOwned = Wallet.owns('lightTiles');
+    const gemRows =
+      row('🎁', 'Booster bundle', '3 of each booster', buyBtn('gem_bundle', `${ECON.bundleGems} 💎`, gems >= ECON.bundleGems)) +
+      row('◻️', 'Light tiles', lightOwned ? (set.lightTiles ? 'On · gel shows as color' : 'Off') : 'Light tiles everywhere; gel shows as color',
+        lightOwned ? buyBtn('toggle_light', set.lightTiles ? 'Turn off' : 'Turn on', true)
+                   : buyBtn('gem_light', `${ECON.lightTilesGems} 💎`, gems >= ECON.lightTilesGems));
+
+    const looks = [0, 1, 2, 3, 4, 5, 6].map(w => {
+      const on = (set.pipLook || 0) === w;
+      if (w === 0) return `<button class="pip-look${on ? ' on' : ''}" data-act="look_0"><span class="pl-auto">Auto</span><small>${on ? 'Using' : 'Each world'}</small></button>`;
+      const owned = Wallet.owns('pip' + w);
+      return `<button class="pip-look${on ? ' on' : ''}${owned ? '' : ' locked'}" data-act="look_${w}">` +
+        `<img src="${Pip.url(w, 'happy', 80, undefined, true)}" alt=""><small>${on ? 'Using' : owned ? 'Use' : ECON.pipLookGems + ' 💎'}</small></button>`;
+    }).join('');
+
+    const actions = {};
+    B.forEach(([k]) => { actions['buy_' + k] = () => {
+      if (!Wallet.spendCoins(ECON.prices[k])) return this.showRefill();
+      inv[k] = (inv[k] || 0) + 1; Save.write(); Sound.play('gift'); this.updateBoosters(); this.showShop(`+1 ${k === 'moves' ? '+5 Moves' : k === 'hammer' ? 'Hammer' : 'Twister'}!`);
+    }; });
+    actions.gem_bundle = () => {
+      if (!Wallet.spendGems(ECON.bundleGems)) return this.showShop('Gems come from clearing worlds.');
+      Object.keys(ECON.bundle).forEach(k => { inv[k] = (inv[k] || 0) + ECON.bundle[k]; });
+      Save.write(); Sound.play('gift'); this.updateBoosters(); this.showShop('Bundle added — 3 of each!');
+    };
+    actions.gem_light = () => {
+      if (!Wallet.spendGems(ECON.lightTilesGems)) return this.showShop('Gems come from clearing worlds.');
+      Wallet.d.owned.lightTiles = true; set.lightTiles = true; Save.write(); Sound.play('gift'); Render.draw(performance.now()); this.showShop('Light tiles on!');
+    };
+    actions.toggle_light = () => { set.lightTiles = !set.lightTiles; Save.write(); Render.draw(performance.now()); this.showShop(); };
+    for (let w = 0; w <= 6; w++) actions['look_' + w] = () => {
+      if (w > 0 && !Wallet.owns('pip' + w)) {
+        if (!Wallet.spendGems(ECON.pipLookGems)) return this.showShop('Gems come from clearing worlds.');
+        Wallet.d.owned['pip' + w] = true; Sound.play('gift');
+      }
+      set.pipLook = w; Save.write(); Pip.refresh && Pip.refresh();
+      const tp = $('titlePip'); if (tp) tp.src = Pip.url(World.current, 'happy');
+      this.showShop(w ? 'Pip loves the new look!' : 'Pip will change looks each world.');
+    };
+    actions.refill = () => this.showRefill();
+
+    this.showModal(`
+      <div class="panel-kicker">Salon shop</div>
+      <div class="panel-title">Shop</div>
+      <div class="wallet-big">🪙 ${coins.toLocaleString()} · 💎 ${gems}</div>
+      ${note ? `<div class="shop-note">${esc(note)}</div>` : ''}
+      <div class="shop-sec">Boosters · coins</div>${boosterRows}
+      <div class="shop-sec">Gem shop</div>${gemRows}
+      <div class="shop-sec">Pip's look · ${ECON.pipLookGems} 💎 each</div><div class="pip-looks">${looks}</div>
+      <div class="panel-btns"><button class="btn" data-act="refill">Get more coins</button>
+      <button class="btn btn-ghost" data-act="close">Done</button></div>`, actions);
+    this.$panelScrollTop();
+  },
+
+  $panelScrollTop() { const p = $('panel'); if (p) p.scrollTop = 0; },
+
+  showRefill() {
+    const actions = { shop: () => this.showShop(), map: () => this.openMap() };
+    const packs = (CONFIG.coinPacks || []).map((pk, i) => {
+      actions['pack' + i] = () => {
+        const got = Wallet.addCoins(pk.coins); Save.write(); Sound.play('gift'); Confetti.burst(60);
+        this.renderWallet(); this.showShop(`+${got.toLocaleString()} coins — ${pk.name}!`);
+      };
+      return `<button class="shop-pack" data-act="pack${i}"><b>🪙 ${pk.coins.toLocaleString()}</b><span>${esc(pk.name)}</span><small>${esc(pk.price)}</small></button>`;
+    }).join('');
+    this.showModal(`
+      <div class="panel-kicker">Running low?</div>
+      <div class="panel-title">Get coins</div>
+      <div class="wallet-big">🪙 ${Wallet.coins().toLocaleString()} · 💎 ${Wallet.gems()}</div>
+      <div class="shop-sec">Coin packs · on the house</div>
+      <div class="shop-packs">${packs}</div>
+      <div class="panel-note">No real money — just tap one. 💕</div>
+      <div class="shop-sec">Or earn them free</div>
+      <div class="ht-text">Replay any level you've already cleared for +${ECON.repeatClear} 🪙 each.</div>
+      <div class="panel-btns"><button class="btn" data-act="map">Level map</button>
+      <button class="btn btn-ghost" data-act="shop">Back to shop</button></div>`, actions);
   },
 
   updateSoundButtons() {
@@ -6066,7 +6268,7 @@ const UI = {
         `style="background:linear-gradient(160deg, ${a}, ${b})" aria-label="Skin tone ${i + 1}"></button>`).join('') + `</div>`;
   },
   pipRow() {
-    return [1, 2, 3, 4, 5, 6].map(w => `<img src="${Pip.url(w, 'happy', 80)}" alt="">`).join('');
+    return [1, 2, 3, 4, 5, 6].map(w => `<img src="${Pip.url(w, 'happy', 80, undefined, true)}" alt="">`).join('');
   },
 
   // Tap Pip on the title screen to restyle.
@@ -6229,7 +6431,7 @@ const UI = {
         <div class="cr-role">Starring</div><div class="cr-name">${esc(CONFIG.fullName)}</div>
         <div class="cr-role">Hair Department Head</div><div class="cr-name">${esc(CONFIG.fullName)}</div>
         <div class="cr-role">Co-starring</div><div class="cr-name">Pip</div>
-        <div class="cr-pips">${[1, 2, 3, 4, 5, 6].map(w => `<img src="${Pip.url(w, 'cheer', 80)}" alt="">`).join('')}</div>
+        <div class="cr-pips">${[1, 2, 3, 4, 5, 6].map(w => `<img src="${Pip.url(w, 'cheer', 80, undefined, true)}" alt="">`).join('')}</div>
         ${CONFIG.honors ? `<div class="cr-honor">★ ${esc(CONFIG.honors)} ★</div>` : ''}
         <div class="cr-role">Selected credits</div>${credits}
         <div class="cr-role">The journey</div>
@@ -6270,7 +6472,7 @@ const UI = {
     });
   },
 
-  showWin(n, stars, score, rewards = []) {
+  showWin(n, stars, score, rewards = [], pay = null) {
     if (n === 180 && !Save.data.help.finale) {
       this.showFinale(() => this.openMap());
       return;
@@ -6287,7 +6489,9 @@ const UI = {
       <div class="big-stars">${[1, 2, 3].map(i =>
         `<span class="bstar${i <= stars ? ' on' : ''}" style="animation-delay:${(0.75 + i * 0.3).toFixed(2)}s">★</span>`).join('')}</div>
       <div class="panel-score">${score.toLocaleString()}</div>
+      ${pay && pay.coins ? `<div class="panel-coins">+${pay.coins.toLocaleString()} 🪙${pay.gems ? ` · +${pay.gems} 💎` : ''}</div>` : ''}
       ${msg ? `<div class="panel-msg">${esc(msg)}</div>` : ''}
+      ${pay ? pay.cards.map(r => `<div class="panel-reward"><b>${r.label}</b>${r.text}</div>`).join('') : ''}
       ${rewards.map(r => `<div class="panel-reward"><b>${r.label}</b>${LevelRewards.describe(r.items)}</div>`).join('')}
       <div class="panel-btns">
         <button class="btn btn-big" data-act="next">Next level</button>
@@ -6322,11 +6526,14 @@ const UI = {
       <div class="panel-btns">
         ${Save.data.boosters.moves > 0
           ? `<button class="btn btn-big btn-gold" data-act="more">+5 moves <small>(${Save.data.boosters.moves} left)</small></button>`
-          : ''}
+          : Wallet.coins() >= ECON.prices.moves
+            ? `<button class="btn btn-big btn-gold" data-act="buymore">+5 moves <small>(${ECON.prices.moves} 🪙)</small></button>`
+            : ''}
         <button class="btn btn-big" data-act="retry">${again}</button>
         <button class="btn btn-ghost" data-act="map">Level map</button>
       </div>`,
-      { retry: () => Game.startLevel(lv.n), map: () => this.openMap(), more: () => Game.continueWithMoves() });
+      { retry: () => Game.startLevel(lv.n), map: () => this.openMap(), more: () => Game.continueWithMoves(),
+        buymore: () => { if (Wallet.spendCoins(ECON.prices.moves)) { Save.data.boosters.moves++; this.renderWallet(); Game.continueWithMoves(); } } });
   },
 
   updateDebug() {
@@ -6673,5 +6880,5 @@ if (document.fonts && document.fonts.ready) {
 // Handy for testing in the console.
 setInterval(() => Game.watchdog(), 500);
 
-window.__game = { LevelRewards, Board, Game, Save, Render, Loop, FX, UI, Tweens, BOMB, makeTile, buildLevel, LEVELS, Pip, World,
+window.__game = { LevelRewards, Wallet, ECON, Board, Game, Save, Render, Loop, FX, UI, Tweens, BOMB, makeTile, buildLevel, LEVELS, Pip, World,
                   Sound, Music, Particles, Shake, Confetti, Daily };
