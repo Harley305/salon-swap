@@ -1196,6 +1196,81 @@ function buildBombSprite(px) {
 }
 
 /* Pre-render each tile once at screen resolution → fast, crisp drawing. */
+function hexRgb(h) { h = h.replace('#', ''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); }
+function mixHex(a, b, t) {
+  const A = hexRgb(a), B = hexRgb(b);
+  return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join('');
+}
+
+/* Gel marker look: a light tile with the icon drawn in the tile's own color.
+   Only tiles sitting on gel use it; they switch back once the gel is cleared. */
+function buildFlipSprite(type, px) {
+  const c = document.createElement('canvas');
+  c.width = c.height = px;
+  const ctx = c.getContext('2d');
+  ctx.scale(px / 100, px / 100);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';                 // drop shadow
+  rr(ctx, 6, 9, 88, 88, 22); ctx.fill();
+  const g = ctx.createLinearGradient(0, 4, 0, 94);    // cream-white body
+  g.addColorStop(0, '#FFFFFF');
+  g.addColorStop(1, '#ECE6F0');
+  ctx.fillStyle = g;
+  rr(ctx, 5, 4, 90, 88, 22); ctx.fill();
+  ctx.strokeStyle = type.base;                        // thin colored rim
+  ctx.lineWidth = 4;
+  rr(ctx, 7, 6, 86, 84, 20); ctx.stroke();
+
+  // Draw the normal icon off-screen, then repaint: white → tile color, details → white.
+  const ink = mixHex(type.base, type.dark, 0.3);
+  const [ir, ig, ib] = hexRgb(ink);
+  const ic = document.createElement('canvas');
+  ic.width = ic.height = px;
+  const ix = ic.getContext('2d');
+  ix.scale(px / 100, px / 100);
+  ix.translate(50, 49); ix.scale(0.9, 0.9); ix.translate(-50, -50);
+  type.draw(ix, type);
+  const im = ix.getImageData(0, 0, px, px), d = im.data;
+  for (let i = 0; i < d.length; i += 4) {
+    if (!d[i + 3]) continue;
+    const lum = (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11) / 255;
+    const k = Math.min(1, Math.max(0, (lum - 0.55) / 0.3));
+    d[i]     = Math.round(ir * k + 255 * (1 - k));
+    d[i + 1] = Math.round(ig * k + 255 * (1 - k));
+    d[i + 2] = Math.round(ib * k + 255 * (1 - k));
+  }
+  ix.putImageData(im, 0, 0);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.shadowColor = 'rgba(0,0,0,0.18)'; ctx.shadowBlur = px * 0.02; ctx.shadowOffsetY = px * 0.015;
+  ctx.drawImage(ic, 0, 0);
+  return c;
+}
+
+/* Goal icon for gel: a light tile with a lilac gel drop (matches the gel look on the board). */
+function buildGelGoalIcon(px) {
+  const c = document.createElement('canvas');
+  c.width = c.height = px;
+  const ctx = c.getContext('2d');
+  ctx.scale(px / 100, px / 100);
+  ctx.fillStyle = 'rgba(0,0,0,0.28)'; rr(ctx, 6, 9, 88, 88, 22); ctx.fill();
+  const g = ctx.createLinearGradient(0, 4, 0, 94);
+  g.addColorStop(0, '#FFFFFF'); g.addColorStop(1, '#ECE6F0');
+  ctx.fillStyle = g; rr(ctx, 5, 4, 90, 88, 22); ctx.fill();
+  ctx.strokeStyle = '#9B7FD6'; ctx.lineWidth = 4; rr(ctx, 7, 6, 86, 84, 20); ctx.stroke();
+  ctx.beginPath();                                   // gel drop
+  ctx.moveTo(50, 20);
+  ctx.bezierCurveTo(72, 44, 74, 58, 74, 62);
+  ctx.bezierCurveTo(74, 76, 63, 84, 50, 84);
+  ctx.bezierCurveTo(37, 84, 26, 76, 26, 62);
+  ctx.bezierCurveTo(26, 58, 28, 44, 50, 20);
+  const dg = ctx.createLinearGradient(0, 20, 0, 84);
+  dg.addColorStop(0, '#C9AEF2'); dg.addColorStop(1, '#7A55C4');
+  ctx.fillStyle = dg; ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.beginPath(); ctx.ellipse(40, 58, 5, 9, -0.3, 0, Math.PI * 2); ctx.fill();
+  return c;
+}
+
 function buildTileSprite(type, px) {
   const c = document.createElement('canvas');
   c.width = c.height = px;
@@ -2511,7 +2586,7 @@ const LEVELS = [
     '........',
     '........',
     '........'] },
-  /* 11 */ { moves: 21, kinds: 5, goals: [], tip: 'Pink gel takes two hits!', layout: [
+  /* 11 */ { moves: 21, kinds: 5, goals: [], tip: 'Gel marked ×2 takes two hits!', layout: [
     '........',
     '........',
     '..JJJJ..',
@@ -4074,24 +4149,12 @@ function makeCanvas(px) {
 /* Pink styling gel under tiles. */
 function buildGelSprite(px, layers) {
   const [c, ctx] = makeCanvas(px);
-  const a = layers > 1 ? 0.62 : 0.36;
-  const g = ctx.createLinearGradient(0, 0, 0, 100);
-  g.addColorStop(0, `rgba(255,160,210,${a})`);
-  g.addColorStop(1, `rgba(236,95,165,${a})`);
+  const a = layers > 1 ? 0.42 : 0.26;
+  const g = ctx.createRadialGradient(50, 40, 10, 50, 50, 70);
+  g.addColorStop(0, `rgba(248,226,255,${a + 0.1})`);
+  g.addColorStop(1, `rgba(206,160,240,${a})`);
   ctx.fillStyle = g;
   rr(ctx, 2, 2, 96, 96, 20); ctx.fill();
-  ctx.strokeStyle = `rgba(255,205,232,${Math.min(1, a + 0.25)})`;
-  ctx.lineWidth = 3;
-  rr(ctx, 3.5, 3.5, 93, 93, 19); ctx.stroke();
-  if (layers > 1) {
-    ctx.strokeStyle = 'rgba(255,255,255,0.45)';
-    ctx.lineWidth = 2.5;
-    rr(ctx, 10, 10, 80, 80, 14); ctx.stroke();
-  }
-  ctx.fillStyle = 'rgba(255,255,255,0.55)';
-  [[14, 15, 4.5], [24, 10, 2.6], [86, 86, 3.5]].forEach(([x, y, r]) => {
-    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-  });
   return c;
 }
 
@@ -4214,6 +4277,7 @@ const Render = {
 
     const px = Math.round(this.cell * this.dpr);
     this.sprites = TILE_TYPES.map(t => buildTileSprite(t, px));
+    this.flipSprites = TILE_TYPES.map(t => buildFlipSprite(t, px));
     this.bombSprite = buildBombSprite(px);
     this.overlays = {
       lineH: buildSpecialOverlay('lineH', px),
@@ -4373,7 +4437,8 @@ const Render = {
       if (t.special === 'bomb') {
         ctx.drawImage(this.bombSprite, x, y, size, size);
       } else {
-        ctx.drawImage(this.sprites[t.kind], x, y, size, size);
+        const cl = Board.cells && Board.cells[t.r] && Board.cells[t.r][t.c];
+        ctx.drawImage((cl && cl.gel && Math.abs(t.y - t.r) < 0.05 ? this.flipSprites : this.sprites)[t.kind], x, y, size, size);
         if (t.special) ctx.drawImage(this.overlays[t.special], x, y, size, size);
       }
       if (t.lock) {
@@ -4388,25 +4453,23 @@ const Render = {
     Board.forEachTile(t => { if (t.lock) drawTile(t); });
     ctx.globalAlpha = 1;
 
-    // Gel frame on top so it reads clearly even with a tile sitting on it.
+    // Double gel: a small ×2 badge in the corner (the light tile already marks gel).
     if (hasCells) {
+      const bw = s * 0.36, bh = s * 0.24;
       ctx.save();
-      ctx.shadowColor = 'rgba(236,95,165,0.8)';
-      ctx.shadowBlur = 6;
+      ctx.font = `700 ${Math.round(bh * 0.72)}px system-ui, -apple-system, sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       for (let r = 0; r < Board.rows; r++) {
         for (let c = 0; c < Board.cols; c++) {
-          const gel = Board.cells[r][c].gel;
-          if (!gel) continue;
-          ctx.strokeStyle = 'rgba(255,130,195,0.95)';
-          ctx.lineWidth = Math.max(2.5, s * 0.07);
-          rr(ctx, c * s + 2, r * s + 2, s - 4, s - 4, s * 0.22);
-          ctx.stroke();
-          if (gel > 1) {
-            ctx.strokeStyle = 'rgba(255,215,236,0.95)';
-            ctx.lineWidth = Math.max(1.5, s * 0.035);
-            rr(ctx, c * s + s * 0.13, r * s + s * 0.13, s * 0.74, s * 0.74, s * 0.16);
-            ctx.stroke();
-          }
+          if ((Board.cells[r][c].gel || 0) < 2) continue;
+          const t = Board.grid[r][c];
+          if (t && Math.abs(t.y - r) >= 0.05) continue;   // tile still falling in
+          const x = c * s + s - bw - s * 0.04, y = r * s + s * 0.03;
+          ctx.fillStyle = '#6B4FA8';
+          rr(ctx, x, y, bw, bh, bh / 2); ctx.fill();
+          ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = Math.max(1, s * 0.025); ctx.stroke();
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillText('×2', x + bw / 2, y + bh / 2 + 0.5);
         }
       }
       ctx.restore();
@@ -5524,7 +5587,7 @@ const UI = {
     };
     this.icons = {
       tiles,
-      gel: buildGelSprite(px, 2).toDataURL(),
+      gel: buildGelGoalIcon(px).toDataURL(),
       ice: layered(buildIceSprite(px, 2)),
       chain: layered(buildChainSprite(px, 1)),
       box: buildBoxSprite(px, 1).toDataURL(),
@@ -5936,8 +5999,8 @@ const UI = {
         return { icon: this.tileIcons(w)[g.kind], title: `Collect ${left} ${t.plural}`,
                  how: `Match ${t.plural.toLowerCase()} in rows of 3 or more. Each one cleared counts.` };
       }
-      case 'gel':   return { icon: this.icons.gel,   title: `Clear the pink gel (${left})`,
-                             how: 'Make matches on top of the pink squares. Darker pink needs two.' };
+      case 'gel':   return { icon: this.icons.gel,   title: `Clear the gel (${left})`,
+                             how: 'Light tiles are sitting on gel. Match them to clear it. Tiles marked ×2 need two matches.' };
       case 'ice':   return { icon: this.icons.ice,   title: `Break the ice (${left})`,
                              how: 'Include the frozen tiles in a match. Thick ice takes two.' };
       case 'chain': return { icon: this.icons.chain, title: `Break the chains (${left})`,
