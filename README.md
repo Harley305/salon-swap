@@ -52,6 +52,14 @@ All art, music and characters are original. The Wizard of Oz / Wicked touches ar
 - Free boosters still come from the Daily Gift, boss boards and world clears.
 - Players who already had progress get a one-time "Back pay" for the levels and worlds they'd already cleared.
 
+## 📋 Missions
+
+- **Call Sheet:** 5 missions (2 easy, 2 medium, 1 hard) that change every 2 days at midnight. A countdown shows when the next one arrives.
+- Missions count during normal play (wins, first tries, ★★★, specials, gel, ice, boxes, score…). Pip calls it out when one finishes.
+- Tap **Claim** for each mission's boosters. Finish all 5 for **That's a wrap!** (1 of each booster + 100 🪙), which unlocks a **bonus mission** worth 1 💎.
+- A pink dot on 📋 means something is ready to claim. Open it from the title screen or the 📋 button on the map.
+- The **Career Track** tab is coming next.
+
 ## If the board ever freezes
 
 The game repairs itself. If a move hits an error, it puts the tiles back in place, fills any gaps, and unlocks the board right away. If a move ever stalls with nothing moving, a safety net unlocks it after about 4 seconds. Progress and stars are never lost.

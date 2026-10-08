@@ -1338,6 +1338,7 @@ const Save = (() => {
     help: { howTo: false, seen: {}, carriedOver: false, world: 1 },
     boosters: { hammer: 2, shuffle: 2, moves: 2 },    // Phase 7
     wallet: { coins: 0, gems: 0, backpaid: false, worldPaid: {}, perfectPaid: {}, owned: {} },
+    missions: { win: -1, world: 1, list: [], wrapClaimed: false, bonus: null, streak: 0 },
     daily: { lastClaim: null, streak: 0 },            // Phase 7
     stats: { levelsWon: 0 },
   });
@@ -2165,6 +2166,141 @@ const Wallet = {
     }
     Save.write();
     return out;
+  },
+};
+
+/* ---------- 📋 Call Sheet missions ----------
+   5 missions (2 easy, 2 medium, 1 hard) every 48 hours, picked from the pool below.
+   Each finished mission is claimed for boosters; all 5 = "That's a wrap!" bonus,
+   then a bonus mission unlocks (worth a gem). Progress counts during normal play. */
+const MISSION_POOL = [
+  // easy
+  { id: 'e_win',    tier: 0, target: 2,     ev: 'win',     text: m => `Win ${m.target} levels` },
+  { id: 'e_play',   tier: 0, target: 3,     ev: 'played',  text: m => `Play ${m.target} levels` },
+  { id: 'e_clear',  tier: 0, target: 40,    ev: 'clear',   kind: true, text: m => `Clear ${m.target} ${m.kindPlural}` },
+  { id: 'e_line',   tier: 0, target: 3,     ev: 'line',    text: m => `Make ${m.target} Line clears` },
+  { id: 'e_gel',    tier: 0, target: 15,    ev: 'gel',     text: m => `Clear ${m.target} gel squares` },
+  { id: 'e_drop',   tier: 0, target: 3,     ev: 'drop',    drop: true, text: m => `Bring down ${m.target} ${m.dropPlural}` },
+  { id: 'e_score',  tier: 0, target: 60000, ev: 'score',   text: m => `Score ${m.target.toLocaleString()} points` },
+  { id: 'e_blast',  tier: 0, target: 2,     ev: 'blast',   text: m => `Make ${m.target} Glitter Blasts` },
+  // medium
+  { id: 'm_first',  tier: 1, target: 2,     ev: 'firstTry', text: m => `Win ${m.target} levels on the first try` },
+  { id: 'm_three',  tier: 1, target: 2,     ev: 'threeStar', text: m => `Earn ★★★ on ${m.target} levels` },
+  { id: 'm_clear',  tier: 1, target: 90,    ev: 'clear',   kind: true, text: m => `Clear ${m.target} ${m.kindPlural}` },
+  { id: 'm_glam',   tier: 1, target: 2,     ev: 'bomb',    text: m => `Make ${m.target} Glam Balls` },
+  { id: 'm_combo',  tier: 1, target: 2,     ev: 'combo',   text: m => `Swap two specials together ${m.target} times` },
+  { id: 'm_ice',    tier: 1, target: 12,    ev: 'ice',     minLevel: 20, text: m => `Break ${m.target} ice` },
+  { id: 'm_box',    tier: 1, target: 12,    ev: 'box',     minLevel: 20, text: m => `Break ${m.target} boxes` },
+  { id: 'm_spare',  tier: 1, target: 1,     ev: 'spare5',  text: () => 'Win a level with 5+ moves left' },
+  { id: 'm_line',   tier: 1, target: 8,     ev: 'line',    text: m => `Make ${m.target} Line clears` },
+  { id: 'm_score',  tier: 1, target: 150000, ev: 'score',  text: m => `Score ${m.target.toLocaleString()} points` },
+  // hard
+  { id: 'h_streak', tier: 2, target: 4,     ev: 'win',     streak: true, text: m => `Win ${m.target} levels in a row` },
+  { id: 'h_boss',   tier: 2, target: 1,     ev: 'boss',    text: () => 'Beat a 👑 boss board' },
+  { id: 'h_first',  tier: 2, target: 4,     ev: 'firstTry', text: m => `Win ${m.target} levels on the first try` },
+  { id: 'h_glam',   tier: 2, target: 3,     ev: 'bomb',    text: m => `Make ${m.target} Glam Balls` },
+  { id: 'h_three',  tier: 2, target: 4,     ev: 'threeStar', text: m => `Earn ★★★ on ${m.target} levels` },
+  { id: 'h_combo',  tier: 2, target: 5,     ev: 'combo',   text: m => `Swap two specials together ${m.target} times` },
+];
+const TIER_NAMES = ['Easy', 'Medium', 'Hard', 'Bonus'];
+
+const Missions = {
+  PERIOD: 48 * 3600 * 1000,
+  ANCHOR: new Date(2026, 0, 1).getTime(),           // sheets change at local midnight, every 2 days
+  get d() { return Save.data.missions; },
+  windowIdx(now = Date.now()) { return Math.floor((now - this.ANCHOR) / this.PERIOD); },
+  endsAt() { return this.ANCHOR + (this.windowIdx() + 1) * this.PERIOD; },
+  tpl(id) { return MISSION_POOL.find(t => t.id === id); },
+  text(m) { const t = this.tpl(m.id); return t ? t.text(m) : m.id; },
+  rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; },
+
+  make(t, rand, w) {
+    const m = { id: t.id, target: t.target, progress: 0, done: false, claimed: false };
+    if (t.kind) { const tiles = WORLDS[w].tiles; const k = tiles[Math.floor(rand() * tiles.length)]; m.kindId = k.id; m.kindPlural = k.plural.toLowerCase(); }
+    if (t.drop) m.dropPlural = dropItem(w).plural;
+    const B = ['hammer', 'shuffle', 'moves'], pick = () => B[Math.floor(rand() * 3)];
+    if (t.tier === 0) m.reward = { [pick()]: 1 };
+    else if (t.tier === 1) { const a = pick(); let b = pick(); if (b === a) b = B[(B.indexOf(a) + 1) % 3]; m.reward = { [a]: 1, [b]: 1 }; }
+    else m.reward = { [pick()]: 2 };
+    return m;
+  },
+
+  // Make sure the current sheet exists (new one every 48 hours).
+  ensure() {
+    const d = this.d, idx = this.windowIdx();
+    if (d.win === idx && d.list.length) return d;
+    const unlocked = Save.data.progress.unlocked;
+    const w = Math.min(6, worldOf(unlocked));
+    const rand = this.rng(idx * 7919 + 13);
+    const pool = MISSION_POOL.filter(t => !t.minLevel || unlocked >= t.minLevel)
+      .filter(t => !t.drop || DROP_ITEMS[w]);
+    const take = (tier, n, used) => {
+      const opts = pool.filter(t => t.tier === tier && !used.has(t.ev));
+      const out = [];
+      while (out.length < n && opts.length) {
+        const t = opts.splice(Math.floor(rand() * opts.length), 1)[0];
+        out.push(t); used.add(t.ev);
+      }
+      return out;
+    };
+    const used = new Set();
+    const chosen = [...take(0, 2, used), ...take(1, 2, used), ...take(2, 1, used)];
+    Object.assign(d, { win: idx, world: w, list: chosen.map(t => this.make(t, rand, w)), wrapClaimed: false, bonus: null, streak: 0 });
+    Save.write();
+    return d;
+  },
+
+  allDone() { const d = this.d; return d.list.length && d.list.every(m => m.done); },
+  claimable() {
+    const d = this.ensure();
+    return d.list.some(m => m.done && !m.claimed) || (this.allDone() && !d.wrapClaimed) || (d.bonus && d.bonus.done && !d.bonus.claimed);
+  },
+
+  // Gameplay reports what happened; matching missions move forward.
+  event(ev, data = {}) {
+    if (!Save.data || !Save.data.missions) return;
+    const d = this.ensure();
+    const list = d.bonus ? [...d.list, d.bonus] : d.list;
+    const finished = [];
+    list.forEach(m => {
+      if (m.done) return;
+      const t = this.tpl(m.id);
+      if (!t) return;
+      if (t.streak && ev === 'lose') { m.progress = 0; return; }
+      if (t.ev !== ev) return;
+      if (t.kind && data.id !== m.kindId) return;
+      m.progress = Math.min(m.target, m.progress + (data.amount || 1));
+      if (m.progress >= m.target) { m.done = true; finished.push(m); }
+    });
+    if (finished.length || ev === 'lose' || ev === 'win') Save.write();
+    finished.forEach(m => { if (typeof UI !== 'undefined' && UI.missionDone) UI.missionDone(m); });
+  },
+
+  claim(m) {
+    if (!m || !m.done || m.claimed) return null;
+    m.claimed = true;
+    const inv = Save.data.boosters;
+    if (m.reward) Object.keys(m.reward).forEach(k => { inv[k] = (inv[k] || 0) + m.reward[k]; });
+    if (m.gems) Wallet.addGems(m.gems);
+    Save.write();
+    return m;
+  },
+  claimWrap() {
+    const d = this.d;
+    if (!this.allDone() || d.wrapClaimed) return false;
+    d.wrapClaimed = true;
+    const inv = Save.data.boosters;
+    ['hammer', 'shuffle', 'moves'].forEach(k => { inv[k] = (inv[k] || 0) + 1; });
+    Wallet.addCoins(100);
+    // unlock the bonus mission
+    const used = new Set(d.list.map(m => m.id));
+    const hard = MISSION_POOL.filter(t => t.tier === 2 && !used.has(t.id));
+    const t = hard[Math.floor(this.rng(d.win * 31 + 7)() * hard.length)] || MISSION_POOL[0];
+    const b = this.make(t, this.rng(d.win * 17 + 3), d.world);
+    b.reward = null; b.gems = 1; b.bonus = true;
+    d.bonus = b;
+    Save.write();
+    return true;
   },
 };
 
@@ -4969,6 +5105,8 @@ const Game = {
   },
 
   progress(type, kind) {
+    if (type === 'collect') { const tt = TILE_TYPES[kind]; if (tt) Missions.event('clear', { id: tt.id }); }
+    else Missions.event(type);
     const g = this.level && this.level.goals.find(goal =>
       goal.type === type && (type !== 'collect' || goal.kind === kind) && goal.have < goal.need);
     if (g) g.have++;
@@ -5002,6 +5140,7 @@ const Game = {
           if (Board.grid[sp.r][sp.c]) return null;          // spot still taken (locked tile)
           const t = makeTile(sp.kind, sp.r, sp.c);
           t.special = sp.special;
+          Missions.event(sp.special === 'lineH' || sp.special === 'lineV' ? 'line' : sp.special);
           t.scale = 0;
           Board.grid[sp.r][sp.c] = t;
           Particles.burst(sp.c + 0.5, sp.r + 0.5, ['#FFFFFF', '#FFE7A3'], 10, { star: true, speed: 3, lift: 0.5 });
@@ -5254,6 +5393,7 @@ const Game = {
 
   // Two specials swapped together (or a Glam Ball with anything).
   async prepareCombo(ta, tb) {
+    Missions.event('combo');
     const sa = ta.special, sb = tb.special;
     const at = { r: ta.r, c: ta.c };
     const set = new Map(), fx = [];
@@ -5497,6 +5637,8 @@ const Game = {
     this.mode = null;
     clearTimeout(this._idleTimer);
     const n = this.level.n;
+    const firstTry = !(Save.data.progress.fails[n] > 0);
+    const movesLeftAtWin = this.movesLeft;
 
     // Leftover moves turn into Line tiles that all go off — a little celebration.
     const left = this.movesLeft;
@@ -5542,6 +5684,12 @@ const Game = {
     p.unlocked = Math.max(p.unlocked, n + 1);
     p.fails[n] = 0;
     const pay = Wallet.forWin(n, firstWin);
+    Missions.event('played'); Missions.event('win');
+    Missions.event('score', { amount: this.score });
+    if (firstTry) Missions.event('firstTry');
+    if (stars === 3) Missions.event('threeStar');
+    if (movesLeftAtWin >= 5) Missions.event('spare5');
+    if (isBoss(n)) Missions.event('boss');
     Save.data.stats.levelsWon = (Save.data.stats.levelsWon || 0) + 1;
     Save.write();
 
@@ -5559,6 +5707,8 @@ const Game = {
     clearTimeout(this._idleTimer);
     Sound.play('lose');
     const n = this.level.n;
+    Missions.event('played'); Missions.event('lose');
+    Missions.event('score', { amount: this.score });
     const p = Save.data.progress;
     p.fails[n] = (p.fails[n] || 0) + 1;
     Save.write();
@@ -5639,6 +5789,7 @@ const UI = {
     $('btnPlay').addEventListener('click', () => this.openMap());
     $('btnSaves').addEventListener('click', () => this.showSaves());
     ['walletTitle', 'walletMap', 'btnShop'].forEach(id => { const el = $(id); if (el) el.addEventListener('click', () => this.showShop()); });
+    ['btnMissions', 'btnMissionsMap'].forEach(id => { const el = $(id); if (el) el.addEventListener('click', () => this.showMissions()); });
     $('goals').addEventListener('click', () => this.showGoalsHelp());
     $('btnHelpMap').addEventListener('click', () => this.showHowTo(0));
     $('btnHelpGame').addEventListener('click', () => { if (!Game.locked) this.showHowTo(0); });
@@ -5681,7 +5832,7 @@ const UI = {
       $('screen' + s[0].toUpperCase() + s.slice(1)).hidden = s !== name;
     });
     if (name !== 'game') World.apply(worldOf(Save.data.progress.unlocked));
-    if (name !== 'game') this.renderWallet();
+    if (name !== 'game') { this.renderWallet(); this.updateMissionDot(); }
     if (name === 'game') Render.layout();
     Music.play(songFor(World.current, name));
     if (name === 'title') {
@@ -5801,6 +5952,67 @@ const UI = {
       b.classList.toggle('empty', !inv[k]);
       b.classList.toggle('active', k === 'hammer' && Game.mode === 'hammer');
     });
+  },
+
+  /* ----- 📋 Missions (Call Sheet + Career Track) ----- */
+  updateMissionDot() {
+    const on = Missions.claimable();
+    ['btnMissions', 'btnMissionsMap'].forEach(id => { const el = $(id); if (el) el.classList.toggle('has-dot', on); });
+  },
+
+  missionDone(m) {
+    this.updateMissionDot();
+    if (Game.state === 'play') this.toast(`📋 Call Sheet: ${Missions.text(m)} ✓`, false, 'cheer');
+  },
+
+  rewardText(m) {
+    if (m.gems) return `💎 ${m.gems}`;
+    const ic = { hammer: '🔨', shuffle: '🌪️', moves: '+5' };
+    return Object.keys(m.reward || {}).map(k => ic[k] + (m.reward[k] > 1 ? '×' + m.reward[k] : '')).join(' ');
+  },
+
+  showMissions(tab = 'sheet', note = '') {
+    const d = Missions.ensure();
+    const actions = { tab_sheet: () => this.showMissions('sheet'), tab_track: () => this.showMissions('track') };
+    const tabs = `<div class="ms-tabs"><button class="ms-tab${tab === 'sheet' ? ' on' : ''}" data-act="tab_sheet">Call Sheet</button>` +
+                 `<button class="ms-tab${tab === 'track' ? ' on' : ''}" data-act="tab_track">Career Track</button></div>`;
+    let body;
+    if (tab === 'track') {
+      body = `<div class="ms-soon"><div class="ms-soon-big">🎬</div><b>Coming next</b>
+        <span>A 150-level climb from Day Player to Hall of Fame — one challenge at a time.</span></div>`;
+    } else {
+      const left = Math.max(0, Missions.endsAt() - Date.now());
+      const h = Math.floor(left / 3600000), mm = Math.floor(left % 3600000 / 60000);
+      const row = (m, i, tier) => {
+        const pct = Math.round(100 * m.progress / m.target);
+        let btn;
+        if (m.claimed) btn = `<span class="ms-check">✓</span>`;
+        else if (m.done) { actions['claim' + i] = () => { const got = Missions.claim(m); if (got) { Sound.play('gift'); Confetti.burst(50); this.updateBoosters(); this.renderWallet(); } this.showMissions('sheet', got ? `Claimed ${this.rewardText(m)}!` : ''); };
+          btn = `<button class="btn btn-gold ms-claim" data-act="claim${i}">Claim</button>`; }
+        else btn = `<span class="ms-reward">${this.rewardText(m)}</span>`;
+        return `<div class="ms-row${m.claimed ? ' claimed' : ''}"><div class="ms-main">` +
+          `<span class="ms-tier t${tier}">${TIER_NAMES[tier]}</span><b>${esc(Missions.text(m))}</b>` +
+          `<div class="ms-bar"><i style="width:${pct}%"></i></div><small>${(m.target >= 1000 ? m.progress.toLocaleString() : m.progress)} / ${m.target.toLocaleString()}</small></div>${btn}</div>`;
+      };
+      const tiers = d.list.map(m => Missions.tpl(m.id) ? Missions.tpl(m.id).tier : 0);
+      let rows = d.list.map((m, i) => row(m, i, tiers[i])).join('');
+      const doneCount = d.list.filter(m => m.done).length;
+      let wrap;
+      if (d.wrapClaimed) wrap = `<div class="ms-wrap done"><b>That's a wrap! ✓</b><span>Bonus mission unlocked below.</span></div>`;
+      else if (Missions.allDone()) {
+        actions.wrap = () => { if (Missions.claimWrap()) { Sound.play('fanfare', 0.55); Confetti.burst(140); this.updateBoosters(); this.renderWallet(); } this.showMissions('sheet', "That's a wrap! +1 of each booster, +100 🪙"); };
+        wrap = `<button class="ms-wrap ready" data-act="wrap"><b>🎬 That's a wrap! — claim</b><span>1 of each booster + 100 🪙</span></button>`;
+      } else wrap = `<div class="ms-wrap"><b>Finish all 5: That's a wrap!</b><span>${doneCount} / 5 done · 1 of each booster + 100 🪙</span></div>`;
+      const bonus = d.bonus ? `<div class="shop-sec">Bonus mission</div>` + row(d.bonus, 'b', 3) : '';
+      body = `<div class="ms-timer">New Call Sheet in ${h}h ${mm}m</div>${rows}${wrap}${bonus}`;
+    }
+    this.showModal(`
+      <div class="panel-kicker">📋 Missions</div>
+      ${tabs}
+      ${note ? `<div class="shop-note">${esc(note)}</div>` : ''}
+      ${body}
+      <div class="panel-btns"><button class="btn btn-ghost" data-act="close">Done</button></div>`, actions);
+    this.updateMissionDot();
   },
 
   /* ----- Coins & gems ----- */
@@ -6880,5 +7092,5 @@ if (document.fonts && document.fonts.ready) {
 // Handy for testing in the console.
 setInterval(() => Game.watchdog(), 500);
 
-window.__game = { LevelRewards, Wallet, ECON, Board, Game, Save, Render, Loop, FX, UI, Tweens, BOMB, makeTile, buildLevel, LEVELS, Pip, World,
+window.__game = { Missions, LevelRewards, Wallet, ECON, Board, Game, Save, Render, Loop, FX, UI, Tweens, BOMB, makeTile, buildLevel, LEVELS, Pip, World,
                   Sound, Music, Particles, Shake, Confetti, Daily };

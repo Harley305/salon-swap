@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#17252A">
   <title>Myesha's Salon Swap</title>
-  <link rel="stylesheet" href="style.css?v=20261008b">
+  <link rel="stylesheet" href="style.css?v=20261008c">
 </head>
 <body>
 <!-- ===== CodePen HTML panel: copy from here ===== -->
@@ -25,7 +25,10 @@
     </div>
     <div class="title-btns">
       <button class="btn btn-big" id="btnPlay" type="button">Play</button>
-      <button class="btn btn-ghost btn-small" id="btnShop" type="button">🛍️ Shop</button>
+      <div class="title-row">
+        <button class="btn btn-ghost btn-small dot-host" id="btnMissions" type="button">📋 Missions</button>
+        <button class="btn btn-ghost btn-small" id="btnShop" type="button">🛍️ Shop</button>
+      </div>
       <button class="btn btn-ghost btn-small" id="btnSaves" type="button">💾 Save &amp; Load</button>
     </div>
   </section>
@@ -39,6 +42,7 @@
       <button class="wallet-chip" id="walletMap" type="button" aria-label="Coins and gems — open the shop">🪙 0 · 💎 0</button>
       <button class="icon-btn" id="btnHelpMap" type="button" aria-label="How to play">?</button>
     </header>
+    <button class="map-missions dot-host" id="btnMissionsMap" type="button" aria-label="Missions">📋</button>
     <div class="map-scroll scrollable" id="mapScroll">
       <div class="map-path" id="mapPath"></div>
     </div>
@@ -101,6 +105,6 @@
 
 </div>
 <!-- ===== to here ===== -->
-<script src="script.js?v=20261008b"></script>
+<script src="script.js?v=20261008c"></script>
 </body>
 </html>
