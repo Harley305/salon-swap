@@ -15,7 +15,9 @@ Plays in the browser on iPhone, iPad and Mac. Touch, mouse and Apple Pencil all 
 - Matching 4 or 5 in a row makes special tiles. Swap two specials together for a combo.
 - Stuck? After a few bad moves Pip gives a hint.
 - Win with moves to spare for more stars (up to ★★★). Any level can be replayed from the map, and the best result is kept.
+- Gel: tiles sitting on gel look light. Match them to clear it — a ×2 badge means it needs two matches.
 - Boosters: 🔨 Hammer (smash one tile), 🌪️ Twister (shuffle), +5 moves. There's a daily gift too.
+- Beating a 👑 boss board gives a free booster, and clearing a world gives 2 of each (first win only).
 - Fail a level 3 times and the game quietly adds 2 extra moves to help.
 
 ## The six worlds (180 levels)
