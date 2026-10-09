@@ -1339,6 +1339,7 @@ const Save = (() => {
     boosters: { hammer: 2, shuffle: 2, moves: 2 },    // Phase 7
     wallet: { coins: 0, gems: 0, backpaid: false, worldPaid: {}, perfectPaid: {}, owned: {} },
     missions: { win: -1, world: 1, list: [], wrapClaimed: false, bonus: null, streak: 0 },
+    career: { lvl: 1, progress: 0, pendingRank: 0, recent: [] },
     daily: { lastClaim: null, streak: 0 },            // Phase 7
     stats: { levelsWon: 0 },
   });
@@ -2259,6 +2260,7 @@ const Missions = {
   // Gameplay reports what happened; matching missions move forward.
   event(ev, data = {}) {
     if (!Save.data || !Save.data.missions) return;
+    if (Save.data.career) Career.event(ev, data);
     const d = this.ensure();
     const list = d.bonus ? [...d.list, d.bonus] : d.list;
     const finished = [];
@@ -2302,6 +2304,99 @@ const Missions = {
     Save.write();
     return true;
   },
+};
+
+/* ---------- 🎬 Career Track ----------
+   A permanent 150-level climb, one challenge at a time, counted during normal play.
+   Every level pays a reward (bigger every 10th). Every 25 levels = a promotion
+   (new rank title, 2 💎 and a free Pip look). Finishing level 150 unlocks the
+   light tile style and 5 💎. Challenges get harder as she climbs. */
+const CAREER_MAX = 150;
+const CAREER_RANKS = ['Day Player', 'Hair Assistant', 'Key Hairstylist', 'Department Head', 'Award Nominee', 'Hall of Fame'];
+const CAREER_TYPES = [
+  { t: 'win',      ev: 'win',       min: 1,  goal: L => 2 + Math.floor(L / 15),   text: n => `Win ${n} levels` },
+  { t: 'line',     ev: 'line',      min: 1,  goal: L => 3 + Math.floor(L / 6),    text: n => `Make ${n} Line clears` },
+  { t: 'clear',    ev: 'clear',     min: 1,  goal: L => 100 + L * 10,             text: n => `Clear ${n.toLocaleString()} tiles` },
+  { t: 'score',    ev: 'score',     min: 1,  goal: L => 50000 + L * 2000,         text: n => `Score ${n.toLocaleString()} points` },
+  { t: 'firstTry', ev: 'firstTry',  min: 3,  goal: L => 1 + Math.floor(L / 20),   text: n => n === 1 ? 'Win a level on the first try' : `Win ${n} levels on the first try` },
+  { t: 'threeStar',ev: 'threeStar', min: 3,  goal: L => 1 + Math.floor(L / 20),   text: n => `Earn ★★★ on ${n} level${n > 1 ? 's' : ''}` },
+  { t: 'blast',    ev: 'blast',     min: 4,  goal: L => 2 + Math.floor(L / 10),   text: n => `Make ${n} Glitter Blasts` },
+  { t: 'gel',      ev: 'gel',       min: 5,  goal: L => 15 + L,                   text: n => `Clear ${n} gel squares` },
+  { t: 'bomb',     ev: 'bomb',      min: 6,  goal: L => 1 + Math.floor(L / 25),   text: n => n === 1 ? 'Make a Glam Ball' : `Make ${n} Glam Balls` },
+  { t: 'drop',     ev: 'drop',      min: 8,  goal: L => 2 + Math.floor(L / 15),   text: n => `Bring down ${n} delivery items` },
+  { t: 'combo',    ev: 'combo',     min: 10, goal: L => 1 + Math.floor(L / 20),   text: n => n === 1 ? 'Swap two specials together' : `Swap two specials together ${n} times` },
+  { t: 'boss',     ev: 'boss',      min: 12, goal: L => 1 + Math.floor(L / 50),   text: n => n === 1 ? 'Beat a 👑 boss board' : `Beat ${n} 👑 boss boards` },
+  { t: 'spare',    ev: 'spare5',    min: 14, goal: L => 1 + Math.floor(L / 30),   text: n => n === 1 ? 'Win a level with 5+ moves left' : `Win ${n} levels with 5+ moves left` },
+  { t: 'streak',   ev: 'win',       min: 15, goal: L => 2 + Math.floor(L / 30),   text: n => `Win ${n} levels in a row`, streak: true },
+  { t: 'blocker',  ev: 'blocker',   min: 25, goal: L => 10 + Math.floor(L / 2),   text: n => `Break ${n} ice, chains or boxes` },
+];
+
+const Career = {
+  get d() { return Save.data.career; },
+  rankOf(L) { return Math.min(CAREER_RANKS.length - 1, Math.floor((Math.min(L, CAREER_MAX) - 1) / 25)); },
+  complete() { return this.d.lvl > CAREER_MAX; },
+
+  // The challenge for track level L (always the same for the same level).
+  _cache: {},
+  challenge(L) {
+    if (this._cache[L]) return this._cache[L];
+    let prev = null;
+    let pick = null;
+    for (let i = 1; i <= L; i++) {
+      const opts = CAREER_TYPES.filter(c => c.min <= i && c.t !== prev);
+      const r = Missions.rng(i * 2654435761 % 2147483647)();
+      pick = opts[Math.floor(r * opts.length)];
+      prev = pick.t;
+    }
+    const n = pick.goal(L);
+    return (this._cache[L] = { L, type: pick, target: n, text: pick.text(n), reward: this.reward(L) });
+  },
+
+  reward(L) {
+    if (L === CAREER_MAX) return { gems: 5, light: true, label: '💎 5 + Light tiles' };
+    if (L % 25 === 0) return { gems: 2, look: true, boosters: { hammer: 1, shuffle: 1, moves: 1 }, label: '💎 2 + Pip look + 1 of each' };
+    if (L % 10 === 0) return { coins: 100, boosters: { hammer: 1, shuffle: 1, moves: 1 }, label: '🪙 100 + 1 of each' };
+    if (L % 2 === 0) { const k = ['hammer', 'shuffle', 'moves'][(L / 2) % 3]; return { boosters: { [k]: 1 }, label: { hammer: '🔨', shuffle: '🌪️', moves: '+5' }[k] + ' ×1' }; }
+    return { coins: 25 + Math.floor(L / 10) * 5, label: `🪙 ${25 + Math.floor(L / 10) * 5}` };
+  },
+
+  give(L) {
+    const r = this.reward(L), inv = Save.data.boosters, out = { L, label: r.label };
+    if (r.coins) Wallet.addCoins(r.coins);
+    if (r.gems) Wallet.addGems(r.gems);
+    if (r.boosters) Object.keys(r.boosters).forEach(k => { inv[k] = (inv[k] || 0) + r.boosters[k]; });
+    if (r.look) {                                       // a free Pip look she doesn't own yet
+      const owned = Save.data.wallet.owned;
+      for (let w = 1; w <= 6; w++) if (!owned['pip' + w]) { owned['pip' + w] = true; out.look = w; break; }
+    }
+    if (r.light) Save.data.wallet.owned.lightTiles = true;
+    return out;
+  },
+
+  event(ev, data = {}) {
+    const d = this.d;
+    if (!d || this.complete()) return;
+    if (ev === 'ice' || ev === 'chain' || ev === 'box') ev = 'blocker';
+    const c = this.challenge(d.lvl);
+    if (c.type.streak && ev === 'lose') { d.progress = 0; return; }
+    if (c.type.ev !== ev) return;
+    d.progress = Math.min(c.target, d.progress + (data.amount || 1));
+    if (d.progress < c.target) return;
+    // level done → reward, move up
+    const got = this.give(d.lvl);
+    const rankBefore = this.rankOf(d.lvl);
+    d.recent.push({ L: d.lvl, text: c.text, label: got.label });
+    if (d.recent.length > 6) d.recent.shift();
+    if (d.lvl % 25 === 0 && d.lvl < CAREER_MAX) d.pendingRank = this.rankOf(d.lvl + 1);
+    if (d.lvl === CAREER_MAX) d.pendingRank = -1;      // career complete
+    d.lvl++;
+    d.progress = 0;
+    Save.write();
+    if (typeof UI !== 'undefined' && UI.careerDone) UI.careerDone(got, c, rankBefore);
+  },
+
+  // Levels finished since the last check (for the win screen).
+  takeRecent(sinceL) { return this.d.recent.filter(r => r.L >= sinceL); },
 };
 
 const Daily = {
@@ -5637,6 +5732,7 @@ const Game = {
     this.mode = null;
     clearTimeout(this._idleTimer);
     const n = this.level.n;
+    const careerStart = Save.data.career ? Save.data.career.lvl : 0;
     const firstTry = !(Save.data.progress.fails[n] > 0);
     const movesLeftAtWin = this.movesLeft;
 
@@ -5696,6 +5792,8 @@ const Game = {
     await wait(450);
     UI.updateBoosters();
     UI.renderWallet();
+    if (careerStart && pay) Career.takeRecent(careerStart).forEach(r =>
+      pay.cards.push({ label: `🎬 Career Track · level ${r.L} done`, text: r.label }));
     UI.showWin(n, stars, this.score, rewards, pay);
   },
 
@@ -5832,7 +5930,10 @@ const UI = {
       $('screen' + s[0].toUpperCase() + s.slice(1)).hidden = s !== name;
     });
     if (name !== 'game') World.apply(worldOf(Save.data.progress.unlocked));
-    if (name !== 'game') { this.renderWallet(); this.updateMissionDot(); }
+    if (name !== 'game') {
+      this.renderWallet(); this.updateMissionDot();
+      if (Save.data.career && Save.data.career.pendingRank) setTimeout(() => { if ($('modal').hidden) this.showRankUp(); }, 700);
+    }
     if (name === 'game') Render.layout();
     Music.play(songFor(World.current, name));
     if (name === 'title') {
@@ -5956,8 +6057,67 @@ const UI = {
 
   /* ----- 📋 Missions (Call Sheet + Career Track) ----- */
   updateMissionDot() {
-    const on = Missions.claimable();
+    const on = Missions.claimable() || !!(Save.data.career && Save.data.career.pendingRank);
     ['btnMissions', 'btnMissionsMap'].forEach(id => { const el = $(id); if (el) el.classList.toggle('has-dot', on); });
+  },
+
+  careerDone(got, c) {
+    this.updateMissionDot();
+    this.renderWallet();
+    this.updateBoosters();
+    if (Game.state === 'play') this.toast(`🎬 Career level ${got.L} done! ${got.label}`, false, 'cheer');
+  },
+
+  // Promotion pop-up (shown the next time she's on the title, map or missions screen).
+  showRankUp() {
+    const d = Save.data.career;
+    if (!d.pendingRank) return false;
+    const done = d.pendingRank === -1;
+    const title = done ? 'Career complete!' : CAREER_RANKS[d.pendingRank];
+    d.pendingRank = 0; Save.write();
+    this.showModal(`
+      <img class="pip pip-card pip-big" src="${Pip.url(World.current, 'cheer')}" alt="Pip">
+      <div class="panel-kicker">${done ? '🏆 Hall of Fame' : '🎬 Promotion'}</div>
+      <div class="panel-title">${esc(title)}</div>
+      <div class="ht-text">${done ? `All 150 Career Track levels, ${esc(CONFIG.playerName)}. Light tiles are unlocked in the shop, plus 5 💎.`
+        : `You've been promoted to <b>${esc(title)}</b>! 2 💎, 1 of each booster and a new Pip look are yours (pick it in the shop).`}</div>
+      <div class="panel-btns"><button class="btn btn-big btn-gold" data-act="track">See my Career Track</button>
+      <button class="btn btn-ghost" data-act="close">Nice!</button></div>`,
+      { track: () => this.showMissions('track') });
+    Confetti.burst(160); Sound.play('fanfare', 0.55);
+    this.updateMissionDot();
+    return true;
+  },
+
+  careerTab() {
+    const d = Save.data.career;
+    if (Career.complete()) {
+      return `<div class="ct-rank"><span class="ct-kicker">Career complete</span><b>🏆 Hall of Fame</b>
+        <span class="ct-sub">All ${CAREER_MAX} levels done. Legend.</span></div>${this.rankLadder(CAREER_RANKS.length)}`;
+    }
+    const L = d.lvl, c = Career.challenge(L), r = Career.rankOf(L);
+    const inRank = (L - 1) % 25, pct = Math.round(100 * d.progress / c.target);
+    const next = [1, 2, 3].map(i => L + i).filter(x => x <= CAREER_MAX).map(x => {
+      const cx = Career.challenge(x);
+      return `<div class="ct-next${x % 25 === 0 ? ' promo' : ''}"><span class="ct-num">${x}</span><span class="ct-ntext">${esc(cx.text)}</span><span class="ct-nrew">${cx.reward.label}</span></div>`;
+    }).join('');
+    return `
+      <div class="ct-rank"><span class="ct-kicker">Your rank</span><b>${esc(CAREER_RANKS[r])}</b>
+        <span class="ct-sub">Level ${L} of ${CAREER_MAX} · ${25 - inRank} to ${r < CAREER_RANKS.length - 1 ? esc(CAREER_RANKS[r + 1]) : 'the finish'}</span>
+        <div class="ms-bar"><i style="width:${Math.round(100 * inRank / 25)}%"></i></div></div>
+      <div class="shop-sec">Now shooting · level ${L}</div>
+      <div class="ms-row ct-now"><div class="ms-main"><b>${esc(c.text)}</b>
+        <div class="ms-bar"><i style="width:${pct}%"></i></div>
+        <small>${c.target >= 1000 ? d.progress.toLocaleString() : d.progress} / ${c.target.toLocaleString()}</small></div>
+        <span class="ms-reward">${c.reward.label}</span></div>
+      ${next ? `<div class="shop-sec">Up next</div>${next}` : ''}
+      ${this.rankLadder(r)}`;
+  },
+
+  rankLadder(cur) {
+    return `<div class="shop-sec">Ranks</div><div class="ct-ladder">` + CAREER_RANKS.map((name, i) =>
+      `<div class="ct-step${i < cur ? ' past' : i === cur ? ' on' : ''}" title="${esc(name)}"><span>${i < cur ? '✓' : i * 25 + 1}</span><small>${esc(name)}</small></div>`).join('') + `</div>` +
+      (cur < CAREER_RANKS.length - 1 ? `<div class="ct-ranks-note">Next promotion: <b>${esc(CAREER_RANKS[cur + 1])}</b> at level ${(cur + 1) * 25 + 1}</div>` : '');
   },
 
   missionDone(m) {
@@ -5972,14 +6132,14 @@ const UI = {
   },
 
   showMissions(tab = 'sheet', note = '') {
+    if (Save.data.career && Save.data.career.pendingRank && this.showRankUp()) return;
     const d = Missions.ensure();
     const actions = { tab_sheet: () => this.showMissions('sheet'), tab_track: () => this.showMissions('track') };
     const tabs = `<div class="ms-tabs"><button class="ms-tab${tab === 'sheet' ? ' on' : ''}" data-act="tab_sheet">Call Sheet</button>` +
                  `<button class="ms-tab${tab === 'track' ? ' on' : ''}" data-act="tab_track">Career Track</button></div>`;
     let body;
     if (tab === 'track') {
-      body = `<div class="ms-soon"><div class="ms-soon-big">🎬</div><b>Coming next</b>
-        <span>A 150-level climb from Day Player to Hall of Fame — one challenge at a time.</span></div>`;
+      body = this.careerTab();
     } else {
       const left = Math.max(0, Missions.endsAt() - Date.now());
       const h = Math.floor(left / 3600000), mm = Math.floor(left % 3600000 / 60000);
@@ -7092,5 +7252,5 @@ if (document.fonts && document.fonts.ready) {
 // Handy for testing in the console.
 setInterval(() => Game.watchdog(), 500);
 
-window.__game = { Missions, LevelRewards, Wallet, ECON, Board, Game, Save, Render, Loop, FX, UI, Tweens, BOMB, makeTile, buildLevel, LEVELS, Pip, World,
+window.__game = { Career, Missions, LevelRewards, Wallet, ECON, Board, Game, Save, Render, Loop, FX, UI, Tweens, BOMB, makeTile, buildLevel, LEVELS, Pip, World,
                   Sound, Music, Particles, Shake, Confetti, Daily };

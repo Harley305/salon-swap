@@ -60,7 +60,10 @@ All art, music and characters are original. The Wizard of Oz / Wicked touches ar
 - Missions count during normal play (wins, first tries, ★★★, specials, gel, ice, boxes, score…). Pip calls it out when one finishes.
 - Tap **Claim** for each mission's boosters. Finish all 5 for **That's a wrap!** (1 of each booster + 100 🪙), which unlocks a **bonus mission** worth 1 💎.
 - A pink dot on 📋 means something is ready to claim. Open it from the title screen or the 📋 button on the map.
-- The **Career Track** tab is coming next.
+- **Career Track:** a permanent 150-level climb — one challenge at a time (win levels, first tries, ★★★, specials, gel, bosses, streaks…), counted during normal play and never reset.
+  - Every level pays coins or a booster; every 10th pays 100 🪙 + 1 of each booster.
+  - Every 25 levels is a promotion: Day Player → Hair Assistant → Key Hairstylist → Department Head → Award Nominee → Hall of Fame (2 💎, 1 of each booster and a free Pip look).
+  - Level 150 unlocks the light tile style and 5 💎.
 
 ## If the board ever freezes
 
