@@ -50,7 +50,7 @@ All art, music and characters are original. The Wizard of Oz / Wicked touches ar
 - **Coins:** 30 for clearing a level the first time, 10 for replaying one, and 200 extra for clearing a world.
 - **Gems:** 3 for clearing a world, plus 1 more when every level in that world has ★★★.
 - **🛍️ Shop** (title screen, or tap the coin counter): coins buy boosters (Hammer 75, Twister 60, +5 Moves 90). Gems buy a booster bundle, the light tile style, and Pip's looks from any world.
-- **Get coins:** pretend coin packs (no real money) or replay cleared levels. Edit the pack names and "prices" in `CONFIG → coinPacks` at the top of `script.js`.
+- **Get coins:** pretend coin packs (no real money) or replay cleared levels. Edit the pack names and "prices" in `coinPacks` in `js/config.js`.
 - Free boosters still come from the Daily Gift, boss boards and world clears.
 - Players who already had progress get a one-time "Back pay" for the levels and worlds they'd already cleared.
 
@@ -69,7 +69,7 @@ All art, music and characters are original. The Wizard of Oz / Wicked touches ar
 
 The game repairs itself. If a move hits an error, it puts the tiles back in place, fills any gaps, and unlocks the board right away. If a move ever stalls with nothing moving, a safety net unlocks it after about 4 seconds. Progress and stars are never lost.
 
-To change that wait, edit `unstickMs` in CONFIG at the top of `script.js` (4000 = 4 seconds).
+To change that wait, edit `unstickMs` in `js/config.js` (4000 = 4 seconds).
 
 ## Test links
 
@@ -84,7 +84,7 @@ Tip: use a **private window** to preview levels without touching a real save.
 
 ## Changing the messages
 
-Everything personal is at the top of `script.js` in the `CONFIG` section:
+Everything personal is in **`js/config.js`** — open that one file in VS Code; nothing else needs touching:
 
 | Setting | What it is |
 |---|---|
@@ -96,6 +96,7 @@ Everything personal is at the top of `script.js` in the `CONFIG` section:
 | `worldWinMessages` | Extra win lines for each world |
 | `fullName`, `awardTitle`, `credits` | Her name, award and real credits in the finale |
 | `finaleMessage`, `finaleSignature` | The thank-you note at the end of the credits |
+| `coinPacks` | Names and pretend "prices" of the coin packs |
 | `masterVolume`, `musicVolume`, `sfxVolume` | Loudness |
 
 `{name}` in any message becomes her name.
@@ -108,15 +109,26 @@ The game files live in `~/Desktop/salon-swap` on the MacBook. After changing the
 cd ~/Desktop/salon-swap && git add -A && git commit -m "describe the change" && git push
 ```
 
-GitHub Pages updates the live link in about a minute. When the code changes, bump the `?v=` number on the two file links in `index.html` so phones load the new version instead of an old saved copy.
+GitHub Pages updates the live link in about a minute. When the code changes, bump the one version number near the top of `index.html` (`SALON_VERSION = '…'`) so phones load the new files instead of an old saved copy.
 
 ## Files
 
 | File | What's in it |
 |---|---|
-| `index.html` | The page layout |
+| `index.html` | The page layout, the version number, and the list of game files in load order |
 | `style.css` | Colors, backgrounds and layout for every world |
-| `script.js` | The whole game: settings, art, levels, sound, music and saving |
+| `js/config.js` | **Your settings and messages** (see above) |
+| `js/art.js` | Tile icons for all six worlds, world settings, delivery items, blocker art |
+| `js/engine.js` | Saving (with backup), animation timing, sound & music, particles, Pip |
+| `js/board.js` | The grid: swapping, finding matches and moves |
+| `js/levels.js` | All 180 handmade levels + the endless generator |
+| `js/progress.js` | Boss/world rewards, coins & gems, Call Sheet, Career Track, daily gift |
+| `js/game.js` | Drawing the board, input, playing a level, the freeze safety net |
+| `js/ui.js` | Screens and pop-ups, finale credits, world backgrounds |
+| `js/boot.js` | Starts the game |
+| `tests/` | Automatic checks that play the game (see `tests/README.md`) |
 | `README.md` | This guide |
+
+The `js/` files load in the order listed in `index.html`; keep that order if you add one.
 
 Made with love by Chris. ❤️

@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <!-- CodePen: paste the next line into Settings → HTML → "Stuff for <head>" -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#17252A">
   <title>Myesha's Salon Swap</title>
-  <link rel="stylesheet" href="style.css?v=20261009a">
+  <!-- VERSION: bump this one number whenever the code changes, so phones load the new files. -->
+  <script>window.SALON_VERSION = '20261016a';
+    document.write('<link rel="stylesheet" href="style.css?v=' + SALON_VERSION + '">');</script>
 </head>
 <body>
-<!-- ===== CodePen HTML panel: copy from here ===== -->
 <div class="bg" id="bg" aria-hidden="true"></div>
 <div id="app">
 
@@ -104,7 +104,11 @@
   <canvas id="confetti" aria-hidden="true"></canvas>
 
 </div>
-<!-- ===== to here ===== -->
-<script src="script.js?v=20261009a"></script>
+<!-- The game code, in load order (see README → Files). -->
+<script>
+  ['config', 'art', 'engine', 'board', 'levels', 'progress', 'game', 'ui', 'boot'].forEach(function (f) {
+    document.write('<script src="js/' + f + '.js?v=' + SALON_VERSION + '"><\/script>');
+  });
+</script>
 </body>
 </html>
