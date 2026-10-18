@@ -1277,7 +1277,7 @@ const LEVELS = [
 const LEVELS_W6 = [
   /* ===== WORLD 6 · CINEMATIC CREDITS (levels 151–180) ===== */
   /* 151 */ { moves: 26, kinds: 5, goals: [['collect', 'trophy', 24], ['collect', 'bouquet', 24]], tip: 'Welcome to the red carpet — the final world!' },
-  /* 152 */ { moves: 28, kinds: 6, goals: [], layout: [
+  /* 152 */ { moves: 27, kinds: 6, goals: [], layout: [
     '........',
     '..jjjj..',
     '.j....j.',
@@ -1286,7 +1286,7 @@ const LEVELS_W6 = [
     '.j....j.',
     '..jjjj..',
     '........'] },
-  /* 153 */ { moves: 28, kinds: 6, goals: [['collect', 'camera', 18]], layout: [
+  /* 153 */ { moves: 24, kinds: 6, goals: [['collect', 'camera', 18]], layout: [
     '........',
     '.b....b.',
     '.bb..bb.',
@@ -1295,7 +1295,7 @@ const LEVELS_W6 = [
     '.bb..bb.',
     '.b....b.',
     '........'] },
-  /* 154 */ { moves: 29, kinds: 6, goals: [], layout: [
+  /* 154 */ { moves: 34, kinds: 6, goals: [], layout: [
     '........',
     '.JJ..JJ.',
     '.J.hh.J.',
@@ -1305,7 +1305,7 @@ const LEVELS_W6 = [
     '.JJ..JJ.',
     '........'] },
   /* 155 */ { moves: 25, kinds: 5, goals: [['score', 23000]], breather: true },
-  /* 156 */ { moves: 29, kinds: 6, goals: [['collect', 'envelope', 18]], layout: [
+  /* 156 */ { moves: 28, kinds: 6, goals: [['collect', 'envelope', 18]], layout: [
     '........',
     '..i..i..',
     '.i.BB.i.',
@@ -1314,7 +1314,7 @@ const LEVELS_W6 = [
     '.i....i.',
     '..i..i..',
     '........'] },
-  /* 157 */ { moves: 30, kinds: 6, goals: [], layout: [
+  /* 157 */ { moves: 27, kinds: 6, goals: [], layout: [
     '........',
     '.jjjjjj.',
     '.jJJJJj.',
@@ -1323,7 +1323,7 @@ const LEVELS_W6 = [
     '.jJJJJj.',
     '.jjjjjj.',
     '........'] },
-  /* 158 */ { moves: 31, kinds: 6, goals: [['collect', 'ribbon', 16], ['collect', 'flute', 16]], layout: [
+  /* 158 */ { moves: 30, kinds: 6, goals: [['collect', 'ribbon', 16], ['collect', 'flute', 16]], layout: [
     '........',
     '.h....h.',
     '...hh...',
@@ -1332,7 +1332,7 @@ const LEVELS_W6 = [
     '...hh...',
     '.h....h.',
     '........'] },
-  /* 159 */ { moves: 30, kinds: 6, goals: [], layout: [
+  /* 159 */ { moves: 27, kinds: 6, goals: [], layout: [
     '........',
     '.X....X.',
     '..b..b..',
@@ -1341,25 +1341,25 @@ const LEVELS_W6 = [
     '..b..b..',
     '.X....X.',
     '........'] },
-  /* 160 */ { moves: 28, kinds: 5, goals: [['collect', 'trophy', 32]], breather: true, layout: [
-    '........',
-    '........',
-    '..jjjj..',
-    '........',
-    '........',
-    '..jjjj..',
-    '........',
+  /* 160 */ { moves: 36, kinds: 6, goals: [['collect', 'trophy', 18]], tip: 'Act 1 boss board — the paparazzi are out!', layout: [
+    '.bb..bb.',
+    '.jjJJjj.',
+    '..iiii..',
+    'jj....jj',
+    'jj....jj',
+    '..hhhh..',
+    '.jjJJjj.',
     '........'] },
-  /* 161 */ { moves: 30, kinds: 6, goals: [], layout: [
+  /* 161 */ { moves: 35, kinds: 6, goals: [], layout: [
     '........',
-    '.i.HH.i.',
+    '.i.hh.i.',
     '........',
-    '.H....H.',
-    '.H....H.',
+    '.h....h.',
+    '.h....h.',
     '........',
-    '.i.HH.i.',
+    '.i.hh.i.',
     '........'] },
-  /* 162 */ { moves: 30, kinds: 6, goals: [['collect', 'bouquet', 20]], layout: [
+  /* 162 */ { moves: 33, kinds: 6, goals: [['collect', 'bouquet', 20]], layout: [
     '........',
     '.JJJJJJ.',
     '.J....J.',
@@ -1368,7 +1368,7 @@ const LEVELS_W6 = [
     '.J....J.',
     '.JJJJJJ.',
     '........'] },
-  /* 163 */ { moves: 29, kinds: 6, goals: [['collect', 'camera', 18], ['collect', 'envelope', 18]], layout: [
+  /* 163 */ { moves: 35, kinds: 6, goals: [['collect', 'camera', 14], ['collect', 'envelope', 14]], layout: [
     '........',
     '..I..I..',
     '........',
@@ -1377,7 +1377,7 @@ const LEVELS_W6 = [
     '........',
     '..I..I..',
     '........'] },
-  /* 164 */ { moves: 31, kinds: 6, goals: [], layout: [
+  /* 164 */ { moves: 21, kinds: 6, goals: [], layout: [
     '........',
     '.BXXXXB.',
     '........',
@@ -1386,7 +1386,7 @@ const LEVELS_W6 = [
     '........',
     '........',
     '........'] },
-  /* 165 */ { moves: 27, kinds: 5, goals: [['score', 32000]], breather: true, layout: [
+  /* 165 */ { moves: 30, kinds: 5, goals: [['score', 28000]], breather: true, layout: [
     '........',
     '........',
     '...ii...',
@@ -1395,7 +1395,7 @@ const LEVELS_W6 = [
     '...ii...',
     '........',
     '........'] },
-  /* 166 */ { moves: 30, kinds: 6, goals: [['collect', 'flute', 20]], layout: [
+  /* 166 */ { moves: 28, kinds: 6, goals: [['collect', 'flute', 20]], layout: [
     '........',
     '.jh..hj.',
     '.j....j.',
@@ -1404,7 +1404,7 @@ const LEVELS_W6 = [
     '.j....j.',
     '.jh..hj.',
     '........'] },
-  /* 167 */ { moves: 30, kinds: 6, goals: [], layout: [
+  /* 167 */ { moves: 32, kinds: 6, goals: [], layout: [
     '........',
     '.Bb..bB.',
     '..I..I..',
@@ -1413,43 +1413,43 @@ const LEVELS_W6 = [
     '..I..I..',
     '.Bb..bB.',
     '........'] },
-  /* 168 */ { moves: 30, kinds: 6, goals: [['collect', 'ribbon', 20], ['collect', 'trophy', 20]], layout: [
+  /* 168 */ { moves: 34, kinds: 6, goals: [['collect', 'ribbon', 16], ['collect', 'trophy', 16]], layout: [
     '........',
     '..h..h..',
-    '.H....H.',
+    '.h....h.',
     '...ii...',
     '...ii...',
-    '.H....H.',
+    '.h....h.',
     '..h..h..',
     '........'] },
-  /* 169 */ { moves: 31, kinds: 6, goals: [], layout: [
+  /* 169 */ { moves: 34, kinds: 6, goals: [], layout: [
     '........',
     '.JJJJJJ.',
     '.JJJJJJ.',
-    '.J.XX.J.',
-    '.J.XX.J.',
+    '.J.BB.J.',
+    '.J.BB.J.',
     '.JJJJJJ.',
     '.JJJJJJ.',
     '........'] },
-  /* 170 */ { moves: 32, kinds: 6, goals: [['collect', 'bouquet', 30]], breather: true, tip: 'Ten more to go — the big night is near!', layout: [
-    '........',
-    '........',
-    '.j.jj.j.',
-    '........',
-    '........',
-    '.j.jj.j.',
-    '........',
+  /* 170 */ { moves: 42, kinds: 6, goals: [['collect', 'bouquet', 14]], tip: 'Act 2 boss board — ten more to go, the big night is near!', layout: [
+    'b.jjjj.b',
+    '.IiiiiI.',
+    '.j....j.',
+    '.jhhhhj.',
+    '.j....j.',
+    '.IiiiiI.',
+    'b.jjjj.b',
     '........'] },
   /* 171 */ { moves: 31, kinds: 6, goals: [], layout: [
     '........',
-    '.H.h.hH.',
+    '.h.h.hh.',
     '........',
     '..I..I..',
     '........',
-    '.H.h.hH.',
+    '.h.h.hh.',
     '........',
     '........'] },
-  /* 172 */ { moves: 30, kinds: 6, goals: [['collect', 'envelope', 22]], layout: [
+  /* 172 */ { moves: 25, kinds: 6, goals: [['collect', 'envelope', 22]], layout: [
     '........',
     '.X.bb.X.',
     '........',
@@ -1458,16 +1458,16 @@ const LEVELS_W6 = [
     '........',
     '.X.bb.X.',
     '........'] },
-  /* 173 */ { moves: 31, kinds: 6, goals: [], layout: [
+  /* 173 */ { moves: 32, kinds: 6, goals: [], layout: [
     '........',
-    '.jIjjIj.',
+    '.jijjij.',
     '.j....j.',
     '.j.hh.j.',
     '.j.hh.j.',
     '.j....j.',
-    '.jIjjIj.',
+    '.jijjij.',
     '........'] },
-  /* 174 */ { moves: 30, kinds: 6, goals: [['collect', 'camera', 20], ['collect', 'flute', 20]], layout: [
+  /* 174 */ { moves: 26, kinds: 6, goals: [['collect', 'camera', 20], ['collect', 'flute', 20]], layout: [
     '........',
     '..b..b..',
     '.h.BB.h.',
@@ -1476,8 +1476,8 @@ const LEVELS_W6 = [
     '.h.BB.h.',
     '..b..b..',
     '........'] },
-  /* 175 */ { moves: 28, kinds: 5, goals: [['collect', 'trophy', 36]], breather: true },
-  /* 176 */ { moves: 31, kinds: 6, goals: [], layout: [
+  /* 175 */ { moves: 24, kinds: 5, goals: [['collect', 'trophy', 36]], breather: true },
+  /* 176 */ { moves: 34, kinds: 6, goals: [], layout: [
     '........',
     '.JJJJJJ.',
     '.JhJJhJ.',
@@ -1486,34 +1486,34 @@ const LEVELS_W6 = [
     '.JhJJhJ.',
     '.JJJJJJ.',
     '........'] },
-  /* 177 */ { moves: 31, kinds: 6, goals: [['collect', 'ribbon', 18]], layout: [
+  /* 177 */ { moves: 32, kinds: 6, goals: [['collect', 'ribbon', 18]], layout: [
     '........',
-    '.I.XX.I.',
-    '........',
-    '.i....i.',
+    '.i.BB.i.',
     '........',
     '.i....i.',
-    '.I.XX.I.',
+    '........',
+    '.i....i.',
+    '.i.BB.i.',
     '........'] },
-  /* 178 */ { moves: 33, kinds: 6, goals: [], layout: [
+  /* 178 */ { moves: 29, kinds: 6, goals: [], layout: [
     '........',
     '.bjjjjb.',
     '.jh..hj.',
-    '.j.II.j.',
-    '.j.II.j.',
+    '.j.ii.j.',
+    '.j.ii.j.',
     '.jh..hj.',
     '.bjjjjb.',
     '........'] },
-  /* 179 */ { moves: 31, kinds: 6, goals: [['collect', 'envelope', 20], ['collect', 'bouquet', 20]], layout: [
+  /* 179 */ { moves: 26, kinds: 6, goals: [['collect', 'envelope', 18], ['collect', 'bouquet', 18]], layout: [
     '........',
-    '..H..H..',
+    '..h..h..',
     '.b....b.',
     '..jjjj..',
     '..jjjj..',
     '.b....b.',
-    '..H..H..',
+    '..h..h..',
     '........'] },
-  /* 180 */ { moves: 38, kinds: 6, goals: [['collect', 'trophy', 16]], tip: 'The grand finale — this one is for you.', layout: [
+  /* 180 */ { moves: 41, kinds: 6, goals: [['collect', 'trophy', 16]], tip: 'The grand finale — this one is for you.', layout: [
     '........',
     '.jjhhjj.',
     '.jI..Ij.',
@@ -1522,6 +1522,7 @@ const LEVELS_W6 = [
     '.jI..Ij.',
     '.jjhhjj.',
     '........'] },
+
 ];
 
 /* Levels after the handmade ones are generated — the same level number
