@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#17252A">
   <title>Myesha's Salon Swap</title>
   <!-- VERSION: bump this one number whenever the code changes, so phones load the new files. -->
-  <script>window.SALON_VERSION = '20261018b';
+  <script>window.SALON_VERSION = '20261018c';
     document.write('<link rel="stylesheet" href="style.css?v=' + SALON_VERSION + '">');</script>
 </head>
 <body>
@@ -106,7 +106,7 @@
 </div>
 <!-- The game code, in load order (see README → Files). -->
 <script>
-  ['config', 'art', 'engine', 'board', 'levels', 'progress', 'game', 'ui', 'boot'].forEach(function (f) {
+  ['config', 'art', 'engine', 'closet', 'board', 'levels', 'progress', 'game', 'ui', 'boot'].forEach(function (f) {
     document.write('<script src="js/' + f + '.js?v=' + SALON_VERSION + '"><\/script>');
   });
 </script>

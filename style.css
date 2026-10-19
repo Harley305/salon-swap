@@ -1736,3 +1736,22 @@ body[data-world="5"] .bg-spark.pink { background: radial-gradient(circle, #fff 0
 .oz-x { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); right: 12px; width: 36px; height: 36px; border-radius: 50%; border: 0;
   background: rgba(0,0,0,.35); color: #fff; font-size: 16px; cursor: pointer; z-index: 2; }
 @media (prefers-reduced-motion: reduce) { .oz-spark { animation: none; } .oz-balloon { transition: none; } }
+
+/* ========== Pip's closet (Style Pip) ========== */
+.cl-sec { margin: 12px 0 6px; font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--mist); opacity: .75; }
+.cl-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.cl-chip { font: inherit; color: var(--white); border: 2px solid transparent; border-radius: 14px; padding: 4px 4px 6px; width: 70px;
+  background: rgba(23,37,42,.45); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; }
+.cl-chip img { width: 46px; height: auto; }
+.cl-chip small { font-size: 11px; font-weight: 600; line-height: 1.15; }
+.cl-chip.on { border-color: var(--gold); background: rgba(58,175,169,.35); }
+.cl-chip.locked { opacity: .5; }
+.cl-chip.cl-text { width: auto; padding: 8px 12px; justify-content: center; }
+.cl-swatches { gap: 8px; }
+.cl-swatch { width: 30px; height: 30px; border-radius: 50%; border: 3px solid rgba(255,255,255,.55); cursor: pointer; padding: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,.3); }
+.cl-swatch.on { border-color: var(--gold); transform: scale(1.15); box-shadow: 0 0 0 3px rgba(244,184,58,.35); }
+.cl-swatch.dflt { position: relative; }
+.cl-swatch.dflt::after { content: '↺'; position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-size: 14px; font-weight: 700; text-shadow: 0 1px 2px #000; }
+.cl-btns { flex-wrap: wrap; }
+.link-btn { font: inherit; background: none; border: 0; color: var(--gold); text-decoration: underline; padding: 0; cursor: pointer; }

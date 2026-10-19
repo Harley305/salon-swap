@@ -84,6 +84,24 @@ const CONFIG = {
     6: ['And the award goes to… {name}!', "{name}, you've earned this one.", 'Standing ovation!', 'Speech! Speech!'],
   },
 
+  // ===== Pip's closet: hair colors =====
+  // Shown as swatches in "Style Pip". Add, remove or rename any line: { name: 'Shown name', hex: '#RRGGBB' }.
+  hairColors: [
+    { name: 'Jet black',    hex: '#121014' },
+    { name: 'Soft black',   hex: '#2A1E1C' },
+    { name: 'Dark brown',   hex: '#3B2416' },
+    { name: 'Chestnut',     hex: '#7A3B1F' },
+    { name: 'Caramel',      hex: '#A4652F' },
+    { name: 'Honey blonde', hex: '#D9A55A' },
+    { name: 'Golden',       hex: '#E5BE6E' },
+    { name: 'Copper',       hex: '#B5532A' },
+    { name: 'Burgundy',     hex: '#6E1E2E' },
+    { name: 'Plum',         hex: '#4B2E6E' },
+    { name: 'Turquoise',    hex: '#3AAFA9' },
+    { name: 'Pink',         hex: '#EC5FA5' },
+    { name: 'Silver',       hex: '#BFC3CC' },
+  ],
+
   // ===== Level 180 finale: end credits =====
   fullName: 'Myesha Starks',
   awardTitle: 'Best Hair Department',

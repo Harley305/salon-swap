@@ -65,6 +65,19 @@ All art, music and characters are original. The Wizard of Oz / Wicked touches ar
   - Every 25 levels is a promotion: Day Player → Hair Assistant → Key Hairstylist → Department Head → Award Nominee → Hall of Fame (2 💎, 1 of each booster and a free Pip look).
   - Level 150 unlocks the light tile style and 5 💎.
 
+## 👗 Pip's closet
+
+Tap Pip on the title screen to open **Style Pip** and mix and match: hair, hair color, outfit, head accessory and skin tone. Tap **Wear it** to keep the look everywhere, or **Back to Auto** to let Pip change looks each world.
+
+- **Free from the start:** the top bun, the scrunchie, the turquoise top, and every hair color.
+- **Buying a world's look in the Shop** (2 💎) also unlocks that world's hairstyle and accessory in the closet.
+- **After the hidden finale**, Mimi joins the closet: her face, curls, twists and box braids, her outfits, jewelry, lip colors and winged liner. These stay hidden until then so the surprise isn't spoiled.
+
+**Adding or changing styles later:**
+- **Hair colors:** edit `hairColors` in `js/config.js`. Each line is `{ name: 'Shown name', hex: '#RRGGBB' }`.
+- **New pieces** (a hairstyle, outfit or accessory): add a line to the `CLOSET` list in `js/closet.js`, then draw it in `drawLook()` in the same file, under the step for that kind of piece. The comments there show where.
+- **The ready-made looks** for each world and for Mimi are `WORLD_LOOKS` and `MIMI_LOOKS` at the top of `js/closet.js`.
+
 ## If the board ever freezes
 
 The game repairs itself. If a move hits an error, it puts the tiles back in place, fills any gaps, and unlocks the board right away. If a move ever stalls with nothing moving, a safety net unlocks it after about 4 seconds. Progress and stars are never lost.
@@ -118,9 +131,10 @@ GitHub Pages updates the live link in about a minute. When the code changes, bum
 |---|---|
 | `index.html` | The page layout, the version number, and the list of game files in load order |
 | `style.css` | Colors, backgrounds and layout for every world |
-| `js/config.js` | **Your settings and messages** (see above) |
+| `js/config.js` | **Your settings and messages** (see above), plus Pip's hair colors |
 | `js/art.js` | Tile icons for all six worlds, world settings, delivery items, blocker art |
 | `js/engine.js` | Saving (with backup), animation timing, sound & music, particles, Pip |
+| `js/closet.js` | Pip's closet: every hairstyle, outfit, accessory and the ready-made looks |
 | `js/board.js` | The grid: swapping, finding matches and moves |
 | `js/levels.js` | All 180 handmade levels + the endless generator |
 | `js/progress.js` | Boss/world rewards, coins & gems, Call Sheet, Career Track, daily gift |

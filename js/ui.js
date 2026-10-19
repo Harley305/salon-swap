@@ -80,6 +80,8 @@ const UI = {
       if (node && !node.classList.contains('locked')) this.showIntro(+node.dataset.n);
     });
     $('panel').addEventListener('click', e => {
+      const cl = e.target.closest('[data-cl]');
+      if (cl && this._cl) { e.stopPropagation(); return this.closetPick(cl.dataset.cl); }
       const sw = e.target.closest('[data-tone]');
       if (!sw) return;
       e.stopPropagation();
@@ -87,6 +89,7 @@ const UI = {
       document.querySelectorAll('.tone').forEach(b => b.classList.toggle('on', b === sw));
       const row = $('pipRow'); if (row) row.innerHTML = this.pipRow();
       document.querySelectorAll('.pip-card').forEach(img => { img.src = Pip.url(World.current, 'cheer'); });
+      if (this._cl && !$('modal').hidden) this.renderCloset('', true);
       Sound.play('tap');
     });
     $('modal').addEventListener('click', e => {
@@ -839,15 +842,113 @@ const UI = {
     return [1, 2, 3, 4, 5, 6].map(w => `<img src="${Pip.url(w, 'happy', 80, undefined, true)}" alt="">`).join('');
   },
 
-  // Tap Pip on the title screen to restyle.
+  // Tap Pip on the title screen to restyle: the closet (mix & match). Pieces live in js/closet.js.
   showPipStyle() {
+    const set = Save.data.settings;
+    {                                                           // start from what Pip wears now
+      const cur = lookSpec(Pip.lookFor(World.current));
+      const d = JSON.parse(JSON.stringify(cur));
+      if (set.pipLook !== 'custom' && d.color && d.color.toLowerCase() === (HAIR_DEFAULT_COLOR[d.hair] || '').toLowerCase()) d.color = null;
+      this._cl = { draft: d };
+    }
+    this.renderCloset();
+  },
+
+  renderCloset(note = '', keepScroll = false) {
+    const set = Save.data.settings, d = this._cl.draft;
+    const isMimi = d.face === 'mimi';
+    const thumb = spec => Pip.url(spec, 'happy', 64, undefined, true);
+    const lockMsg = p => p.unlock === 'mimi' ? 'Unlocks after the finale 💚'
+      : `Get the World ${p.unlock.slice(3)} look in the Shop (${ECON.pipLookGems} 💎)`;
+    const chip = (sec, p, on, img) => {
+      const ok = closetOwned(p);
+      return `<button type="button" class="cl-chip${on ? ' on' : ''}${ok ? '' : ' locked'}" data-cl="${sec}:${p.id}">` +
+        (img ? `<img src="${img}" alt="">` : '') + `<small>${ok ? '' : '🔒 '}${esc(p.name)}</small></button>`;
+    };
+    const sec = (title, body) => `<div class="cl-sec">${title}</div><div class="cl-row">${body}</div>`;
+    const seen = p => p.unlock !== 'mimi' || Wallet.owns('mimi');     // Mimi pieces stay a secret until the finale
+
+    const faces = CLOSET.face.map(p => chip('face', p, d.face === p.id, thumb({ ...d, face: p.id }))).join('');
+    const hairs = CLOSET.hair.filter(seen).map(p => chip('hair', p, d.hair === p.id, thumb({ ...d, hair: p.id, head: 'none' }))).join('');
+    const colors = [{ name: 'Default', hex: null }].concat(CONFIG.hairColors || []).map(c => {
+      const on = (d.color || null) === null ? c.hex === null : !!c.hex && c.hex.toLowerCase() === d.color.toLowerCase();
+      const bg = c.hex || HAIR_DEFAULT_COLOR[d.hair] || '#3B2416';
+      return `<button type="button" class="cl-swatch${on ? ' on' : ''}${c.hex ? '' : ' dflt'}" data-cl="color:${c.hex || ''}" ` +
+        `style="background:${bg}" title="${esc(c.name)}" aria-label="${esc(c.name)}"></button>`;
+    }).join('');
+    const outfits = CLOSET.outfit.filter(seen).map(p => chip('outfit', p, d.outfit === p.id, thumb({ ...d, outfit: p.id }))).join('');
+    const heads = CLOSET.head.filter(seen).map(p => chip('head', p, d.head === p.id, thumb({ ...d, head: p.id }))).join('');
+    const jewels = CLOSET.jewels.filter(seen).filter(p => !p.face || p.face === d.face)
+      .map(p => chip('jewel', p, (d.jewels || []).includes(p.id))).join('');
+    const lips = isMimi ? CLOSET.lips.map(l => `<button type="button" class="cl-swatch${d.lips === l.id ? ' on' : ''}" data-cl="lips:${l.id}" ` +
+      `style="background:${l.color[0]}" title="${esc(l.name)}" aria-label="${esc(l.name)}"></button>`).join('') +
+      `<button type="button" class="cl-chip cl-text${d.liner ? ' on' : ''}" data-cl="liner:1"><small>Winged liner</small></button>` : '';
+
+    const wearing = set.pipLook === 'custom';
+    const actions = {
+      wear: () => {
+        const w = JSON.parse(JSON.stringify(d));
+        w.jewels = (w.jewels || []).filter(j => { const p = CLOSET.jewels.find(x => x.id === j); return p && (!p.face || p.face === w.face); });
+        if (w.face !== 'mimi') { delete w.lips; delete w.liner; }
+        set.closet = w; set.pipLook = 'custom'; Save.write();
+        Pip.refresh && Pip.refresh();
+        const tp = $('titlePip'); if (tp) tp.src = Pip.url(World.current, 'happy');
+        Sound.play('glam'); this._cl = null;
+      },
+      auto: () => {
+        set.pipLook = 0; Save.write(); Pip.refresh && Pip.refresh();
+        const tp = $('titlePip'); if (tp) tp.src = Pip.url(World.current, 'happy');
+        this._cl = null;
+      },
+      shop: () => { this._cl = null; this.showShop(); },
+      close: () => { this._cl = null; },
+    };
+    const scroll = $('panel') ? $('panel').scrollTop : 0;
     this.showModal(`
-      <img class="pip pip-card pip-big" id="pipPreview" src="${Pip.url(World.current, 'cheer')}" alt="Pip">
-      <div class="panel-kicker">Pip's look</div>
+      <img class="pip pip-card pip-big" id="pipPreview" src="${Pip.url(d, 'cheer', 120, undefined, true)}" alt="Pip">
+      <div class="panel-kicker">Pip's closet</div>
       <div class="panel-title">Style Pip</div>
-      ${this.toneRow()}
-      <div class="pip-row" id="pipRow">${this.pipRow()}</div>
-      <div class="panel-btns"><button class="btn btn-big" data-act="close">Done</button></div>`);
+      ${note ? `<div class="shop-note">${note}</div>` : ''}
+      ${isMimi ? '' : this.toneRow()}
+      ${Wallet.owns('mimi') ? sec('Who', faces) : ''}
+      ${sec('Hair', hairs)}
+      <div class="cl-sec">Hair color</div><div class="cl-row cl-swatches">${colors}</div>
+      ${sec('Outfit', outfits)}
+      ${sec('Head', heads)}
+      ${jewels ? sec('Jewelry', jewels) : ''}
+      ${isMimi ? `<div class="cl-sec">Lips</div><div class="cl-row cl-swatches">${lips}</div>` : ''}
+      <div class="panel-btns cl-btns">
+        <button class="btn btn-gold" data-act="wear">${wearing ? 'Wear changes' : 'Wear it'}</button>
+        <button class="btn btn-ghost" data-act="auto">${set.pipLook ? 'Back to Auto' : 'Auto (each world)'}</button>
+        <button class="btn btn-ghost" data-act="close">Done</button>
+      </div>`, actions);
+    if (keepScroll) { const p = $('panel'); if (p) p.scrollTop = scroll; } else this.$panelScrollTop();
+  },
+
+  // Tapping a piece in the closet (handled on the panel so the closet stays open).
+  closetPick(key) {
+    const d = this._cl.draft, i = key.indexOf(':'), sec = key.slice(0, i), id = key.slice(i + 1);
+    const list = { face: CLOSET.face, hair: CLOSET.hair, outfit: CLOSET.outfit, head: CLOSET.head, jewel: CLOSET.jewels }[sec];
+    const p = list && list.find(x => x.id === id);
+    if (p && !closetOwned(p)) {
+      const msg = p.unlock === 'mimi' ? `🔒 ${esc(p.name)} unlocks after the finale 💚`
+        : `🔒 ${esc(p.name)} comes with the World ${p.unlock.slice(3)} look — <button type="button" class="link-btn" data-act="shop">Shop</button> (${ECON.pipLookGems} 💎)`;
+      return this.renderCloset(msg);
+    }
+    if (sec === 'face') {
+      d.face = id;
+      if (id === 'mimi' && !d.lips) d.lips = 'plum';
+    } else if (sec === 'hair') d.hair = id;
+    else if (sec === 'color') d.color = id || null;
+    else if (sec === 'outfit') d.outfit = id;
+    else if (sec === 'head') d.head = id;
+    else if (sec === 'jewel') {
+      d.jewels = d.jewels || [];
+      d.jewels = d.jewels.includes(id) ? d.jewels.filter(j => j !== id) : d.jewels.concat(id);
+    } else if (sec === 'lips') d.lips = id;
+    else if (sec === 'liner') d.liner = !d.liner;
+    Sound.play('tap');
+    this.renderCloset('', true);
   },
 
   showMeetPip() {
