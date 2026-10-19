@@ -103,7 +103,7 @@ async def main():
               T.breakOnce(G, name);
               if (how === 'swap') await T.move();
               else if (how === 'combo') {
-                const m = g.Board.findMoves()[0];
+                const m = g.Board.findMoves().find(mv => !g.Board.grid[mv.a.r][mv.a.c].drop && !g.Board.grid[mv.b.r][mv.b.c].drop);
                 const ta = g.Board.grid[m.a.r][m.a.c], tb = g.Board.grid[m.b.r][m.b.c];
                 ta.special = 'lineH'; tb.special = 'lineV';
                 await G.trySwap(m.a, m.b);

@@ -407,6 +407,13 @@ const SFX = {
     S.noiseHit(at + 0.3, 0.6, { freq: 2400, sweep: 400, q: 2.5, vol: 0.18 });
   },
   twinkle: (S, at) => { S.bell(SPARKLE[5], at, 0.06, 0.5); S.bell(SPARKLE[7], at + 0.12, 0.05, 0.5); },
+  // Hidden Oz finale: an original dreamy rising melody.
+  ozTheme: (S, at) => {
+    const mel = ['G5', 'B5', 'D6', 'G6', 'F#6', 'D6', 'B5', 'D6', 'E6', 'G6', 'B6', 'A6', 'G6', 'D6', 'E6', 'G6'];
+    mel.forEach((n, i) => S.bell(noteFreq(n), at + i * 0.32, 0.07, 1.1));
+    [['G3', 0], ['E3', 1.28], ['C3', 2.56], ['D3', 3.84]].forEach(([n, t]) =>
+      S.tone(noteFreq(n), at + t, 1.3, { type: 'triangle', vol: 0.05, attack: 0.08 }));
+  },
   // Click, click, click…
   heelClicks: (S, at) => {
     for (let i = 0; i < 3; i++) {
@@ -758,6 +765,247 @@ const COMBO_WORDS = { 3: 'Gorgeous!', 4: 'Fabulous!', 5: 'Popular!', 6: 'Wicked!
    A little mannequin head who travels with her. The hairstyle changes
    in every world; the face changes with the mood.
    moods: happy, blink, wow, oops, think, wink, cheer */
+/* ---------- Mimi-Pip ----------
+   A cartoon of Myesha in Pip's style, drawn entirely in code (no photo is stored).
+   Three looks: 'curls' (black side-swept curls, blazer), 'twists' (burgundy twists with
+   gold thread, mustard top) and 'braids' (long brown box braids, black knit).
+   She first appears in the hidden Oz finale, then unlocks in the shop. */
+function drawMimi(ctx, mood, style = 'curls') {
+  const SKIN_T = '#B07448', SKIN_B = '#8A5534';             // warm deep brown
+  const HAIR = '#1A1012', HAIR_HI = '#4A3236';
+  const LIP = { twists: '#7A4A4E', braids: '#4E2A30' }[style] || '#6B3138';
+  const LIP_HI = { twists: '#A87478', braids: '#734650' }[style] || '#9A5560';
+  const circle = (x, y, r, fill) => { ctx.fillStyle = fill; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); };
+  const curl = (x, y, r) => {                               // one spiral ringlet
+    circle(x, y, r, HAIR);
+    ctx.strokeStyle = HAIR_HI; ctx.lineWidth = Math.max(0.9, r * 0.22); ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(x + r * 0.1, y + r * 0.05, r * 0.55, Math.PI * 1.05, Math.PI * 2.2); ctx.stroke();
+  };
+  const TW = '#5E1A24', TW_HI = '#9C3442', GOLD = '#E2B54E';
+  // one rope twist along a path of points, with optional gold thread wraps
+  const rope = (pts, w, wraps = []) => {
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [x1, y1] = pts[i], [x2, y2] = pts[i + 1];
+      const len = Math.hypot(x2 - x1, y2 - y1), ang = Math.atan2(y2 - y1, x2 - x1);
+      const n = Math.max(1, Math.round(len / (w * 0.9)));
+      for (let k = 0; k < n; k++) {
+        const t = (k + 0.5) / n, x = x1 + (x2 - x1) * t, y = y1 + (y2 - y1) * t;
+        ctx.save(); ctx.translate(x, y); ctx.rotate(ang + ((k + i) % 2 ? 0.5 : -0.5));
+        ctx.fillStyle = TW; ctx.beginPath(); ctx.ellipse(0, 0, w * 0.62, w * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = TW_HI; ctx.beginPath(); ctx.ellipse(-w * 0.12, -w * 0.15, w * 0.3, w * 0.14, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+    }
+    wraps.forEach(f => {                                      // gold thread wrapped around the twist
+      const seg = Math.min(pts.length - 2, Math.floor(f * (pts.length - 1))), t = f * (pts.length - 1) - seg;
+      const [x1, y1] = pts[seg], [x2, y2] = pts[seg + 1];
+      const x = x1 + (x2 - x1) * t, y = y1 + (y2 - y1) * t, ang = Math.atan2(y2 - y1, x2 - x1) + Math.PI / 2;
+      ctx.strokeStyle = GOLD; ctx.lineWidth = 0.7;
+      for (let j = -0.5; j <= 0.5; j += 1) {
+        ctx.beginPath();
+        ctx.moveTo(x + Math.cos(ang) * w * 0.5 + j * 1.1 * Math.cos(ang - Math.PI / 2), y + Math.sin(ang) * w * 0.5 + j * 1.1 * Math.sin(ang - Math.PI / 2));
+        ctx.lineTo(x - Math.cos(ang) * w * 0.5 + j * 1.1 * Math.cos(ang - Math.PI / 2), y - Math.sin(ang) * w * 0.5 + j * 1.1 * Math.sin(ang - Math.PI / 2));
+        ctx.stroke();
+      }
+    });
+  };
+  // one box braid hanging along a path: plaited chevrons in a brown / ash-brown blend
+  const braid = (pts, w, light) => {
+    const A = '#2E2018', B = light ? '#8A6A4C' : '#5C4330';
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [x1, y1] = pts[i], [x2, y2] = pts[i + 1];
+      const len = Math.hypot(x2 - x1, y2 - y1), ang = Math.atan2(y2 - y1, x2 - x1);
+      const n = Math.max(1, Math.round(len / (w * 0.75)));
+      for (let k = 0; k < n; k++) {
+        const t = (k + 0.5) / n, x = x1 + (x2 - x1) * t, y = y1 + (y2 - y1) * t;
+        ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+        ctx.fillStyle = A; ctx.beginPath(); ctx.ellipse(0, 0, w * 0.5, w * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = B;
+        ctx.beginPath(); ctx.ellipse(0, -w * 0.18, w * 0.42, w * 0.2, 0.55, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(0, w * 0.18, w * 0.42, w * 0.2, -0.55, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+    }
+  };
+  const skinG = ctx.createLinearGradient(0, 26, 0, 90);
+  skinG.addColorStop(0, SKIN_T); skinG.addColorStop(1, SKIN_B);
+
+  // ---- stand: black blazer + layered gold necklaces with a red crystal
+  ctx.fillStyle = SKIN_B; rr(ctx, 42, 78, 16, 16, 4); ctx.fill();
+  const baseG = ctx.createLinearGradient(0, 100, 0, 116);
+  baseG.addColorStop(0, '#3AAFA9'); baseG.addColorStop(1, '#1D7470');
+  ctx.fillStyle = baseG; ctx.beginPath(); ctx.ellipse(50, 108, 26, 8, 0, 0, Math.PI * 2); ctx.fill();
+  if (style === 'braids') {                                  // chunky black cable-knit sweater, crew neck
+    ctx.fillStyle = '#1E1C22';
+    ctx.beginPath(); ctx.moveTo(29, 104); ctx.quadraticCurveTo(29, 89, 42, 87); ctx.quadraticCurveTo(50, 91, 58, 87);
+    ctx.quadraticCurveTo(71, 89, 71, 104); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#3A3742'; ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(42, 87.5); ctx.quadraticCurveTo(50, 92, 58, 87.5); ctx.stroke();      // ribbed collar
+    ctx.lineWidth = 1;
+    for (const cx of [37, 50, 63]) {                                                                  // cable stitches
+      for (let y = 93; y < 104; y += 3.4) { ctx.beginPath(); ctx.moveTo(cx - 2, y); ctx.quadraticCurveTo(cx, y + 2, cx + 2, y); ctx.stroke(); }
+    }
+  } else if (style === 'twists') {                                  // mustard wrap top + black cord necklaces
+    ctx.fillStyle = '#D9A93A';
+    ctx.beginPath(); ctx.moveTo(30, 104); ctx.quadraticCurveTo(30, 90, 42, 88); ctx.lineTo(50, 103); ctx.lineTo(58, 88);
+    ctx.quadraticCurveTo(70, 90, 70, 104); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#B88A24'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(42, 88); ctx.lineTo(50, 103); ctx.lineTo(58, 88); ctx.stroke();
+    ctx.strokeStyle = '#1A1012'; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(44, 86); ctx.lineTo(49, 99); ctx.moveTo(56, 86); ctx.lineTo(51, 99); ctx.moveTo(45.5, 86); ctx.lineTo(50.5, 101); ctx.stroke();
+  } else {
+    ctx.fillStyle = '#16161C';                                 // blazer shoulders + lapels
+    ctx.beginPath(); ctx.moveTo(30, 104); ctx.quadraticCurveTo(30, 90, 42, 88); ctx.lineTo(50, 102); ctx.lineTo(58, 88);
+    ctx.quadraticCurveTo(70, 90, 70, 104); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#33333D'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(42, 88); ctx.lineTo(46, 97); ctx.moveTo(58, 88); ctx.lineTo(54, 97); ctx.stroke();
+    ctx.strokeStyle = '#E2B54E'; ctx.lineWidth = 0.9;
+    ctx.beginPath(); ctx.moveTo(43, 86); ctx.quadraticCurveTo(50, 92, 57, 86); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(42.5, 86); ctx.quadraticCurveTo(50, 97, 57.5, 86); ctx.stroke();
+    ctx.fillStyle = '#C7C9D3'; ctx.beginPath(); ctx.arc(50, 91.5, 1.6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#C4472F'; ctx.beginPath(); ctx.moveTo(48.6, 95.5); ctx.lineTo(51.4, 95.5); ctx.lineTo(51.4, 99); ctx.lineTo(50, 101); ctx.lineTo(48.6, 99); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#E2B54E'; ctx.fillRect(48.4, 94.6, 3.2, 1.2);
+  }
+
+  if (style === 'braids') {
+    // long box braids falling past the shoulders on both sides
+    ctx.fillStyle = '#2E2018'; ctx.beginPath(); ctx.ellipse(50, 42, 28, 20, 0, Math.PI, 0); ctx.fill();
+    [[[30, 40], [22, 60], [19, 82], [20, 106]], [[34, 38], [27, 58], [25, 82], [26, 108]], [[26, 46], [17, 66], [14, 88], [15, 104]],
+     [[70, 40], [78, 60], [81, 82], [80, 106]], [[66, 38], [73, 58], [75, 82], [74, 108]], [[74, 46], [83, 66], [86, 88], [85, 104]]]
+      .forEach((p, i) => braid(p, 5.6, i % 2 === 1));
+  } else if (style === 'twists') {
+    // twists gathered up at the crown, cascading long down her right side (our left)
+    ctx.fillStyle = TW; ctx.beginPath(); ctx.ellipse(48, 38, 27, 18, 0, Math.PI, 0); ctx.fill();
+    rope([[40, 22], [30, 30], [22, 44], [18, 60], [18, 76], [22, 92], [26, 104]], 7.5, [0.35, 0.7]);
+    rope([[46, 20], [34, 32], [27, 48], [24, 64], [25, 80], [30, 96], [34, 106]], 7, [0.5, 0.85]);
+    rope([[34, 26], [24, 38], [16, 52], [13, 68], [14, 84], [18, 98]], 6.5, [0.6]);
+    rope([[52, 18], [44, 14], [36, 16], [30, 22]], 6.5, [0.4]);          // twists piled at the crown
+    rope([[58, 20], [50, 12], [42, 10], [36, 13]], 6, []);
+    rope([[74, 46], [78, 60], [78, 74]], 5, []);                         // a few behind the tucked side
+  } else {
+    // ---- hair behind the head: smooth crown, long ringlets cascading down her right side (our left),
+    //      only a few curls peeking out behind the tucked side
+    ctx.fillStyle = HAIR;
+    ctx.beginPath(); ctx.ellipse(50, 40, 29, 20, 0, Math.PI, 0); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(21, 40); ctx.bezierCurveTo(12, 60, 12, 84, 18, 100); ctx.lineTo(34, 100); ctx.bezierCurveTo(30, 80, 28, 60, 30, 42); ctx.closePath(); ctx.fill();
+    [[20, 48, 8.5], [15, 60, 9.5], [14, 72, 10], [16, 84, 9.5], [20, 95, 9], [28, 102, 7], [25, 66, 8.5], [26, 80, 8.5], [32, 92, 7]]
+      .forEach(([x, y, r]) => curl(x, y, r));
+    [[79, 66, 5.5], [80, 77, 6], [78, 88, 5.5], [74, 96, 4.5]].forEach(([x, y, r]) => curl(x, y, r));
+  }
+
+  // ---- head
+  ctx.fillStyle = skinG; ctx.beginPath(); ctx.ellipse(50, 56, 25, 28, 0, 0, Math.PI * 2); ctx.fill();
+  // ear on the tucked side (our right) + tiny stud
+  ctx.fillStyle = SKIN_B; ctx.beginPath(); ctx.ellipse(75, 59, 3.4, 5, 0, 0, Math.PI * 2); ctx.fill();
+  circle(75.5, 63.5, 1.1, '#E2B54E');
+
+  if (style === 'braids') {
+    // middle part with braids starting at the hairline and falling to each side
+    ctx.fillStyle = '#2E2018';
+    ctx.beginPath(); ctx.moveTo(25, 52); ctx.bezierCurveTo(22, 24, 78, 24, 75, 52);
+    ctx.bezierCurveTo(70, 40, 58, 37, 50, 38); ctx.bezierCurveTo(42, 37, 30, 40, 25, 52); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#8A5A3C'; ctx.lineWidth = 1.1;                                               // the part
+    ctx.beginPath(); ctx.moveTo(50, 38); ctx.lineTo(50, 27); ctx.stroke();
+    ctx.strokeStyle = 'rgba(138,106,76,.55)'; ctx.lineWidth = 0.9;                                  // braid sections
+    for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) {
+      ctx.beginPath(); ctx.moveTo(50 + sx * (4 + i * 7), 38 - i * 0.6); ctx.quadraticCurveTo(50 + sx * (6 + i * 8), 31, 50 + sx * (2 + i * 6), 27); ctx.stroke();
+    }
+    braid([[31, 42], [26, 56], [24, 72], [24, 90]], 5.4, true);                                     // front braids framing the face
+    braid([[69, 42], [74, 56], [76, 72], [76, 90]], 5.4, false);
+  } else if (style === 'twists') {
+    // pulled back with smooth edges: a dark cap over the whole crown, hairline at the forehead
+    ctx.fillStyle = '#3A1218';
+    ctx.beginPath(); ctx.moveTo(25, 50); ctx.bezierCurveTo(22, 22, 78, 22, 75, 50);
+    ctx.bezierCurveTo(68, 40, 58, 37, 50, 37); ctx.bezierCurveTo(40, 37, 30, 42, 25, 50); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(160,60,72,.55)'; ctx.lineWidth = 1;          // brushed-back texture
+    for (let x = 36; x <= 70; x += 5) { ctx.beginPath(); ctx.moveTo(x, 38); ctx.quadraticCurveTo(x - 6, 31, x - 14, 27); ctx.stroke(); }
+    rope([[46, 30], [36, 34], [28, 44], [25, 58], [26, 72]], 6.5, [0.3, 0.75]);
+    // gold hoop on the curl side
+    ctx.strokeStyle = GOLD; ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.ellipse(26, 72, 4.5, 6, 0, 0, Math.PI * 2); ctx.stroke();
+  } else {
+    // ---- hair on top: deep side part (our right), swept across to our left
+    ctx.fillStyle = HAIR;
+    ctx.beginPath();
+    ctx.moveTo(68, 32);                                         // part line
+    ctx.bezierCurveTo(58, 28, 36, 28, 27, 40);
+    ctx.bezierCurveTo(22, 50, 24, 62, 27, 72);                  // sweep down her right side
+    ctx.bezierCurveTo(31, 60, 34, 48, 44, 42);
+    ctx.bezierCurveTo(54, 37, 62, 36, 68, 32);
+    ctx.closePath(); ctx.fill();
+    ctx.beginPath();                                            // tucked side, close to the head
+    ctx.moveTo(68, 32); ctx.bezierCurveTo(74, 36, 76, 44, 74, 52); ctx.lineTo(71, 52);
+    ctx.bezierCurveTo(72, 44, 70, 38, 66, 35); ctx.closePath(); ctx.fill();
+    [[44, 28, 5], [35, 31, 5.5], [27, 38, 6], [22, 48, 6.5], [27, 50, 5.5], [25, 61, 6], [27, 72, 5.5]].forEach(([x, y, r]) => curl(x, y, r));
+    ctx.strokeStyle = HAIR_HI; ctx.lineWidth = 1.4; ctx.lineCap = 'round';   // shine on the sweep
+    ctx.beginPath(); ctx.moveTo(60, 33); ctx.quadraticCurveTo(46, 33, 36, 42); ctx.stroke();
+  }
+
+  // ---- face
+  const eyeY = 57, ink = '#1A0D12';
+  const lashes = (x, up) => {
+    ctx.strokeStyle = ink; ctx.lineWidth = 1.4; ctx.lineCap = 'round';
+    const y = eyeY + (up ? -1 : 2);
+    ctx.beginPath(); ctx.moveTo(x - 4.6, y - 1); ctx.lineTo(x - 6.6, y - 3); ctx.moveTo(x + 4.6, y - 1); ctx.lineTo(x + 6.6, y - 3); ctx.stroke();
+  };
+  const openEye = (x, big) => {
+    ctx.fillStyle = ink; ctx.beginPath(); ctx.ellipse(x, eyeY, big ? 4.4 : 3.6, big ? 5.2 : 4.4, 0, 0, Math.PI * 2); ctx.fill();
+    circle(x + 1.3, eyeY - 1.6, big ? 1.7 : 1.3, '#FFFFFF'); lashes(x, true);
+    if (style === 'braids') { ctx.strokeStyle = ink; ctx.lineWidth = 1.6; ctx.beginPath(); const s = x < 50 ? -1 : 1;
+      ctx.moveTo(x + s * 3.6, eyeY - 2.4); ctx.lineTo(x + s * 7.4, eyeY - 4.8); ctx.stroke(); }
+  };
+  const arcEye = x => {
+    ctx.strokeStyle = ink; ctx.lineWidth = 2.6; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(x, eyeY + 2, 4.4, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); lashes(x, false);
+  };
+  const lineEye = x => { ctx.strokeStyle = ink; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(x - 4, eyeY); ctx.lineTo(x + 4, eyeY); ctx.stroke(); };
+  if (mood === 'blink') { lineEye(41); lineEye(59); }
+  else if (mood === 'cheer' || mood === 'happy') { arcEye(41); arcEye(59); }
+  else if (mood === 'wink') { openEye(41); arcEye(59); }
+  else if (mood === 'wow') { openEye(41, true); openEye(59, true); }
+  else { openEye(41); openEye(59); }
+  // defined brows
+  ctx.strokeStyle = HAIR; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  if (mood === 'oops') {
+    ctx.beginPath(); ctx.moveTo(35, 50); ctx.lineTo(45, 47); ctx.moveTo(65, 50); ctx.lineTo(55, 47); ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.moveTo(35, 49); ctx.quadraticCurveTo(40, 45.5, 46, 47.5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(54, 47.5); ctx.quadraticCurveTo(60, 45.5, 65, 49); ctx.stroke();
+  }
+  // nose + silver septum ring
+  ctx.strokeStyle = 'rgba(70,35,20,.55)'; ctx.lineWidth = 1.3;
+  ctx.beginPath(); ctx.moveTo(47.5, 65); ctx.quadraticCurveTo(50, 67, 52.5, 65); ctx.stroke();
+  ctx.strokeStyle = '#D9DEE8'; ctx.lineWidth = 1.1;
+  ctx.beginPath(); ctx.arc(50, 66.4, 1.7, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
+  // cheeks
+  ctx.fillStyle = 'rgba(205,90,110,.35)';
+  ctx.beginPath(); ctx.ellipse(33, 66, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(67, 66, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+  // mouth: her big bright smile with plum-brown lips
+  if (mood === 'wow') {
+    ctx.fillStyle = LIP; ctx.beginPath(); ctx.ellipse(50, 73, 4.6, 5.4, 0, 0, Math.PI * 2); ctx.fill();
+    circle(50, 73.5, 2.6, '#3A1418');
+  } else if (mood === 'oops') {
+    ctx.strokeStyle = LIP; ctx.lineWidth = 2.8; ctx.beginPath(); ctx.moveTo(44, 75); ctx.quadraticCurveTo(50, 70, 56, 75); ctx.stroke();
+  } else if (mood === 'think') {
+    ctx.strokeStyle = LIP; ctx.lineWidth = 2.8; ctx.beginPath(); ctx.moveTo(45, 73); ctx.quadraticCurveTo(51, 71, 56, 72); ctx.stroke();
+  } else {
+    const wide = mood === 'cheer' ? 1 : 0.8;
+    ctx.fillStyle = LIP;                                        // lips
+    ctx.beginPath(); ctx.moveTo(50 - 10 * wide, 69.5);
+    ctx.quadraticCurveTo(50, 67.4, 50 + 10 * wide, 69.5);
+    ctx.quadraticCurveTo(50, 83 * (wide === 1 ? 1 : 0.98), 50 - 10 * wide, 69.5); ctx.fill();
+    ctx.fillStyle = '#FFFFFF';                                  // teeth
+    ctx.beginPath(); ctx.moveTo(50 - 8 * wide, 70.4);
+    ctx.quadraticCurveTo(50, 69, 50 + 8 * wide, 70.4);
+    ctx.quadraticCurveTo(50, 76.5, 50 - 8 * wide, 70.4); ctx.fill();
+    ctx.strokeStyle = LIP_HI; ctx.lineWidth = 0.9;               // gloss
+    ctx.beginPath(); ctx.moveTo(45, 77.3); ctx.quadraticCurveTo(50, 78.6, 55, 77.3); ctx.stroke();
+  }
+}
+
+const MIMI_BY_WORLD = { 1: 'braids', 2: 'braids', 3: 'twists', 4: 'twists', 5: 'curls', 6: 'curls' };
+
 const Pip = {
   _cache: {},
   // Skin tones she can choose from: [highlight, shade]
@@ -783,6 +1031,7 @@ const Pip = {
 
   // Draw Pip into a 100 × 120 box.
   draw(ctx, world, mood, toneIdx = this.tone()) {
+    if (typeof world === 'string' && world.startsWith('mimi-')) return drawMimi(ctx, mood, world.slice(5));
     const [skinTop, skinBot] = this.TONES[toneIdx] || this.TONES[2];
     const HAIR = {
       1: '#3B2416', 2: '#7A3B1F', 3: '#A4652F', 4: '#2A1A10', 5: '#4B2E6E', 6: '#E5BE6E',
@@ -948,6 +1197,8 @@ const Pip = {
   // A look she bought in the shop keeps Pip in that world's hairstyle (0 = change each world).
   lookFor(world) {
     const l = Save.data && Save.data.settings && Save.data.settings.pipLook;
+    if (l === 'mimi-auto') return 'mimi-' + (MIMI_BY_WORLD[world] || 'curls');
+    if (typeof l === 'string' && l.startsWith('mimi-')) return l;
     return l >= 1 && l <= 6 ? l : world;
   },
   url(world, mood, px = 120, tone = this.tone(), raw = false) {

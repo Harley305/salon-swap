@@ -403,7 +403,20 @@ const UI = {
         `<img src="${Pip.url(w, 'happy', 80, undefined, true)}" alt=""><small>${on ? 'Using' : owned ? 'Use' : ECON.pipLookGems + ' 💎'}</small></button>`;
     }).join('');
 
+    const mimiLooks = [['mimi-auto', 'Auto'], ['mimi-curls', 'Curls'], ['mimi-twists', 'Twists'], ['mimi-braids', 'Braids']];
+    const mimiRow = Wallet.owns('mimi') ? mimiLooks.map(([id, name]) => {
+      const on = set.pipLook === id;
+      const img = id === 'mimi-auto' ? 'mimi-curls' : id;
+      return `<button class="pip-look${on ? ' on' : ''}" data-act="look_${id}"><img src="${Pip.url(img, 'happy', 80, undefined, true)}" alt=""><small>${on ? 'Using' : name}</small></button>`;
+    }).join('') : '';
+
     const actions = {};
+    mimiLooks.forEach(([id, name]) => { actions['look_' + id] = () => {
+      if (!Wallet.owns('mimi')) return;
+      set.pipLook = id; Save.write(); Pip.refresh && Pip.refresh();
+      const tp = $('titlePip'); if (tp) tp.src = Pip.url(World.current, 'happy');
+      this.showShop(id === 'mimi-auto' ? 'Mimi changes looks with each world.' : `Mimi · ${name} it is!`);
+    }; });
     B.forEach(([k]) => { actions['buy_' + k] = () => {
       if (!Wallet.spendCoins(ECON.prices[k])) return this.showRefill();
       inv[k] = (inv[k] || 0) + 1; Save.write(); Sound.play('gift'); this.updateBoosters(); this.showShop(`+1 ${k === 'moves' ? '+5 Moves' : k === 'hammer' ? 'Hammer' : 'Twister'}!`);
@@ -436,6 +449,7 @@ const UI = {
       ${note ? `<div class="shop-note">${esc(note)}</div>` : ''}
       <div class="shop-sec">Boosters · coins</div>${boosterRows}
       <div class="shop-sec">Gem shop</div>${gemRows}
+      ${mimiRow ? `<div class="shop-sec">Mimi · free</div><div class="pip-looks">${mimiRow}</div>` : ''}
       <div class="shop-sec">Pip's look · ${ECON.pipLookGems} 💎 each</div><div class="pip-looks">${looks}</div>
       <div class="panel-btns"><button class="btn" data-act="refill">Get more coins</button>
       <button class="btn btn-ghost" data-act="close">Done</button></div>`, actions);
@@ -1010,9 +1024,25 @@ const UI = {
       setTimeout(() => { el.remove(); if (onDone) onDone(); }, 450);
     };
     const showDone = () => {
+      if (el.classList.contains('ended')) return;
       el.classList.add('ended');                  // credits fade, trophy + engraved plaque return
       el.querySelector('[data-fin="done"]').hidden = false;
       el.querySelector('[data-fin="skip"]').hidden = true;
+      // the hidden Oz scene: tap the trophy three times (like clicking her heels)
+      const trophy = el.querySelector('.fin-trophy img');
+      const hint = document.createElement('div');
+      hint.className = 'oz-hint';
+      hint.innerHTML = `<img src="${Pip.url(World.current, 'wink', 60)}" alt=""><span>${esc(CONFIG.ozHint || '')}</span>`;
+      setTimeout(() => { if (el.isConnected) el.querySelector('.fin-trophy').insertBefore(hint, el.querySelector('.fin-plate')); }, 2600);
+      let taps = [];
+      trophy.addEventListener('click', e => {
+        e.stopPropagation();
+        const now = performance.now();
+        taps = taps.filter(t => now - t < 1800); taps.push(now);
+        Sound.play('clink');
+        trophy.classList.remove('oz-tap'); void trophy.offsetWidth; trophy.classList.add('oz-tap');
+        if (taps.length >= 3) { taps = []; hint.remove(); this.showOz(); }
+      });
     };
     // trophy first, then the credits roll
     setTimeout(() => el.classList.add('rolling'), 4200);
@@ -1023,6 +1053,77 @@ const UI = {
       if (!b) return;
       if (b.dataset.fin === 'skip') { showDone(); el.classList.add('rolling', 'skipped'); }
       else finish();
+    });
+  },
+
+  /* ----- Hidden Oz finale: her road to the Emerald City ----- */
+  showOz() {
+    if (document.querySelector('.oz')) return;
+    const worlds = [1, 2, 3, 4, 5, 6].map(w => (WORLDS[w] || { name: WORLD_NAMES[w] }).name);
+    const credits = (CONFIG.credits || []).map(c => {
+      let t = String(c).split('|')[0].replace(/\s*\(.*?\)\s*$/, '').replace(/,\s*Season.*$/i, '').trim();
+      if (t.length > 22 && t.includes(':')) t = t.split(':')[0].trim();      // keep the lights short
+      return t;
+    });
+    const look = w => 'mimi-' + MIMI_BY_WORLD[w];
+    const sparks = Array.from({ length: 30 }, (_, i) =>
+      `<i class="oz-spark" style="left:${(i * 37) % 100}%;top:${(i * 53) % 58 + 2}%;animation-delay:${(i % 7) * 0.35}s;transform:scale(${0.6 + (i % 4) * 0.3})"></i>`).join('');
+    // sign spots along the road (left/right, nearest first)
+    const spots = [[6, 80], [58, 71], [9, 62], [56, 54], [13, 47], [52, 41]];
+    const signs = worlds.map((w, i) =>
+      `<div class="oz-sign" style="left:${spots[i][0]}%;top:${spots[i][1]}%"><b>World ${i + 1}</b>${esc(w)}</div>`).join('');
+    const el = document.createElement('div');
+    el.className = 'oz';
+    el.innerHTML = `
+      <div class="oz-wash"></div><div class="oz-sky">${sparks}</div>
+      <svg class="oz-city" viewBox="0 0 390 190" preserveAspectRatio="xMidYMax meet"><g>
+        <rect x="95" y="80" width="28" height="110"/><polygon points="95,80 109,36 123,80"/>
+        <rect x="130" y="50" width="34" height="140"/><polygon points="130,50 147,4 164,50"/>
+        <rect x="172" y="30" width="46" height="160"/><polygon points="172,30 195,-20 218,30"/>
+        <rect x="226" y="50" width="34" height="140"/><polygon points="226,50 243,4 260,50"/>
+        <rect x="268" y="80" width="28" height="110"/><polygon points="268,80 282,36 296,80"/></g></svg>
+      <div class="oz-lights">${credits.map(c => `<span>${esc(c)}</span>`).join('')}</div>
+      ${CONFIG.honors ? `<div class="oz-honor">★ ${esc(CONFIG.honors)} ★</div>` : ''}
+      <div class="oz-gate"><small>${esc(CONFIG.awardTitle)}</small>${esc(CONFIG.fullName)}</div>
+      <div class="oz-road"></div>
+      ${signs}
+      <div class="oz-bubble"></div>
+      <svg class="oz-balloon" viewBox="0 0 70 100"><path d="M35 4 C10 4 4 30 14 46 C20 56 28 60 30 66 L40 66 C42 60 50 56 56 46 C66 30 60 4 35 4Z" fill="#3AAFA9" stroke="#1D7470" stroke-width="2"/><path d="M35 4 C26 20 26 50 32 66 M35 4 C44 20 44 50 38 66" fill="none" stroke="#ffd36b" stroke-width="2"/><path d="M30 66 L28 80 M40 66 L42 80" stroke="#7a5a2a" stroke-width="1.5"/><rect x="26" y="80" width="18" height="12" rx="2" fill="#b07a3c"/></svg>
+      <div class="oz-walker"><img class="oz-mimi" src="${Pip.url(look(1), 'cheer', 160, undefined, true)}" alt="">
+        <svg class="oz-shoes" viewBox="0 0 120 50"><defs><linearGradient id="ozsv" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#cfd8e6"/><stop offset="1" stop-color="#8a97ad"/></linearGradient></defs><g fill="url(#ozsv)" stroke="#6f7c93" stroke-width="1.5"><path d="M6 36 Q8 20 26 22 L44 28 Q52 30 52 38 L52 42 L10 42 Q6 42 6 36Z"/><rect x="8" y="40" width="6" height="8" rx="2"/><path d="M66 36 Q68 20 86 22 L104 28 Q112 30 112 38 L112 42 L70 42 Q66 42 66 36Z"/><rect x="68" y="40" width="6" height="8" rx="2"/></g><g fill="#fff"><circle cx="30" cy="30" r="2"/><circle cx="90" cy="30" r="2"/></g></svg></div>
+      <div class="oz-card"><b>${esc(CONFIG.ozTitle || '')}</b><span>${esc(CONFIG.ozMessage || '')}</span><small>${esc(CONFIG.ozTagline || '')}</small>
+        <div class="oz-unlock">New in the Shop → Pip's look: <b>Mimi</b> 💇🏾‍♀️</div>
+        <button class="btn btn-gold" data-oz="back" type="button">Back to my trophy</button></div>
+      <button class="oz-x" data-oz="back" type="button" aria-label="Close">✕</button>`;
+    $('app').appendChild(el);
+
+    const timers = [];
+    const at = (ms, fn) => timers.push(setTimeout(() => { if (el.isConnected) fn(); }, ms));
+    const walker = el.querySelector('.oz-walker'), mimi = el.querySelector('.oz-mimi');
+    const close = () => { timers.forEach(clearTimeout); el.classList.add('out'); setTimeout(() => el.remove(), 500); };
+    el.addEventListener('click', e => { if (e.target.closest('[data-oz="back"]')) close(); });
+
+    Sound.play('heelClicks');
+    at(150, () => el.classList.add('on'));                       // emerald wash + road unrolls
+    at(700, () => Sound.play('ozTheme'));
+    // walk up the road: one world sign at a time; her look changes as her career grows
+    worlds.forEach((_, i) => at(1600 + i * 1700, () => {
+      el.querySelectorAll('.oz-sign')[i].classList.add('lit');
+      walker.style.setProperty('--step', i);
+      const src = Pip.url(look(i + 1), 'cheer', 160, undefined, true);
+      if (mimi.getAttribute('src') !== src) { mimi.classList.add('swap'); setTimeout(() => { mimi.src = src; mimi.classList.remove('swap'); }, 220); Sound.play('special'); }
+      else Sound.play('twinkle');
+    }));
+    at(3200, () => el.classList.add('bubble-pop'));
+    const cityAt = 1600 + 6 * 1700;
+    at(cityAt, () => { el.classList.add('city'); Sound.play('fanfare', 0.2); });
+    el.querySelectorAll('.oz-lights span').forEach((s, i) => at(cityAt + 500 + i * 230, () => { s.classList.add('on'); if (i % 3 === 0) Sound.play('twinkle'); }));
+    const endAt = cityAt + 500 + credits.length * 230 + 600;
+    at(endAt, () => { el.classList.add('honor'); Sound.play('glam'); Confetti.burst(160); });
+    at(endAt + 1600, () => {
+      el.classList.add('done');
+      if (!Wallet.d.owned.mimi) { Wallet.d.owned.mimi = true; Save.write(); }
+      Sound.play('gift');
     });
   },
 

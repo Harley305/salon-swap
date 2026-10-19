@@ -96,6 +96,7 @@ Everything personal is in **`js/config.js`** — open that one file in VS Code; 
 | `worldWinMessages` | Extra win lines for each world |
 | `fullName`, `awardTitle`, `credits` | Her name, award and real credits in the finale |
 | `finaleMessage`, `finaleSignature` | The thank-you note at the end of the credits |
+| `ozHint`, `ozTitle`, `ozMessage`, `ozTagline` | The words in the hidden scene after the finale (tap the trophy three times) |
 | `coinPacks` | Names and pretend "prices" of the coin packs |
 | `masterVolume`, `musicVolume`, `sfxVolume` | Loudness |
 

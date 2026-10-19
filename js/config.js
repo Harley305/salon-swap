@@ -116,4 +116,13 @@ const CONFIG = {
   // Chris: replace this with your own message to her.
   finaleMessage: "From the first chair to the red carpet — I've watched you earn every bit of it. I'm so proud of you.",
   finaleSignature: '— Chris',
+
+  // ===== Hidden Oz finale =====
+  // On the final trophy plaque, tapping the trophy three times opens a secret scene:
+  // she walks the yellow-brick road past her six worlds into the Emerald City,
+  // where her credits light up. These are the words on the last card.
+  ozHint: 'psst… tap the trophy three times',
+  ozTitle: 'Every step was yours, Mimi.',
+  ozMessage: 'From the first chair to the Emerald City — every set, every take, every credit.',
+  ozTagline: 'No place like the chair 💚💗',
 };
